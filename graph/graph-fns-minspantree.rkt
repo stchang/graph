@@ -12,8 +12,6 @@
 ;; uses data/union-find
 
 (define (mst-kruskal G)
-;  (define weights (weighted-graph-weights G))
-;  (define (w u v) (hash-ref weights (list u v)))
   (define (w u v) (edge-weight G u v))
   (define A null) (define (A-add! e) (set! A (cons e A)))
   
@@ -39,8 +37,6 @@
 
 ;; r is root vertex
 (define (mst-prim G r)
-;  (define weights (weighted-graph-weights G))
-;  (define (w u v) (hash-ref weights (list u v)))
   (define (w u v) (edge-weight G u v))
   (define-hashes key π in-Q?)
   
