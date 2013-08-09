@@ -1,6 +1,6 @@
 #lang racket
 
-(require "hash-utils.rkt" "gen-graph.rkt")
+(require "hash-utils.rkt" "gen-graph.rkt" "graph-fns-basic.rkt")
 
 (provide (except-out (all-defined-out)))
 
@@ -33,5 +33,20 @@
   
   (values d π))
 
-;(define (dag-shortest-paths G s)
-;  (define 
+(define (dag-shortest-paths G s)
+  (define (w u v) (edge-weight G u v))
+  (define tsorted (tsort G))
+  
+  ;; init
+  (define-hashes d π)
+  (for ([v (in-vertices G)]) (d-set! v +inf.0) (π-set! v #f))
+  (d-set! s 0)
+
+  (for* ([u tsorted]
+         [v (in-neighbors G u)])
+    ;; relax
+    (when (> (d v) (+ (d u) (w u v)))
+      (d-set! v (+ (d u) (w u v)))
+      (π-set! v u)))
+  
+  (values d π))

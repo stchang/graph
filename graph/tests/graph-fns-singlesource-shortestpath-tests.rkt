@@ -1,6 +1,7 @@
 #lang racket
 (require "../graph-weighted.rkt"
          "../graph-fns-singlesource-shortestpath.rkt"
+         "../graph-fns-basic.rkt"
          "test-utils.rkt")
 
 (require rackunit)
@@ -41,4 +42,17 @@
 (check-equal? d24.3
               (make-hash '((x . 4) (y . 7) (z . -2) (t . 2) (s . 0))))
 
+
+(define g24.5 (mk-weighted-graph/directed '((5 r s) (3 r t)
+                                            (6 s x) (2 s t)
+                                            (7 t x) (4 t y) (2 t z)
+                                            (1 x z) (-1 x y)
+                                            (-2 y z))))
+
+(check-true (dag? g24.5))
+
+(define-values (d24.5 π24.5) (dag-shortest-paths g24.5 's))
+
+(check-equal? d24.5
+              (make-hash '((r . +inf.0) (s . 0) (t . 2) (x . 6) (y . 5) (z . 3))))
 
