@@ -11,6 +11,7 @@
 ;; single-source shortest path ------------------------------------------------
 
 ;; s = source
+;; no neg weight cycles
 (define (bellman-ford G s)
   (define (w u v) (edge-weight G u v))
 
@@ -54,6 +55,7 @@
   
   (values d π))
 
+;; no negative weight edges
 (define (dijkstra G s)
   (define (w u v) (edge-weight G u v))
 
