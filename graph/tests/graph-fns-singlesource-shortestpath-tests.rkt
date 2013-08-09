@@ -9,6 +9,8 @@
 
 ;; single-source shortest path tests ------------------------------------------
 
+;; bellman-ford ---------------------------------------------------------------
+
 ;; neg weight cycle
 (define g24.1
   (mk-weighted-graph/directed '((3 s a) (5 s c) (2 s e)
@@ -31,17 +33,24 @@
 (check-equal? d24.2
               (make-hash '((x . 9) (y . 5) (z . 11) (t . 3) (s . 0))))
 
-(define g24.3
+(define g24.4
   (mk-weighted-graph/directed '((6 s t) (7 s y)
                                 (5 t x) (8 t y) (-4 t z)
                                 (-2 x t)
                                 (7 z x) (2 z s)
                                 (9 y z) (-3 y x))))
 
-(define-values (d24.3 π24.3) (bellman-ford g24.3 's))
-(check-equal? d24.3
+(define-values (d24.4 π24.4) (bellman-ford g24.4 's))
+(check-equal? d24.4
               (make-hash '((x . 4) (y . 7) (z . -2) (t . 2) (s . 0))))
 
+
+(check-false (dag? g24.1))
+(check-false (dag? g24.2))
+(check-false (dag? g24.4))
+
+
+;; dag-shortest-paths ---------------------------------------------------------
 
 (define g24.5 (mk-weighted-graph/directed '((5 r s) (3 r t)
                                             (6 s x) (2 s t)
@@ -52,7 +61,39 @@
 (check-true (dag? g24.5))
 
 (define-values (d24.5 π24.5) (dag-shortest-paths g24.5 's))
+(define-values (d24.5b π24.5b) (bellman-ford g24.5 's))
 
+(check-equal? d24.5 d24.5b)
 (check-equal? d24.5
               (make-hash '((r . +inf.0) (s . 0) (t . 2) (x . 6) (y . 5) (z . 3))))
 
+(check-equal? π24.5 π24.5b)
+(check-equal? π24.5
+              (make-hash '((z . y) (x . s) (y . x) (t . s) (s . #f) (r . #f))))
+
+;; dijkstra -------------------------------------------------------------------
+(define g24.6 (mk-weighted-graph/directed '((10 s t) (5 s y)
+                                            (1 t x) (2 t y)
+                                            (4 x z)
+                                            (6 z x) (6 z s)
+                                            (3 y t) (9 y x) (2 y z))))
+
+(define-values (d24.6 π24.6) (dijkstra g24.6 's))
+
+(check-equal? d24.6
+              (make-hash '((z . 7) (x . 9) (y . 5) (s . 0) (t . 8))))
+(check-equal? π24.6
+              (make-hash '((z . y) (x . t) (y . s) (s . #f) (t . y))))
+
+(define g24.8 
+  (mk-weighted-graph/directed '((0 v0 v1) (0 v0 v2) (0 v0 v3) (0 v0 v4) (0 v0 v5)
+                                (5 v1 v3) (4 v1 v4)
+                                (0 v2 v1)
+                                (-3 v3 v5) (-1 v3 v4)
+                                (-3 v4 v5)
+                                (-1 v5 v1) (1 v5 v2))))
+
+;; linear programming test ----------------------------------------------------
+(define-values (d24.8 π24.8) (bellman-ford g24.8 'v0))
+(check-equal? d24.8
+              (make-hash '((v5 . -4) (v3 . 0) (v1 . -5) (v4 . -1) (v0 . 0) (v2 . -3))))
