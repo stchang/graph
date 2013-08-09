@@ -27,7 +27,7 @@
       (π-set! v u)))
   
   ;; check for invalid graph (ie neg weight cycle)
-  (for/and ([e (in-edges G)])
+  (for ([e (in-edges G)])
     (match-define (list u v) e)
     (when (> (d v) (+ (d u) (w u v))) 
       (error 'bellman-ford "negative weight cycle")))

@@ -35,6 +35,7 @@
 (check-equal? '(s w x u) (shortest-path g22.3 's 'u))
 (check-equal? '(s w x y) (shortest-path g22.3 's 'y))
 
+
 ;; dfs utils ------------------------------------------------------------------
 
 (define (verify-π d π)
@@ -61,13 +62,14 @@
 (define-values (color22.4 d22.4 π22.4 f22.4) (dfs g22.4))
 
 (check-true (all-black? color22.4))
+
 ;; started at 'v
-(check-equal? d22.4
-              (make-hash '((v . 1) (y . 2) (x . 3) (w . 7) (z . 8) (u . 11))))
-(check-equal? π22.4
-              (make-hash '((v . #f) (y . v) (x . y) (w . #f) (z . w) (u . #f))))
-(check-equal? f22.4
-              (make-hash '((x . 4) (y . 5) (v . 6) (z . 9) (w . 10) (u . 12))))
+;(check-equal? d22.4
+;              (make-hash '((v . 1) (y . 2) (x . 3) (w . 7) (z . 8) (u . 11))))
+;(check-equal? π22.4
+;              (make-hash '((v . #f) (y . v) (x . y) (w . #f) (z . w) (u . #f))))
+;(check-equal? f22.4
+;              (make-hash '((x . 4) (y . 5) (v . 6) (z . 9) (w . 10) (u . 12))))
 
 (verify-π d22.4 π22.4)
 (verify-times d22.4 f22.4)
@@ -80,16 +82,17 @@
 (define-values (color22.5 d22.5 π22.5 f22.5) (dfs g22.5))
 (check-true (all-black? color22.5))
 (verify-times d22.5 f22.5)
-;; started at 'w
-(check-equal? 
- d22.5
- (make-hash '((t . 10) (y . 4) (z . 3) (u . 9) (s . 12) (x . 2) (v . 11) (w . 1))))
-(check-equal? 
- π22.5
- (make-hash '((t . u) (y . z) (z . x) (u . #f) (s . v) (v . t) (x . w) (w . #f))))
-(check-equal? 
- f22.5
- (make-hash '((x . 7) (y . 5) (z . 6) (v . 14) (s . 13) (t . 15) (u . 16) (w . 8))))
+
+;;; started at 'w
+;(check-equal? 
+; d22.5
+; (make-hash '((t . 10) (y . 4) (z . 3) (u . 9) (s . 12) (x . 2) (v . 11) (w . 1))))
+;(check-equal? 
+; π22.5
+; (make-hash '((t . u) (y . z) (z . x) (u . #f) (s . v) (v . t) (x . w) (w . #f))))
+;(check-equal? 
+; f22.5
+; (make-hash '((x . 7) (y . 5) (z . 6) (v . 14) (s . 13) (t . 15) (u . 16) (w . 8))))
 
 (verify-π d22.5 π22.5)
 (verify-times d22.5 f22.5)
@@ -113,20 +116,20 @@
 (verify-π d22.6 π22.6)
 (verify-times d22.6 f22.6)
 
-(check-equal?
- d22.6
- (make-hash 
-  '((t . 10) (y . 2) (z . 12) (v . 6) (s . 5) (x . 11) (q . 3) (u . 18) (w . 4) (r . 1))))
-
-(check-equal?
- π22.6
- (make-hash 
-  '((t . q) (y . r) (z . x) (u . r) (s . w) (v . s) (q . y) (x . t) (w . q) (r . #f))))
-
-(check-equal?
- f22.6
- (make-hash
-  '((t . 15) (y . 17) (z . 13) (v . 7) (s . 8) (x . 14) (q . 16) (u . 19) (w . 9) (r . 20))))
+;(check-equal?
+; d22.6
+; (make-hash 
+;  '((t . 10) (y . 2) (z . 12) (v . 6) (s . 5) (x . 11) (q . 3) (u . 18) (w . 4) (r . 1))))
+;
+;(check-equal?
+; π22.6
+; (make-hash 
+;  '((t . q) (y . r) (z . x) (u . r) (s . w) (v . s) (q . y) (x . t) (w . q) (r . #f))))
+;
+;(check-equal?
+; f22.6
+; (make-hash
+;  '((t . 15) (y . 17) (z . 13) (v . 7) (s . 8) (x . 14) (q . 16) (u . 19) (w . 9) (r . 20))))
 
 ;; tsort utils ----------------------------------------------------------------
 
