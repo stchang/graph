@@ -1,6 +1,6 @@
 #lang racket
 (require "../graph-weighted.rkt"
-         "../graph-fns-singlesource-shortestpath.rkt"
+         "../graph-fns-singlesource-shortestpaths.rkt"
          "../graph-fns-basic.rkt"
          "test-utils.rkt")
 
