@@ -5,5 +5,7 @@
 (define-generics graph
   (in-vertices graph)
   (in-neighbors graph v)
-  (in-edges graph)
-  (edge-weight graph u v))
+  (edge-weight graph u v)
+  (add-directed-edge! graph u v [weight])
+  (add-edge! graph u v [weight])
+  (add-vertex! graph v))

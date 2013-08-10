@@ -1,7 +1,7 @@
 #lang racket
 
-(require "gen-graph.rkt")
-(require racket/generator)
+(require "gen-graph.rkt"
+         "adjlist-utils.rkt")
 
 ; unweighted, adjacency-list graph
 
@@ -12,13 +12,21 @@
   #:methods gen:graph
   [(define (in-vertices g) (in-unweighted-graph-vertices g))
    (define (in-neighbors g v) (in-unweighted-graph-neighbors g v))
-   (define (in-edges g) (in-unweighted-graph-edges g))
-   (define (edge-weight g u v) (error 'edge-weight "unweighted graph"))])
+   (define (edge-weight g u v) (error 'edge-weight "unweighted graph"))
+   (define (add-directed-edge! g u v [weight #f])
+     (define adj (unweighted-graph-adjlist g))
+     (add-edge@ adj u v)
+     (add-vertex@ adj v))
+   (define (add-edge! g u v [weight #f])
+     (define adj (unweighted-graph-adjlist g))
+     (add-edge@ adj u v)
+     (add-edge@ adj v u))
+   (define (add-vertex! g v)
+     (add-vertex@ (unweighted-graph-adjlist g) v))])
 
-;; An AdjacencyList is a [MutableHashOf Vertex -> Vertex]
+;; An AdjacencyList is a [MutableHashOf Vertex -> [Setof Vertex]]
 ;;   and is the internal graph representation
-
-;; (internal graph functions and names have a @ suffix)
+;; (internal adjlist functions and names have a @ suffix)
 
 ;; A Vertex is any value comparable with equal?
 
@@ -52,21 +60,9 @@
 
 ;; returns neighbors as a sequence
 (define (in-unweighted-graph-neighbors g v)
-  (in-set (hash-ref (unweighted-graph-adjlist g) v (set))))
-
-;; returns edges as a sequence
-(define (in-unweighted-graph-edges g)
-  (in-generator 
-   (for* ([u (in-vertices g)] [v (in-neighbors g u)]) 
-     (yield (list u v)))))
-
-  
-
-;; ----------------------------------------------------------------------------
-;; Internal graph functions (operates on the hash table)
-(define (add-edge@ adj u v) (hash-update! adj u (λ (vs) (set-add vs v)) (set)))
-(define (add-vertex@ adj v) (hash-update! adj v (λ (vs) vs) (set)))
-
+  (in-set 
+   (hash-ref (unweighted-graph-adjlist g) v 
+             (λ () (error 'in-vertices "vertex ~a not in graph ~a" v g)))))
 
 (define (transpose G)
   (define adj^T (make-hash))

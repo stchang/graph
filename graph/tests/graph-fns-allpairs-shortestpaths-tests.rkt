@@ -77,3 +77,26 @@
 (hash-values-inexact->exact weights25.2fw)
 
 (check-equal? weights25.2slow weights25.2fw)
+
+(require "../graph-unweighted.rkt")
+(define g25.5
+  (mk-unweighted-graph/directed '((2 3) (2 4) (3 2) (4 3) (4 1))))
+
+(check-equal? 
+ (transitive-closure g25.5)
+ (make-hash '(((1 1) . #t)
+              ((1 2) . #f)
+              ((1 3) . #f)
+              ((1 4) . #f)
+              ((2 1) . #t)
+              ((2 2) . #t)
+              ((2 3) . #t)
+              ((2 4) . #t)
+              ((3 1) . #t)
+              ((3 2) . #t)
+              ((3 3) . #t)
+              ((3 4) . #t)
+              ((4 1) . #t)
+              ((4 2) . #t)
+              ((4 3) . #t)
+              ((4 4) . #t))))

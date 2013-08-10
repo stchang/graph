@@ -5,7 +5,7 @@
 
 ; weighted, adjacency matrix graph
 
-(provide (except-out (all-defined-out)))
+(provide (except-out (all-defined-out) add-vertex@))
 
 ;; (internal graph functions and names have a @ suffix)
 
@@ -51,7 +51,19 @@
           [else (set! vs (set-add vs w+e))]))
   (matrix-graph vs weights))
 
-(define (mk-empty-matrix-graph) (matrix-graph (set) (make-hash)))
+;; directed graph constructor
+(define (mk-unweighted-matrix-graph/directed es)
+  (define vs (set))
+  (define weights (make-hash))
+  (for ([e es]) 
+    (cond [(list? e) 
+           (set! vs (set-union vs (apply set e)))
+           (hash-set! weights e 1)]
+          [else (set! vs (set-add vs e))]))
+  (matrix-graph vs weights))
+
+
+;(define (mk-empty-matrix-graph) (matrix-graph (set) (make-hash)))
 
 ;; returns vertices as a list
 ;(define (in-weighted-graph-vertices g) (hash-keys (weighted-graph-adjlist g)))

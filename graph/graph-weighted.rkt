@@ -1,25 +1,33 @@
 #lang racket
 
 (require "gen-graph.rkt")
-(require racket/generator)
+(require "adjlist-utils.rkt")
 
 ; weighted, adjacency-list graph
 
 (provide (except-out (all-defined-out)))
-
-;; (internal graph functions and names have a @ suffix)
 
 ;; A WeightedGraph is a (weighted-graph AdjacencyList Weights)
 (struct weighted-graph (adjlist weights) #:transparent
   #:methods gen:graph
   [(define (in-vertices g) (in-weighted-graph-vertices g))
    (define (in-neighbors g v) (in-weighted-graph-neighbors g v))
-   (define (in-edges g) (in-weighted-graph-edges g))
    (define (edge-weight g u v) 
-     (hash-ref (weighted-graph-weights g) (list u v)))])
+     (hash-ref (weighted-graph-weights g) (list u v)))
+   (define (add-directed-edge! g u v [weight #f])
+     (define adj (weighted-graph-adjlist g))
+     (add-edge@ adj u v)
+     (add-vertex@ adj v))
+   (define (add-edge! g u v [weight #f])
+     (define adj (weighted-graph-adjlist g))
+     (add-edge@ adj u v)
+     (add-edge@ adj v u))
+   (define (add-vertex! g v)
+     (add-vertex@ (weighted-graph-adjlist g) v))])
 
-;; An AdjacencyList is a [MutableHashOf Vertex -> Vertex]
+;; An AdjacencyList is a [MutableHashOf Vertex -> [Setof Vertex]]
 ;;   and is the internal graph representation
+;; (internal adjlist functions and names have a @ suffix)
 
 ;; A Vertex is any value comparable with equal?
 
@@ -59,17 +67,9 @@
 
 ;; returns neighbors as a sequence
 (define (in-weighted-graph-neighbors g v) 
-  (in-set (hash-ref (weighted-graph-adjlist g) v (set))))
+  (in-set 
+   (hash-ref (weighted-graph-adjlist g) v 
+             (λ () (error 'in-vertices "vertex ~a not in graph ~a" v g)))))
 
-;; returns edges as a sequence
-(define (in-weighted-graph-edges g)
-  (in-generator 
-   (for* ([u (in-vertices g)] [v (in-neighbors g u)]) 
-     (yield (list u v)))))
-  
 
-;; ----------------------------------------------------------------------------
-;; Internal graph functions (operates on the hash table)
-(define (add-edge@ adj u v) (hash-update! adj u (λ (vs) (set-add vs v)) (set)))
-(define (add-vertex@ adj v) (hash-update! adj v (λ (vs) vs) (set)))
 
