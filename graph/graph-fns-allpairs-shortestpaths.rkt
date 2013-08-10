@@ -2,7 +2,8 @@
 
 (require "hash-utils.rkt"
          "graph-matrix.rkt"
-         "gen-graph.rkt")
+         "gen-graph.rkt"
+         "graph-fns-basic.rkt")
 
 (provide (all-defined-out))
 
@@ -15,6 +16,7 @@
       (new-L-set! (list i j) (min (new-L (list i j)) (+ (lw i k) (w k j))))))
   new-L)
 
+;; ie, the matrix multiplication method
 (define (all-pairs-shortest-paths/slow W)
   (define (w u v) (edge-weight W u v))
   ;; Ls is a hash mapping a vertex to a hash that maps an edge to its weight
@@ -30,6 +32,7 @@
                w))
     (Ls m)))
 
+;; ie, the repeat matrix squaring method
 ;; something wrong with this --- see test for g25.2
 (define (all-pairs-shortest-paths/faster W)
   (define-hash Ls)
@@ -55,8 +58,7 @@
   (define v0 (gensym))
   (define-hash Ds)
   (Ds-set! v0 (matrix-graph-weights W))
-  (for/last ([k-1 (cons v0 vs)]
-             [k vs])
+  (for/last ([k-1 (cons v0 vs)] [k vs])
     (define-hash new-D)
     (for* ([i vs] [j vs])
       (new-D-set! 
@@ -66,3 +68,25 @@
                (if (equal? k j) 0 (hash-ref (Ds k-1) (list k j) +inf.0))))))
     (Ds-set! k new-D)
     new-D))
+
+(define (transitive-closure G)
+  (define vs (in-vertices G))
+  (define-hash Ts)
+
+  ;; add Ts[v0]
+  (define v0 (gensym))
+  (define-hash new-T)
+  (for* ([i vs] [j vs])
+    (if (or (equal? i j) (edge? G i j)) 
+        (new-T-set! (list i j) #t) 
+        (new-T-set! (list i j) #f)))
+  (Ts-set! v0 new-T)
+  
+  (for/last ([k-1 (cons v0 vs)] [k vs])
+    (define-hash new-T)
+    (for* ([i vs] [j vs])
+      (new-T-set! (list i j) (or (hash-ref (Ts k-1) (list i j))
+                                 (and (hash-ref (Ts k-1) (list i k))
+                                      (hash-ref (Ts k-1) (list k j))))))
+    (Ts-set! k new-T)
+    new-T))
