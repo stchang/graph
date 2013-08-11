@@ -2,8 +2,9 @@
 
 (require "hash-utils.rkt" 
          "gen-graph.rkt"
+         "graph-fns-basic.rkt" 
+         (only-in "../queue/priority.rkt" mk-empty-priority)
          "graph-fns-basic.rkt")
-(require data/heap)
 
 (provide (except-out (all-defined-out)))
 
@@ -58,35 +59,66 @@
 ;; no negative weight edges
 (define (dijkstra G s)
   (define (w u v) (edge-weight G u v))
-
-  ;; init
+  ;; (d v) represents intermediate known shortest path from s to v
   (define-hashes d π)
-  (for ([v (in-vertices G)]) (d-set! v +inf.0) (π-set! v #f))
-  (d-set! s 0)
 
-  ;(define S null)
-  
-  (define Q (make-heap (λ (u v) (< (d u) (d v)))))
-  
-  (heap-add! Q s)
-  
-  (let loop ([u (heap-min Q)])
-    ;; remove all (possibly duplicate) copies of u and mark u as not in Q
-    (let remove-loop ()
-      (heap-remove-min! Q)
-      (when (and (not (zero? (heap-count Q))) 
-                 (equal? (heap-min Q) u))
-        (remove-loop)))
-    
-   ; (set! S (cons u S))
-    
-    (for ([v (in-neighbors G u)])
-      ;; relax
-      (when (> (d v) (+ (d u) (w u v)))
-        (d-set! v (+ (d u) (w u v)))
-        (π-set! v u)
-        (heap-add! Q v))) ; add v to Q when its d changes
-    
-    (unless (zero? (heap-count Q)) (loop (heap-min Q))))
+  (define Q (mk-empty-priority (λ (u v) (< (d u) (d v)))))
 
-  (values d π))
+  (define (init G s)
+    (for ([v (in-vertices G)]) (d-set! v +inf.0) (π-set! v #f))
+    (d-set! s 0))
+    
+  (define (pre-visit u) (void))
+  
+  (define (process-neighbor? u v) (> (d v) (+ (d u) (w u v))))
+    
+  (define (process-neighbor u v)
+    (d-set! v (+ (d u) (w u v)))
+    (π-set! v u))
+  
+  (define (post-visit u) (void))
+    
+  (define (finish G s) (values d π))
+    
+  (define bfs-fns
+    (vector init pre-visit process-neighbor? process-neighbor post-visit finish))
+  
+  (bfs G s #:init-queue Q #:traversal-fns bfs-fns))
+
+
+
+;
+;
+;  (define (w u v) (edge-weight G u v))
+;
+;  ;; init
+;  (define-hashes d π)
+;  (for ([v (in-vertices G)]) (d-set! v +inf.0) (π-set! v #f))
+;  (d-set! s 0)
+;
+;  ;(define S null)
+;  
+;  (define Q (make-heap (λ (u v) (< (d u) (d v)))))
+;  
+;  (heap-add! Q s)
+;  
+;  (let loop ([u (heap-min Q)])
+;    ;; remove all (possibly duplicate) copies of u and mark u as not in Q
+;    (let remove-loop ()
+;      (heap-remove-min! Q)
+;      (when (and (not (zero? (heap-count Q))) 
+;                 (equal? (heap-min Q) u))
+;        (remove-loop)))
+;    
+;   ; (set! S (cons u S))
+;    
+;    (for ([v (in-neighbors G u)])
+;      ;; relax
+;      (when (> (d v) (+ (d u) (w u v)))
+;        (d-set! v (+ (d u) (w u v)))
+;        (π-set! v u)
+;        (heap-add! Q v))) ; add v to Q when its d changes
+;    
+;    (unless (zero? (heap-count Q)) (loop (heap-min Q))))
+;
+;  (values d π))

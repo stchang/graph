@@ -46,8 +46,8 @@
             bfs-post-visit
             bfs-finish)))
 
-;; bfs : Graph Vertex -> 
-;; s is the source vertex
+;; bfs : Graph Vertex -> any/c
+;; s is the source vertex, default Q is from data/queue
 ;; see also bfs clients prim and dijkstra
 (define (bfs G s 
              #:init-queue [Q (mk-empty-fifo)]

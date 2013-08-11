@@ -37,14 +37,13 @@
   A)
 
 ;; prim -----------------------------------------------------------------------
-;; uses priority queue in data/heap
+;; uses priority queue based on in data/heap
 
 ;; r is root vertex
 (define (mst-prim G r)
   (define (w u v) (edge-weight G u v))
   (define-hashes key π in-Q?)
 
-  ;  (define Q (make-heap (λ (u v) (< (key u) (key v)))))
   (define Q (mk-empty-priority (λ (u v) (< (key u) (key v)))))
 
   (define (init G r)
@@ -67,25 +66,5 @@
     
   (define bfs-fns
     (vector init pre-visit process-neighbor? process-neighbor post-visit finish))
-  
-;  (let loop ([u (heap-min Q)])
-;    ;; remove all (possibly duplicate) copies of u and mark u as not in Q
-;    (let remove-loop ()
-;      (heap-remove-min! Q)
-;      (when (and (not (zero? (heap-count Q))) 
-;                 (equal? (heap-min Q) u))
-;        (remove-loop)))
-;    (in-Q?-set! u #f)
-;    
-;    (for ([v (in-neighbors G u)]
-;          #:when 
-;          (and (in-Q? v) (< (w u v) (key v))))
-;      (π-set! v u)
-;      (key-set! v (w u v))
-;      (heap-add! Q v)) ; add v to Q when its key changes
-;    
-;    (unless (zero? (heap-count Q)) (loop (heap-min Q))))
-;  
-;  (for/list ([v (in-vertices G)] #:unless (equal? v r)) (list v (π v)))
   
   (bfs G r #:init-queue Q #:traversal-fns bfs-fns))
