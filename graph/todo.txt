@@ -1,0 +1,11 @@
+******** 2013-08-08 ********
+- either eliminate graph-matrix.rkt
+      or
+  implement in-neighbors, etc properly
+- refactor fns-allpairs-shortestpaths so that the Ls store functions instead of
+  hashes --- enables better use of generics
+- compute \Pi for floyd-warshall
+- state somewhere that floyd warshall requires all self-edges to be 0 and no
+  negative weight cycles
+- implement max flow algorithms
+- refactor dfs and related fns to take a "visitor" function

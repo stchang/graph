@@ -1,12 +1,13 @@
 #lang racket
 (require "../graph-unweighted.rkt" 
          "../gen-graph.rkt" 
-         "../graph-fns-basic.rkt")
+         "../graph-fns-basic.rkt"
+         "../utils.rkt")
 (require rackunit)
 
 ;; bfs utils ----------------------------------------------------------------------
 
-(define (all-black? h) (for/and ([c (hash-values h)]) (eq? c 'black)))
+(define (all-black? h) (for/and ([c (hash-values h)]) (black? c)))
 
 ;; bfs tests ------------------------------------------------------------------
 

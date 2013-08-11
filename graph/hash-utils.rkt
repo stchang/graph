@@ -13,10 +13,11 @@
        #'(begin
            (define hash-name0 (make-hash))
            (define-syntax hash-name
-             (syntax-id-rules ()
+             (syntax-id-rules (set!)
+               [(set! hash-name new-h) (set! hash-name0 new-h)]
                [(_ key) (hash-ref hash-name0 key)]
                [(_ key fail) (hash-ref hash-name0 key (thunk fail))]
-               [x hash-name0]))
+               [hash-name hash-name0]))
            (define (hash-name-set! key value) (hash-set! hash-name0 key value))))]))
                       
 (define-syntax-rule (define-hashes h ...) (begin (define-hash h) ...))

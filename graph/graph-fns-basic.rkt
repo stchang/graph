@@ -1,13 +1,19 @@
 #lang racket
 
-(require "hash-utils.rkt")
-(require "utils.rkt")
-(require "gen-graph.rkt")
+(require "hash-utils.rkt"
+         "utils.rkt"
+         "gen-graph.rkt"
+         (only-in "../queue/fifo.rkt" mk-empty-fifo)
+         "../queue/gen-queue.rkt")
+
 (require racket/generator)
 
 (provide (except-out (all-defined-out)))
 
+;; general fns ----------------------------------------------------------------
+
 (define (vertex? g v) (and (member v (in-vertices g)) #t))
+
 (define (edge? g u v)
   (and (vertex? g u) (vertex? g v)
        (member v (sequence->list (in-neighbors g u)))
@@ -23,38 +29,80 @@
 ;; ----------------------------------------------------------------------------
 ;; bfs and dfs
 
-(require data/queue)
+(define-values (bfs-init
+                bfs-process-neighbor?
+                bfs-process-neighbor
+                bfs-post-visit
+                bfs-finish)
+  (let ()
+    (define-hashes color d π)
+                
+    (define (bfs-init G s)
+      (define-hashes new-color new-d new-π)
+      (set! color new-color)
+      (set! d new-d)
+      (set! π new-π)
+  
+      (for ([u (in-vertices G)])
+        (cond [(equal? s u) (color-set! s GRAY)
+                            (d-set!     s 0)
+                            (π-set!     s #f)]
+              [else         (color-set! u WHITE)
+                            (d-set!     u +inf.0)
+                            (π-set!     u #f)])))
 
-(define WHITE 'white)
-(define BLACK 'black)
-(define GRAY 'gray)
+    (define (bfs-process-neighbor? v) (white? (color v)))
+  
+    (define (bfs-process-neighbor u v)
+      (color-set! v GRAY)
+      (d-set!     v (add1 (d u)))
+      (π-set!     v u))
+    
+    (define (bfs-post-visit u) (color-set! u BLACK))
+    
+    (define (bfs-finish) (values color d π))
+    
+    (values bfs-init 
+            bfs-process-neighbor?
+            bfs-process-neighbor
+            bfs-post-visit
+            bfs-finish)))
 
 ;; bfs : Graph Vertex -> 
 ;; s is the source vertex
-(define (bfs G s)
-  (define-hashes color d π)
-  (define (white? v) (eq? WHITE (color v)))
-  
-  (for ([u (in-vertices G)])
-    (cond [(equal? s u) (color-set! s GRAY)
-                        (d-set!     s 0)
-                        (π-set!     s #f)]
-          [else         (color-set! u WHITE)
-                        (d-set!     u +inf.0)
-                        (π-set!     u #f)]))
+(define (bfs G s 
+             #:make-queue [make-queue mk-empty-fifo]
+             #:init [init bfs-init]
+             #:process-neighbor? [process-neighbor? bfs-process-neighbor?]
+             #:process-neighbor [process-neighbor bfs-process-neighbor]
+             #:post-visit [post-visit bfs-post-visit]
+             #:finish [finish bfs-finish])
+;  (define-hashes color d π)
+;  
+;  (for ([u (in-vertices G)])
+;    (cond [(equal? s u) (color-set! s GRAY)
+;                        (d-set!     s 0)
+;                        (π-set!     s #f)]
+;          [else         (color-set! u WHITE)
+;                        (d-set!     u +inf.0)
+;                        (π-set!     u #f)]))
+  (init G s)
   
   (define Q (make-queue))
   (enqueue! Q s)
-  (let loop () (when (non-empty-queue? Q)
+  (let loop () (unless (empty? Q)
     (define u (dequeue! Q))
-    (for ([v (in-neighbors G u)] #:when (white? v))
-      (color-set! v GRAY)
-      (d-set!     v (add1 (d u)))
-      (π-set!     v u)
+    (for ([v (in-neighbors G u)] #:when (process-neighbor? v))
+      (process-neighbor u v)
+;      (color-set! v GRAY)
+;      (d-set!     v (add1 (d u)))
+;      (π-set!     v u)
       (enqueue! Q v))
-    (color-set! u BLACK)
+    (post-visit u)
+;    (color-set! u BLACK)
     (loop)))
-  (values color d π))
+  (finish))
+;  (values color d π))
 
 ;; returns shortest path in G from source s to v
 (define (shortest-path G s v)
@@ -62,7 +110,8 @@
   (reverse
    (let loop ([v v])
      (if (equal? v s) (list s)
-         (let ([πv (hash-ref π v (λ() (error 'shortest-path "no vertex ~a in graph ~a" v G)))])
+         (let ([πv (hash-ref π v
+                     (λ() (error 'shortest-path "no vertex ~a in graph ~a" v G)))])
            (if πv (cons v (loop πv))
                (error 'shortest-path "no path from ~a to ~a in graph ~a" s v G)))))))
 
@@ -70,18 +119,17 @@
 (define (dfs G #:order [order (λ (vs) vs)])
   ;; d[u] = discovery time, f[u] = finishing time
   (define-hashes color d π f)
-  (define (white? v) (eq? WHITE (color v)))
   (for ([u (in-vertices G)]) 
     (color-set! u WHITE)
     (π-set!     u #f))
   (define time 0)
   
-  (for ([u (order (in-vertices G))] #:when (white? u))
+  (for ([u (order (in-vertices G))] #:when (white? (color u)))
     (let dfs-visit ([u u])
       (color-set! u GRAY)
       (add1! time)
       (d-set! u time)
-      (for ([v (in-neighbors G u)] #:when (white? v))
+      (for ([v (in-neighbors G u)] #:when (white? (color v)))
         (π-set! v u)
         (dfs-visit v))
       (color-set! u BLACK)
@@ -92,18 +140,15 @@
 
 (define (dag? G)
   (define-hashes color)
-  (define (white? v) (eq? WHITE (color v)))
-  (define (gray? v) (eq? GRAY (color v)))
-  (define (black? v) (eq? BLACK (color v)))
   (for ([u (in-vertices G)]) (color-set! u WHITE))
   
-  (for/and ([u (in-vertices G)] #:when (white? u))
+  (for/and ([u (in-vertices G)] #:when (white? (color u)))
     (let dfs-visit ([u u])
       (color-set! u GRAY)
       (begin0
         (for/and ([v (in-neighbors G u)])
-          (and (not (gray? v))
-               (or (black? v)
+          (and (not (gray? (color v)))
+               (or (black? (color v))
                    (dfs-visit v))))
         (color-set! u BLACK)))))
 
@@ -112,13 +157,12 @@
   (sort (hash-keys f) > #:key (λ (k) (hash-ref f k))))
 
   
-;; tarjan algorithm
+;; tarjan algorithm for strongly connected components
 (define (scc G)
   (define i 0)
   (define-hashes index lowlink)
   (define S null)
   (define (S-push x) (set! S (cons x S)))
-;  (define (S-pop) (begin0 (car S) (set! S (cdr S))))
   
   (define SCC null)
   
@@ -139,5 +183,4 @@
   
   (for ([v (in-vertices G)] #:unless (hash-has-key? index v)) (strongconnect v))
   
-  SCC
-  )
+  SCC)
