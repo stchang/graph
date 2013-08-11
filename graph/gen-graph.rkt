@@ -3,9 +3,12 @@
 (provide (all-defined-out)) ; not enough to only provide gen:graph
 ;; generic graph interface
 (define-generics graph
+  (vertex? graph v)
+  (edge? graph u v)
+  (add-edge! graph u v [weight])
+  (add-directed-edge! graph u v [weight])
+  (add-vertex! graph v)
   (in-vertices graph)
   (in-neighbors graph v)
-  (edge-weight graph u v)
-  (add-directed-edge! graph u v [weight])
-  (add-edge! graph u v [weight])
-  (add-vertex! graph v))
+  (in-edges graph)
+  (edge-weight graph u v))

@@ -1,7 +1,11 @@
 #lang racket
 
-(require "hash-utils.rkt" "gen-graph.rkt")
-(require data/union-find data/heap)
+(require "hash-utils.rkt" 
+         "gen-graph.rkt"
+         "../queue/gen-queue.rkt"
+         (only-in "../queue/priority.rkt" mk-empty-priority)
+         "graph-fns-basic.rkt")
+(require data/union-find)
 
 ;; minimum spanning tree fns
 
@@ -39,37 +43,49 @@
 (define (mst-prim G r)
   (define (w u v) (edge-weight G u v))
   (define-hashes key π in-Q?)
-  
-  (for ([u (in-vertices G)]) 
-    (key-set! u +inf.0) (π-set! u #f) (in-Q?-set! u #t))
-  
 
-  (define Q (make-heap (λ (u v) (< (key u) (key v)))))
-  
-  ;; delay adding the vertices to Q to save on re-heapifying after key changes
-  ;; separately keep from of Q "membership" with in-Q? hash
-  ;(heap-add-all! Q (in-vertices G))
+  ;  (define Q (make-heap (λ (u v) (< (key u) (key v)))))
+  (define Q (mk-empty-priority (λ (u v) (< (key u) (key v)))))
 
-  (key-set! r 0)
-  (heap-add! Q r)
-  
-  (let loop ([u (heap-min Q)])
-    ;; remove all (possibly duplicate) copies of u and mark u as not in Q
-    (let remove-loop ()
-      (heap-remove-min! Q)
-      (when (and (not (zero? (heap-count Q))) 
-                 (equal? (heap-min Q) u))
-        (remove-loop)))
-    (in-Q?-set! u #f)
+  (define (init G r)
+    (for ([u (in-vertices G)]) 
+      (key-set! u +inf.0) (π-set! u #f) (in-Q?-set! u #t))
+      (key-set! r 0))
     
-    (for ([v (in-neighbors G u)]
-          #:when 
-          (and (in-Q? v) (< (w u v) (key v))))
-      (π-set! v u)
-      (key-set! v (w u v))
-      (heap-add! Q v)) ; add v to Q when its key changes
+  (define (pre-visit u) (in-Q?-set! u #f))
+  
+  (define (process-neighbor? u v) (and (in-Q? v) (< (w u v) (key v))))
     
-    (unless (zero? (heap-count Q)) (loop (heap-min Q))))
+  (define (process-neighbor u v)
+    (π-set! v u)
+    (key-set! v (w u v)))
+    
+  (define (post-visit u) (void))
+    
+  (define (finish G r) 
+    (for/list ([v (in-vertices G)] #:unless (equal? v r)) (list v (π v))))
+    
+  (define bfs-fns
+    (vector init pre-visit process-neighbor? process-neighbor post-visit finish))
   
-  (for/list ([v (in-vertices G)] #:unless (equal? v r)) (list v (π v))))
+;  (let loop ([u (heap-min Q)])
+;    ;; remove all (possibly duplicate) copies of u and mark u as not in Q
+;    (let remove-loop ()
+;      (heap-remove-min! Q)
+;      (when (and (not (zero? (heap-count Q))) 
+;                 (equal? (heap-min Q) u))
+;        (remove-loop)))
+;    (in-Q?-set! u #f)
+;    
+;    (for ([v (in-neighbors G u)]
+;          #:when 
+;          (and (in-Q? v) (< (w u v) (key v))))
+;      (π-set! v u)
+;      (key-set! v (w u v))
+;      (heap-add! Q v)) ; add v to Q when its key changes
+;    
+;    (unless (zero? (heap-count Q)) (loop (heap-min Q))))
+;  
+;  (for/list ([v (in-vertices G)] #:unless (equal? v r)) (list v (π v)))
   
+  (bfs G r #:init-queue Q #:traversal-fns bfs-fns))

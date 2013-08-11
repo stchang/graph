@@ -5,7 +5,4 @@
   (enqueue! queue x)
   (peek queue)
   (dequeue! queue)
-  (empty? queue)
-  ;; restore queue invariants 
-  ;; (ie like for a min/max priority queue dependent on external keys)
-  (restore queue))
+  (empty? queue))

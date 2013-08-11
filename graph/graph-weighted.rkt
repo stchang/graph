@@ -3,6 +3,8 @@
 (require "gen-graph.rkt")
 (require "adjlist-utils.rkt")
 
+(require racket/generator)
+
 ; weighted, adjacency-list graph
 
 (provide (except-out (all-defined-out)))
@@ -23,7 +25,18 @@
      (add-edge@ adj u v)
      (add-edge@ adj v u))
    (define (add-vertex! g v)
-     (add-vertex@ (weighted-graph-adjlist g) v))])
+     (add-vertex@ (weighted-graph-adjlist g) v))
+   (define (vertex? g v) (and (member v (in-vertices g)) #t))
+   (define (edge? g u v)
+     (and (vertex? g u) (vertex? g v)
+          (member v (sequence->list (in-neighbors g u)))
+          #t))
+   ;; returns edges as a sequence
+   (define (in-edges g)
+     (in-generator 
+      (for* ([u (in-vertices g)] [v (in-neighbors g u)]) 
+        (yield (list u v)))))])
+
 
 ;; An AdjacencyList is a [MutableHashOf Vertex -> [Setof Vertex]]
 ;;   and is the internal graph representation

@@ -1,3 +1,6 @@
+******** 2013-08-09 ********
+- use fallbacks to implement graph methods: vertex? edge? in-edges
+
 ******** 2013-08-08 ********
 - either eliminate graph-matrix.rkt
       or
