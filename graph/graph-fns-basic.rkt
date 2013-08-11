@@ -172,21 +172,33 @@
                  #:pre-visit pre-visit
                  #:process-neighbor? process-neighbor?
                  #:post-visit post-visit
-                 #:return finish)
-  
-  #;(for/and ([u (in-vertices G)] #:when (white? (color u)))
-    (let dfs-visit ([u u])
-      (color-set! u GRAY)
-      (begin0
-        (for/and ([v (in-neighbors G u)])
-          (and (not (gray? (color v)))
-               (or (black? (color v))
-                   (dfs-visit v))))
-        (color-set! u BLACK)))))
+                 #:return finish))
 
 (define (tsort G)
-  (define-values (color d π f) (dfs G))
-  (sort (hash-keys f) > #:key (λ (k) (hash-ref f k))))
+  (define res null) (define (add-finished! v) (set! res (cons v res)))
+  (define-hashes color)
+  
+  (define (init G) (for ([u (in-vertices G)]) (color-set! u WHITE)))
+  
+  (define (visit? G u) (white? (color u)))
+  
+  (define (pre-visit u) (color-set! u GRAY))
+  
+  (define (process-neighbor? G u v) (white? (color v)))
+
+  (define (post-visit u) (color-set! u BLACK) (add-finished! u))
+  
+  (define (finish G) res)
+  
+  (dfs/generic G #:init init
+                 #:visit? visit?
+                 #:pre-visit pre-visit
+                 #:process-neighbor? process-neighbor?
+                 #:post-visit post-visit
+                 #:return finish))
+
+;  (define-values (color d π f) (dfs G))
+;  (sort (hash-keys f) > #:key (λ (k) (hash-ref f k))))
 
   
 ;; tarjan algorithm for strongly connected components
