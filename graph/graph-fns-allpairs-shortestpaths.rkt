@@ -1,7 +1,6 @@
 #lang racket
 
 (require "hash-utils.rkt"
-         ;"graph-matrix.rkt"
          "gen-graph.rkt"
          "graph-fns-basic.rkt")
 
@@ -27,21 +26,11 @@
   ;; Ls is a hash mapping a vertex to a function that maps an edge to its weight
   (define-hash Ls)
   (define vs (in-vertices W))
-;  (Ls-set! (car vs) (matrix-graph-weights W))
   (Ls-set! (car vs) w)
   (for/last ([m-1 vs] ; traverse two offset vs list in parallel
              [m (drop-right (cdr vs) 1)]) ; drop last bc (L n-1) == (L n)
     (define new-L (extend-shortest-paths vs (Ls m-1) w))
-    (Ls-set! m 
-             (λ (u v) (if (equal? u v) 0 (hash-ref new-L
-;             (extend-shortest-paths 
-;               vs 
-;               (Ls m-1)
-;;               (λ (u v) (if (equal? u v) 0 
-;;                            (hash-ref (Ls m-1) (list u v) +inf.0)))
-;               w)
-             (list u v) +inf.0))))
-;    (Ls m)))
+    (Ls-set! m (λ(u v) (if (equal? u v) 0 (hash-ref new-L (list u v) +inf.0))))
     new-L))
 
 ;; ie, the repeat matrix squaring method
@@ -50,7 +39,6 @@
   (define (w u v) (if (equal? u v) 0 (edge-weight W u v)))
   (define-hash Ls)
   (define vs (in-vertices W))
-;  (Ls-set! (car vs) (matrix-graph-weights W))
   (Ls-set! (car vs) w)
   ;; want every (2^n)th vertex
   (let loop ([base 1] [m (car vs)] [last-L null])
@@ -59,19 +47,8 @@
       [(> (length vs) to-drop)
        (define 2m (car (drop vs to-drop)))
        (define new-L (extend-shortest-paths vs (Ls m) (Ls m)))
-       (Ls-set! 2m 
-             (λ (u v) (if (equal? u v) 0 (hash-ref new-L
-;                (extend-shortest-paths 
-;                    vs 
-;                    (Ls m) (Ls m)
-;;                    (λ (u v) (if (equal? u v) 0 
-;;                                 (hash-ref (Ls m) (list u v) +inf.0)))
-;;                    (λ (u v) (if (equal? u v) 0 
-;;                                 (hash-ref (Ls m) (list u v) +inf.0)))
-;                    )
-                (list u v) +inf.0))))
+       (Ls-set! 2m (λ(u v) (if (equal? u v) 0 (hash-ref new-L (list u v) +inf.0))))
        (loop (add1 base) 2m new-L)]
-;      [else (Ls m)])))
       [else last-L])))
 
 (define (floyd-warshall W)
@@ -79,17 +56,12 @@
   (define vs (in-vertices W))
   (define v0 (gensym))
   (define-hash Ds)
-;  (Ds-set! v0 (matrix-graph-weights W))
   (Ds-set! v0 w)
   (for/last ([k-1 (cons v0 vs)] [k vs])
     (define-hash new-D)
     (for* ([i vs] [j vs])
-      (new-D-set! 
-       (list i j)
-       (min ((Ds k-1) i j) (+ ((Ds k-1) i k) ((Ds k-1) k j)))))
-;       (min (if (equal? i j) 0 (hash-ref (Ds k-1) (list i j) +inf.0))
-;            (+ (if (equal? i k) 0 (hash-ref (Ds k-1) (list i k) +inf.0))
-;               (if (equal? k j) 0 (hash-ref (Ds k-1) (list k j) +inf.0))))))
+      (new-D-set! (list i j)
+                  (min ((Ds k-1) i j) (+ ((Ds k-1) i k) ((Ds k-1) k j)))))
     (Ds-set! k (λ (u v) (if (equal? u v) 0 (hash-ref new-D (list u v) +inf.0))))
     new-D))
 

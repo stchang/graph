@@ -1,6 +1,5 @@
 #lang racket
-(require ;"../graph-matrix.rkt"
-         "../graph-weighted.rkt"
+(require "../graph-weighted.rkt"
          "../graph-fns-allpairs-shortestpaths.rkt"
          "test-utils.rkt")
 
