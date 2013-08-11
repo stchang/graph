@@ -35,7 +35,7 @@
                    #:process-neighbor? process-neighbor?
                    #:process-neighbor process-neighbor
                    #:post-visit post-visit
-                   #:finish finish))
+                   #:return finish))
 
 ;; bfs : Graph Vertex -> any/c
 ;; s is the source vertex, default Q is from data/queue
@@ -48,14 +48,14 @@
                      #:process-neighbor? [process-neighbor? (λ _ #t)]
                      #:process-neighbor [process-neighbor void]
                      #:post-visit [post-visit void]
-                     #:finish [finish void])
+                     #:return [finish void])
   (init G s)
   (enqueue! Q s)
   (let loop () (unless (or (break?) (empty? Q))
     (define u (dequeue! Q))
     (pre-visit u)
     (for ([v (in-neighbors G u)] 
-          #:when (and (not (break?)) (process-neighbor? G u v)))
+          #:when (process-neighbor? G u v) #:break (break?))
       (process-neighbor G u v)
       (enqueue! Q v))
     (post-visit u)
@@ -93,36 +93,88 @@
                    #:process-neighbor? process-neighbor?
                    #:process-neighbor process-neighbor
                    #:post-visit post-visit
-                   #:finish finish))
+                   #:return finish))
            
 
-(define (dfs G #:order [order (λ (vs) vs)])
+
+(define (dfs G)
   ;; d[u] = discovery time, f[u] = finishing time
   (define-hashes color d π f)
-  (for ([u (in-vertices G)]) 
-    (color-set! u WHITE)
-    (π-set!     u #f))
   (define time 0)
   
-  (for ([u (order (in-vertices G))] #:when (white? (color u)))
-    (let dfs-visit ([u u])
-      (color-set! u GRAY)
-      (add1! time)
-      (d-set! u time)
-      (for ([v (in-neighbors G u)] #:when (white? (color v)))
-        (π-set! v u)
-        (dfs-visit v))
-      (color-set! u BLACK)
-      (add1! time)
-      (f-set! u time)))
+  (define (init G)
+    (for ([u (in-vertices G)]) (color-set! u WHITE) (π-set! u #f)))
   
-  (values color d π f))
+  (define (visit? G u) (white? (color u)))
+  
+  (define (pre-visit u) (color-set! u GRAY) (add1! time) (d-set! u time))
+  
+  (define (process-neighbor? G u v) (white? (color v)))
+
+  (define (process-neighbor G u v) (π-set! v u))
+  
+  (define (post-visit u) (color-set! u BLACK) (add1! time) (f-set! u time))
+  
+  (define (finish G) (values color d π f))
+  
+  (dfs/generic G #:init init
+                 #:visit? visit?
+                 #:pre-visit pre-visit
+                 #:process-neighbor? process-neighbor?
+                 #:process-neighbor process-neighbor
+                 #:post-visit post-visit
+                 #:return finish))
+
+(define (dfs/generic G #:order [order (λ (vs) vs)]
+                       #:break [break? (λ _ #f)]
+                       #:init [init void]
+                       #:visit? [visit? (λ _ #t)]
+                       #:pre-visit [pre-visit void]
+                       #:process-neighbor? [process-neighbor? (λ _ #f)]
+                       #:process-neighbor [process-neighbor void]
+                       #:post-visit [post-visit void]
+                       #:return [finish void])
+  (init G)
+  (for ([u (order (in-vertices G))] #:when (visit? G u) #:break (break?))
+    (let dfs-visit ([u u])
+      (pre-visit u)
+      (for ([v (in-neighbors G u)] 
+            #:when (process-neighbor? G u v) #:break (break?))
+        (process-neighbor G u v)
+        (dfs-visit v))
+      (post-visit u)))
+  (finish G))
 
 (define (dag? G)
   (define-hashes color)
-  (for ([u (in-vertices G)]) (color-set! u WHITE))
+  (define not-dag #f)
   
-  (for/and ([u (in-vertices G)] #:when (white? (color u)))
+  (define (init G) (for ([u (in-vertices G)]) (color-set! u WHITE)))
+  
+  (define (visit? G u) (white? (color u)))
+  
+  (define (pre-visit u) (color-set! u GRAY))
+  
+  (define (process-neighbor? G u v) 
+    (if (gray? (color v)) 
+        (begin0 #f (set! not-dag #t))
+        (not (black? (color v)))))
+  
+  (define (not-dag?) not-dag)
+  
+  (define (post-visit u) (color-set! u BLACK))
+  
+  (define (finish G) (not not-dag))
+    
+  (dfs/generic G #:break not-dag?
+                 #:init init
+                 #:visit? visit?
+                 #:pre-visit pre-visit
+                 #:process-neighbor? process-neighbor?
+                 #:post-visit post-visit
+                 #:return finish)
+  
+  #;(for/and ([u (in-vertices G)] #:when (white? (color u)))
     (let dfs-visit ([u u])
       (color-set! u GRAY)
       (begin0

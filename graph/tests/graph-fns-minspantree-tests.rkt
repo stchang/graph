@@ -1,7 +1,8 @@
 #lang racket
 (require "../graph-weighted.rkt"
          "../graph-fns-minspantree.rkt"
-         "test-utils.rkt")
+         "test-utils.rkt"
+         )
 
 (require rackunit)
 
@@ -21,3 +22,10 @@
                         (lists->sets '((a b) (b c) (c i) (c f) (f g) (g h) (c d) (d e))))
                 (equal? (lists->sets (mst-prim g23.1 'a))
                         (lists->sets '((a b) (a h) (c i) (c f) (f g) (g h) (c d) (d e))))))
+
+;; since g23.1 is an undirected graph, the previous test is correct but this test
+;; additionally checks that edges are going in the right direction
+(check-true (or (equal? (apply set (mst-prim g23.1 'a))
+                        (apply set '((a b) (b c) (c i) (c f) (f g) (g h) (c d) (d e))))
+                (equal? (apply set (mst-prim g23.1 'a))
+                        (apply set '((a b) (a h) (c i) (c f) (f g) (g h) (c d) (d e))))))

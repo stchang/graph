@@ -79,7 +79,7 @@
                    #:init init
                    #:process-neighbor? process-neighbor?
                    #:process-neighbor process-neighbor
-                   #:finish finish))
+                   #:return finish))
 
 
 

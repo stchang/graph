@@ -49,7 +49,7 @@
   (define (init G r)
     (for ([u (in-vertices G)]) 
       (key-set! u +inf.0) (π-set! u #f) (in-Q?-set! u #t))
-      (key-set! r 0))
+    (key-set! r 0))
     
   (define (pre-visit u) (in-Q?-set! u #f))
   
@@ -59,16 +59,13 @@
     (π-set! v u)
     (key-set! v (w u v)))
     
-  (define (post-visit u) (void))
-    
-  (define (finish G r) 
-    (for/list ([v (in-vertices G)] #:unless (equal? v r)) (list v (π v))))
+  (define (finish G r)
+    (for/list ([v (in-vertices G)] #:unless (equal? v r)) (list (π v) v)))
   
   (bfs/generic G r #:init-queue Q 
                    #:init init
                    #:pre-visit pre-visit
                    #:process-neighbor? process-neighbor?
                    #:process-neighbor process-neighbor
-                   #:post-visit post-visit
-                   #:finish finish))
+                   #:return finish))
                
