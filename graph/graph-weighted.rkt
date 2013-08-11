@@ -14,8 +14,8 @@
   #:methods gen:graph
   [(define (in-vertices g) (in-weighted-graph-vertices g))
    (define (in-neighbors g v) (in-weighted-graph-neighbors g v))
-   (define (edge-weight g u v) 
-     (hash-ref (weighted-graph-weights g) (list u v)))
+   (define (edge-weight g u v) ; ok to return infty for non-existent edge?
+     (hash-ref (weighted-graph-weights g) (list u v) +inf.0))
    (define (add-directed-edge! g u v [weight #f])
      (define adj (weighted-graph-adjlist g))
      (add-edge@ adj u v)

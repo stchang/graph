@@ -14,7 +14,9 @@
   #:methods gen:graph
   [(define (in-vertices g) (in-unweighted-graph-vertices g))
    (define (in-neighbors g v) (in-unweighted-graph-neighbors g v))
-   (define (edge-weight g u v) (error 'edge-weight "unweighted graph"))
+   (define (edge-weight g u v) 
+     (if (member (list u v) (in-edges g)) 1
+         (error 'edge-weight "edge ~a ~a does not exist" u v)))
    (define (add-directed-edge! g u v [weight #f])
      (define adj (unweighted-graph-adjlist g))
      (add-edge@ adj u v)

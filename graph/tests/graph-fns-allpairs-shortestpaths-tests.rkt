@@ -1,5 +1,6 @@
 #lang racket
-(require "../graph-matrix.rkt"
+(require ;"../graph-matrix.rkt"
+         "../graph-weighted.rkt"
          "../graph-fns-allpairs-shortestpaths.rkt"
          "test-utils.rkt")
 
@@ -9,7 +10,7 @@
 ;; all pairs shortest paths tests ------------------------------------------
 
 (define g25.1
-  (mk-weighted-matrix-graph/directed
+  (mk-weighted-graph/directed
    '((3 1 2) (-4 1 5) (8 1 3)
      (7 2 5) (1 2 4)
      (4 3 2)
@@ -52,7 +53,7 @@
               ((5 5) . 0))))
 
 (define g25.2
-  (mk-weighted-matrix-graph/directed
+  (mk-weighted-graph/directed
    '((-1 1 5)
      (1 2 1) (2 2 4)
      (2 3 2) (-8 3 6)

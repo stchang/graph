@@ -1,5 +1,6 @@
 ******** 2013-08-09 ********
 - use fallbacks to implement graph methods: vertex? edge? in-edges
+- implement bfs/generic as a syntax/parse macro to avoid keyword boilerplate?
 
 ******** 2013-08-08 ********
 - either eliminate graph-matrix.rkt

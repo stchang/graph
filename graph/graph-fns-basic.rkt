@@ -62,8 +62,8 @@
     (loop)))
   (finish G s))
 
-;; returns shortest path in G from source s to v
-(define (shortest-path G s v)
+;; returns the path in G from s to v with the fewest vertices in between
+(define (fewest-vertices-path G s v)
   (define-hashes color π)
   (define found-v #f)
   

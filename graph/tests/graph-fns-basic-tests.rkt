@@ -30,11 +30,11 @@
  π22.3
  (make-hash '((t . w) (y . x) (u . x) (s . #f) (v . r) (x . w) (w . s) (r . s))))
 
-(check-equal? '(s r v) (shortest-path g22.3 's 'v))
-(check-equal? '(s w t) (shortest-path g22.3 's 't))
-(check-equal? '(s w x) (shortest-path g22.3 's 'x))
-(check-equal? '(s w x u) (shortest-path g22.3 's 'u))
-(check-equal? '(s w x y) (shortest-path g22.3 's 'y))
+(check-equal? '(s r v) (fewest-vertices-path g22.3 's 'v))
+(check-equal? '(s w t) (fewest-vertices-path g22.3 's 't))
+(check-equal? '(s w x) (fewest-vertices-path g22.3 's 'x))
+(check-equal? '(s w x u) (fewest-vertices-path g22.3 's 'u))
+(check-equal? '(s w x y) (fewest-vertices-path g22.3 's 'y))
 
 
 ;; dfs utils ------------------------------------------------------------------
