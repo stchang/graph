@@ -12,60 +12,51 @@
 ;; ----------------------------------------------------------------------------
 ;; bfs and dfs
 
-(define bfs-traversal-fns
-  (let ()
-    (define-hashes color d π)
+(define (bfs G s)
+  (define-hashes color d π)
     
-    (define (bfs-init G s)
-      (define-hashes new-color new-d new-π)
-      (set! color new-color)
-      (set! d new-d)
-      (set! π new-π)
-      
-      (for ([u (in-vertices G)]) 
-        (color-set! u WHITE) (d-set! u +inf.0) (π-set! u #f))
-      (color-set! s GRAY) (d-set! s 0) (π-set! s #f))
+  (define (init G s)
+    (for ([u (in-vertices G)]) 
+      (color-set! u WHITE) (d-set! u +inf.0) (π-set! u #f))
+    (color-set! s GRAY) (d-set! s 0) (π-set! s #f))
     
-    (define (bfs-pre-visit u) (void))
+  (define (process-neighbor? G u v) (white? (color v)))
     
-    (define (bfs-process-neighbor? u v) (white? (color v)))
+  (define (process-neighbor G u v)
+    (color-set! v GRAY)
+    (d-set! v (add1 (d u)))
+    (π-set! v u))
     
-    (define (bfs-process-neighbor u v)
-      (color-set! v GRAY)
-      (d-set!     v (add1 (d u)))
-      (π-set!     v u))
+  (define (post-visit u) (color-set! u BLACK))
     
-    (define (bfs-post-visit u) (color-set! u BLACK))
-    
-    (define (bfs-finish G s) (values color d π))
-    
-    (vector bfs-init 
-            bfs-pre-visit
-            bfs-process-neighbor?
-            bfs-process-neighbor
-            bfs-post-visit
-            bfs-finish)))
+  (define (finish G s) (values color d π))
+
+  (bfs/generic G s #:init init
+                   #:process-neighbor? process-neighbor?
+                   #:process-neighbor process-neighbor
+                   #:post-visit post-visit
+                   #:finish finish))
 
 ;; bfs : Graph Vertex -> any/c
 ;; s is the source vertex, default Q is from data/queue
 ;; see also bfs clients prim and dijkstra
-(define (bfs G s 
-             #:init-queue [Q (mk-empty-fifo)]
-             #:break [break? (λ _ #f)]
-             #:traversal-fns [traversal-fns bfs-traversal-fns])
-  (match-define 
-   (vector init pre-visit process-neighbor? process-neighbor post-visit finish) 
-   traversal-fns)
-  
+(define (bfs/generic G s 
+                     #:init-queue [Q (mk-empty-fifo)]
+                     #:break [break? (λ _ #f)]
+                     #:init [init void]
+                     #:pre-visit [pre-visit void]
+                     #:process-neighbor? [process-neighbor? (λ _ #t)]
+                     #:process-neighbor [process-neighbor void]
+                     #:post-visit [post-visit void]
+                     #:finish [finish void])
   (init G s)
-  
   (enqueue! Q s)
   (let loop () (unless (or (break?) (empty? Q))
     (define u (dequeue! Q))
     (pre-visit u)
     (for ([v (in-neighbors G u)] 
-          #:when (and (not (break?)) (process-neighbor? u v)))
-      (process-neighbor u v)
+          #:when (and (not (break?)) (process-neighbor? G u v)))
+      (process-neighbor G u v)
       (enqueue! Q v))
     (post-visit u)
     (loop)))
@@ -80,11 +71,11 @@
     (for ([u (in-vertices G)]) (color-set! u WHITE) (π-set! u #f))
     (color-set! s GRAY) (π-set! s #f))
   
-  (define (process-neighbor? u v) (white? (color v)))
+  (define (process-neighbor? G u v) (white? (color v)))
   
   (define (found-v?) found-v)
   
-  (define (process-neighbor v1 v2)
+  (define (process-neighbor G v1 v2)
     (when (equal? v2 v) (set! found-v #t))
     (color-set! v2 GRAY)
     (π-set!     v2 v1))
@@ -97,12 +88,13 @@
           (if (equal? v s) (cons s path) (loop (cons v path) (π v))))
         (error 'shortest-path "no path from ~a to ~a" s v)))
   
-  (define traversal-fns
-    (vector init (λ _ (void)) process-neighbor? process-neighbor post-visit finish))
-  
-  (bfs G s #:break found-v? #:traversal-fns traversal-fns))
+  (bfs/generic G s #:break found-v?
+                   #:init init
+                   #:process-neighbor? process-neighbor?
+                   #:process-neighbor process-neighbor
+                   #:post-visit post-visit
+                   #:finish finish))
            
-
 
 (define (dfs G #:order [order (λ (vs) vs)])
   ;; d[u] = discovery time, f[u] = finishing time

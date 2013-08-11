@@ -53,9 +53,9 @@
     
   (define (pre-visit u) (in-Q?-set! u #f))
   
-  (define (process-neighbor? u v) (and (in-Q? v) (< (w u v) (key v))))
+  (define (process-neighbor? G u v) (and (in-Q? v) (< (w u v) (key v))))
     
-  (define (process-neighbor u v)
+  (define (process-neighbor G u v)
     (π-set! v u)
     (key-set! v (w u v)))
     
@@ -63,8 +63,12 @@
     
   (define (finish G r) 
     (for/list ([v (in-vertices G)] #:unless (equal? v r)) (list v (π v))))
-    
-  (define bfs-fns
-    (vector init pre-visit process-neighbor? process-neighbor post-visit finish))
   
-  (bfs G r #:init-queue Q #:traversal-fns bfs-fns))
+  (bfs/generic G r #:init-queue Q 
+                   #:init init
+                   #:pre-visit pre-visit
+                   #:process-neighbor? process-neighbor?
+                   #:process-neighbor process-neighbor
+                   #:post-visit post-visit
+                   #:finish finish))
+               

@@ -57,33 +57,29 @@
   (values d π))
 
 ;; no negative weight edges
-(define (dijkstra G s)
-  (define (w u v) (edge-weight G u v))
+(define (dijkstra G s) 
   ;; (d v) represents intermediate known shortest path from s to v
   (define-hashes d π)
-
+  (define (w u v) (edge-weight G u v))
   (define Q (mk-empty-priority (λ (u v) (< (d u) (d v)))))
 
   (define (init G s)
     (for ([v (in-vertices G)]) (d-set! v +inf.0) (π-set! v #f))
     (d-set! s 0))
     
-  (define (pre-visit u) (void))
-  
-  (define (process-neighbor? u v) (> (d v) (+ (d u) (w u v))))
+  (define (process-neighbor? G u v) (> (d v) (+ (d u) (w u v))))
     
-  (define (process-neighbor u v)
+  (define (process-neighbor G u v)
     (d-set! v (+ (d u) (w u v)))
     (π-set! v u))
-  
-  (define (post-visit u) (void))
     
   (define (finish G s) (values d π))
-    
-  (define bfs-fns
-    (vector init pre-visit process-neighbor? process-neighbor post-visit finish))
   
-  (bfs G s #:init-queue Q #:traversal-fns bfs-fns))
+  (bfs/generic G s #:init-queue Q
+                   #:init init
+                   #:process-neighbor? process-neighbor?
+                   #:process-neighbor process-neighbor
+                   #:finish finish))
 
 
 
