@@ -61,60 +61,34 @@
   ;; (d v) represents intermediate known shortest path from s to v
   (define-hashes d π)
   (define (w u v) (edge-weight G u v))
-  (define Q (mk-empty-priority (λ (u v) (< (d u) (d v)))))
 
-  (define (init G s)
-    (for ([v (in-vertices G)]) (d-set! v +inf.0) (π-set! v #f))
-    (d-set! s 0))
-    
-  (define (visit? G s u v) (> (d v) (+ (d u) (w u v))))
-    
-  (define (process-edge G s u v)
-    (d-set! v (+ (d u) (w u v)))
-    (π-set! v u))
-    
-  (define (finish G s) (values d π))
-  
-  (bfs/generic G s #:init-queue Q
-                   #:init init
-                   #:visit? visit?
-                   #:process-edge process-edge
-                   #:return finish))
+  (do-bfs G s #:init-queue (mk-empty-priority (λ (u v) (< (d u) (d v))))
+    #:init
+      (for ([v (in-vertices G)]) (d-set! v +inf.0) (π-set! v #f))
+      (d-set! s 0)
+    #:visit? (to from) (> (d from) (+ (d to) (w to from)))
+    #:pre-visit (to from)
+      (d-set! from (+ (d to) (w to from)))
+      (π-set! from to)
+    #:return (values d π)))
 
-
-
-;
-;
-;  (define (w u v) (edge-weight G u v))
-;
-;  ;; init
-;  (define-hashes d π)
-;  (for ([v (in-vertices G)]) (d-set! v +inf.0) (π-set! v #f))
-;  (d-set! s 0)
-;
-;  ;(define S null)
-;  
-;  (define Q (make-heap (λ (u v) (< (d u) (d v)))))
-;  
-;  (heap-add! Q s)
-;  
-;  (let loop ([u (heap-min Q)])
-;    ;; remove all (possibly duplicate) copies of u and mark u as not in Q
-;    (let remove-loop ()
-;      (heap-remove-min! Q)
-;      (when (and (not (zero? (heap-count Q))) 
-;                 (equal? (heap-min Q) u))
-;        (remove-loop)))
+          
+          
+;  (define Q (mk-empty-priority (λ (u v) (< (d u) (d v)))))
+;  (define (init G s)
+;    (for ([v (in-vertices G)]) (d-set! v +inf.0) (π-set! v #f))
+;    (d-set! s 0))
 ;    
-;   ; (set! S (cons u S))
+;  (define (visit? G s u v) (> (d v) (+ (d u) (w u v))))
 ;    
-;    (for ([v (in-neighbors G u)])
-;      ;; relax
-;      (when (> (d v) (+ (d u) (w u v)))
-;        (d-set! v (+ (d u) (w u v)))
-;        (π-set! v u)
-;        (heap-add! Q v))) ; add v to Q when its d changes
+;  (define (pre-visit G s u v)
+;    (d-set! v (+ (d u) (w u v)))
+;    (π-set! v u))
 ;    
-;    (unless (zero? (heap-count Q)) (loop (heap-min Q))))
-;
-;  (values d π))
+;  (define (finish G s) (values d π))
+;  
+;  (bfs/generalized G s #:init-queue Q
+;                       #:init init
+;                       #:visit? visit?
+;                       #:pre-visit pre-visit
+;                       #:return finish))

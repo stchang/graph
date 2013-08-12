@@ -5,10 +5,6 @@
          "../utils.rkt")
 (require rackunit)
 
-;; bfs utils ----------------------------------------------------------------------
-
-;(define (all-black? h) (for/and ([c (hash-values h)]) (black? c)))
-
 ;; bfs tests ------------------------------------------------------------------
 
 ;; graph from clrs figure 22.3
@@ -20,8 +16,6 @@
               (apply set (sequence->list (in-vertices g22.3))))
 
 (define-values (d22.3 π22.3) (bfs g22.3 's))
-
-;(check-true (all-black? color22.3))
 
 (check-equal? 
  d22.3

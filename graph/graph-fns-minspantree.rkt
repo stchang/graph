@@ -44,35 +44,47 @@
   (define (w u v) (edge-weight G u v))
   (define-hashes key π in-Q?)
 
-  (define Q (mk-empty-priority (λ (u v) (< (key u) (key v)))))
+  (do-bfs G r #:init-queue (mk-empty-priority (λ (u v) (< (key u) (key v))))
+    #:init
+      (for ([u (in-vertices G)])
+        (key-set! u +inf.0) (π-set! u #f) (in-Q?-set! u #t))
+      (key-set! r 0)
+    ;; default bfs skips the visit if v has been enqueued (ie it's not "white")
+    ;; but here we want to skip only if v has been dequeued (ie it's "black")
+    #:visit? (to from) (in-Q? from)
+    #:pre-visit (to from)
+      (when (< (w to from) (key from)) ; relax
+        (π-set! from to)
+        (key-set! from (w to from)))
+    #:visit (u) (in-Q?-set! u #f)
+    #:return (for/list ([v (in-vertices G)] #:unless (equal? v r)) (list (π v) v))))
 
-  (define (init G r)
-    (for ([u (in-vertices G)]) 
-      (key-set! u +inf.0) (π-set! u #f) (in-Q?-set! u #t))
-    (key-set! r 0))
-    
-  ;; default bfs skips the visit if v has been enqueued (ie it's not "white")
-  ;; but here we want to skip only if v has been dequeued (ie it's "black")
-  (define (visit? G s u v) (in-Q? v))
-  
-  (define (visit G s u) (in-Q?-set! u #f))
-      
-;  (define (process-neighbor G u v)
-  (define (process-edge G r u v)
-    (when (< (w u v) (key v)) ; relax
-      (π-set! v u)
-      (key-set! v (w u v))))
-    
-  (define (finish G r)
-    (for/list ([v (in-vertices G)] #:unless (equal? v r)) (list (π v) v)))
-  
-  (bfs/generic G r #:init-queue Q 
-                   #:init init
-                   #:visit? visit?
-                   #:visit visit
-;                   #:pre-visit pre-visit
- ;                  #:process-neighbor? process-neighbor?
-  ;                 #:process-neighbor process-neighbor
-                   #:process-edge process-edge
-                   #:return finish))
+;  (define Q (mk-empty-priority (λ (u v) (< (key u) (key v)))))
+;
+;  (define (init G r)
+;    (for ([u (in-vertices G)])
+;      (key-set! u +inf.0) (π-set! u #f) (in-Q?-set! u #t))
+;    (key-set! r 0))
+;    
+;  ;; default bfs skips the visit if v has been enqueued (ie it's not "white")
+;  ;; but here we want to skip only if v has been dequeued (ie it's "black")
+;  (define (visit? G s u v) (in-Q? v))
+;
+;  (define (pre-visit G r u v)
+;    (when (< (w u v) (key v)) ; relax
+;      (π-set! v u)
+;      (key-set! v (w u v))))
+;  
+;  (define (visit G s u) (in-Q?-set! u #f))
+;      
+;    
+;  (define (finish G r)
+;    (for/list ([v (in-vertices G)] #:unless (equal? v r)) (list (π v) v)))
+;  
+;  (bfs/generalized G r #:init-queue Q 
+;                       #:init init
+;                       #:visit? visit?
+;                       #:pre-visit pre-visit
+;                       #:visit visit
+;                       #:return finish))
                

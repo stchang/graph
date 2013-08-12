@@ -6,6 +6,8 @@
          (only-in "../queue/fifo.rkt" mk-empty-fifo)
          "../queue/gen-queue.rkt")
 
+(require (for-syntax syntax/parse))
+
 (provide (except-out (all-defined-out)))
 
 
@@ -13,95 +15,112 @@
 ;; bfs and dfs
 
 (define (bfs G s)
-  (define-hashes color d π)
-    
-  (define (init G s)
-    (for ([u (in-vertices G)]) 
-      #;(color-set! u WHITE) (d-set! u +inf.0) (π-set! u #f))
-    #;(color-set! s GRAY) (d-set! s 0) (π-set! s #f))
-    
-;  (define (process-neighbor? G u v) (white? (color v)))
-    
-;  (define (process-neighbor G u v)
-  (define (process-edge G s u v)
-;    (color-set! v GRAY)
-    (d-set! v (add1 (d u)))
-    (π-set! v u))
-    
- ; (define (post-visit u) (color-set! u BLACK))
-    
-  (define (finish G s) (values d π))
+  (define-hashes d π)
 
-  (bfs/generic G s #:init init
-                   #:process-edge process-edge
-;                   #:process-neighbor? process-neighbor?
-;                   #:process-neighbor process-neighbor
-;                   #:post-visit post-visit
-                   #:return finish))
+  (do-bfs G s 
+    #:init 
+      (for ([u (in-vertices G)]) (d-set! u +inf.0) (π-set! u #f))
+      (d-set! s 0) (π-set! s #f)
+    #:pre-visit (from to)
+      (d-set! to (add1 (d from))) (π-set! to from)
+    #:return (values d π)))
+
+;  (define (init G s)
+;    (for ([u (in-vertices G)]) (d-set! u +inf.0) (π-set! u #f))
+;    (d-set! s 0) (π-set! s #f))
+;    
+;  (define (pre-visit G s u v) (d-set! v (add1 (d u))) (π-set! v u))
+;    
+;  (define (finish G s) (values d π))
+;
+;  (bfs/generalized G s #:init init #:pre-visit pre-visit #:return finish))
 
 ;; bfs : Graph Vertex -> any/c
 ;; s is the source vertex, default Q is from data/queue
 ;; see also bfs clients prim and dijkstra
-(define (bfs/generic G s 
-                     #:init-queue [Q (mk-empty-fifo)]
-                     #:break [break? (λ _ #f)]
-                     #:init [init void]
-                     #:visit? [custom-visit?-fn #f]
-                     #:visit [visit void]
-                     #:process-edge [process-edge void]
-                     #:return [finish void])
+(define (bfs/generalized G s #:init-queue [Q (mk-empty-fifo)]
+                             #:break [break? (λ _ #f)]
+                             #:init [init void]
+                             #:visit? [custom-visit?-fn #f]
+                             #:pre-visit [pre-visit void]
+                             #:visit [visit void]
+                             #:return [finish void])
   ; v ∈ visited means v has been seen and enqueued, ie it's no longer "white"
   (define visited (set)) 
-  (define (mark-visited! v) (set! visited (set-add visited v)))
+  (define (mark-in-queue! v) (set! visited (set-add visited v)))
   (define visit? (or custom-visit?-fn (λ (G s u v) (not (set-member? visited v)))))
+  
   (init G s)
   (enqueue! Q s) ; source vertex s is always visited
-  (mark-visited! s)
-;  (let loop () (unless (or (break?) (empty? Q))
-;    (define u (dequeue! Q))
+  (mark-in-queue! s)
   (for ([u (in-queue Q)])
     (visit G s u)
     (for ([v (in-neighbors G u)] #:when (visit? G s u v) #:break (break?))
-      (mark-visited! v)
-      (process-edge G s u v)
+      (pre-visit G s u v)
+      (mark-in-queue! v)
       (enqueue! Q v)))
-;    (loop)))
   (finish G s))
+
+(define-syntax (do-bfs stx)
+  (syntax-parse stx 
+    [(_ G s (~optional (~seq #:init-queue Q:expr))
+            (~optional (~seq #:break break?:expr))
+            (~optional (~seq #:init init:expr ...))
+            (~optional (~seq #:visit? (visit?-from:id visit?-to:id) visit?:expr ...))
+            (~optional (~seq #:pre-visit (pre-visit-from:id pre-visit-to:id) pre-visit:expr ...))
+            (~optional (~seq #:visit (v:id) visit:expr ...))
+            (~optional (~seq #:return return:expr ...)))
+     #`(bfs/generalized 
+        G s 
+        #,@(if (attribute Q) #'(#:init-queue Q) '())
+        #,@(if (attribute break?) #'(#:break break?) '())
+        #,@(if (attribute init) #'(#:init (λ _ init ...)) '())
+        #,@(if (attribute visit?) #'(#:visit? (λ (G s visit?-from visit?-to) visit? ...)) '())
+        #,@(if (attribute pre-visit) #'(#:pre-visit (λ (G s pre-visit-from pre-visit-to) pre-visit ...)) '())
+        #,@(if (attribute visit) #'(#:visit (λ (G s v) visit ...)) '())
+        #,@(if (attribute return) #'(#:return (λ _ return ...)) '()))]))
+         
+    
 
 ;; returns the path in G from s to v with the fewest vertices in between
 (define (fewest-vertices-path G s v)
   (define-hashes color π)
   (define found-v #f)
-  
-  (define (init G s)
-    (for ([u (in-vertices G)]) #;(color-set! u WHITE) (π-set! u #f))
-    #;(color-set! s GRAY) (π-set! s #f))
-  
-;  (define (process-neighbor? G u v) (white? (color v)))
-  
   (define (found-v?) found-v)
-  
-;  (define (process-neighbor G v1 v2)
-  (define (process-edge G s v1 v2)
-    (when (equal? v2 v) (set! found-v #t))
-    #;(color-set! v2 GRAY)
-    (π-set!     v2 v1))
-  
-;  (define (post-visit u) (color-set! u BLACK))
-  
-  (define (finish G s) 
-    (if found-v?
-        (let loop ([path null] [v v])
-          (if (equal? v s) (cons s path) (loop (cons v path) (π v))))
-        (error 'shortest-path "no path from ~a to ~a" s v)))
-  
-  (bfs/generic G s #:break found-v?
-                   #:init init
-                   #:process-edge process-edge
- ;                  #:process-neighbor? process-neighbor?
- ;                  #:process-neighbor process-neighbor
- ;                  #:post-visit post-visit
-                   #:return finish))
+
+  (do-bfs G s #:break found-v?
+    #:init
+      (for ([u (in-vertices G)]) (π-set! u #f))
+      (π-set! s #f)
+    #:pre-visit (to from)
+      (when (equal? from v) (set! found-v #t))
+      (π-set! from to)
+    #:return
+      (if found-v?
+          (let loop ([path null] [v v])
+            (if (equal? v s) (cons s path) (loop (cons v path) (π v))))
+          (error 'shortest-path "no path from ~a to ~a" s v))))
+
+      
+;  (define (init G s)
+;    (for ([u (in-vertices G)]) (π-set! u #f))
+;    (π-set! s #f))
+;  
+;  
+;  (define (pre-visit G s v1 v2)
+;    (when (equal? v2 v) (set! found-v #t))
+;    (π-set! v2 v1))
+;  
+;  (define (finish G s) 
+;    (if found-v?
+;        (let loop ([path null] [v v])
+;          (if (equal? v s) (cons s path) (loop (cons v path) (π v))))
+;        (error 'shortest-path "no path from ~a to ~a" s v)))
+;  
+;  (bfs/generalized G s #:break found-v?
+;                       #:init init
+;                       #:pre-visit pre-visit
+;                       #:return finish))
            
 
 
