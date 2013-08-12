@@ -104,14 +104,21 @@
   ;; d[u] = discovery time, f[u] = finishing time
   (define-hashes d π f)
   (define time 0)
-  
-  (define (prologue G parent u) (add1! time) (d-set! u time) (π-set! u parent))
-  
-  (define (epilogue G parent u) (add1! time) (f-set! u time))
-  
-  (define (finish G) (values d π f))
-  
-  (dfs/generalized G #:prologue prologue #:epilogue epilogue #:return finish))
+
+  (do-dfs G
+    #:prologue (parent u) (add1! time) (d-set! u time) (π-set! u parent)
+    #:epilogue (parent u) (add1! time) (f-set! u time)
+    #:return (values d π f)))
+
+
+;  
+;  (define (prologue G parent u) (add1! time) (d-set! u time) (π-set! u parent))
+;  
+;  (define (epilogue G parent u) (add1! time) (f-set! u time))
+;  
+;  (define (finish G) (values d π f))
+;  
+;  (dfs/generalized G #:prologue prologue #:epilogue epilogue #:return finish))
 
 (define (dfs/generalized G #:order [order (λ (vs) vs)]
                            #:break [break? (λ _ #f)]
