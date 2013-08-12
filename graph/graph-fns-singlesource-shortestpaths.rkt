@@ -65,7 +65,7 @@
       (for ([v (in-vertices G)]) (d-set! v +inf.0) (π-set! v #f))
       (d-set! s 0)
     #:visit? (to from) (> (d from) (+ (d to) (w to from)))
-    #:pre-visit (to from)
+    #:discover (to from)
       (d-set! from (+ (d to) (w to from)))
       (π-set! from to)
     #:return (values d π)))

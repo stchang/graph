@@ -47,10 +47,10 @@
       (for ([u (in-vertices G)])
         (key-set! u +inf.0) (π-set! u #f) (in-Q?-set! u #t))
       (key-set! r 0)
-    ;; default bfs skips the visit if v has been enqueued (ie it's not "white")
+    ;; default bfs skips the visit if v has been discovered (ie it's not "white")
     ;; but here we want to skip only if v has been dequeued (ie it's "black")
     #:visit? (to from) (in-Q? from)
-    #:pre-visit (to from)
+    #:discover (to from)
       (when (< (w to from) (key from)) ; relax
         (π-set! from to)
         (key-set! from (w to from)))

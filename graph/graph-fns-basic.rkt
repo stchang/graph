@@ -24,7 +24,7 @@
     #:init 
       (for ([u (in-vertices G)]) (d-set! u +inf.0) (π-set! u #f))
       (d-set! s 0) (π-set! s #f)
-    #:pre-visit (from to)
+    #:discover (from to)
       (d-set! to (add1 (d from))) (π-set! to from)
     #:return (values d π)))
 
@@ -34,22 +34,22 @@
                              #:break [break? (λ _ #f)]
                              #:init [init void]
                              #:visit? [custom-visit?-fn #f]
-                             #:pre-visit [pre-visit void]
+                             #:discover [discover void]
                              #:visit [visit void]
                              #:return [finish void])
   ; v ∈ visited means v has been seen and enqueued, ie it's no longer "white"
-  (define visited (set)) 
-  (define (mark-in-queue! v) (set! visited (set-add visited v)))
-  (define visit? (or custom-visit?-fn (λ (G s u v) (not (set-member? visited v)))))
+  (define discovered (set)) 
+  (define (mark-discovered! v) (set! discovered (set-add discovered v)))
+  (define visit? (or custom-visit?-fn (λ (G s u v) (not (set-member? discovered v)))))
   
   (init G s)
   (enqueue! Q s) ; source vertex s is always visited
-  (mark-in-queue! s)
+  (mark-discovered! s)
   (for ([u (in-queue Q)])
     (visit G s u)
     (for ([v (in-neighbors G u)] #:when (visit? G s u v) #:break (break?))
-      (pre-visit G s u v)
-      (mark-in-queue! v)
+      (mark-discovered! v)
+      (discover G s u v)
       (enqueue! Q v)))
   (finish G s))
 
@@ -60,7 +60,7 @@
             (~optional (~seq #:break break?:expr))
             (~optional (~seq #:init init:expr ...))
             (~optional (~seq #:visit? (visit?-from:id visit?-to:id) visit?:expr ...))
-            (~optional (~seq #:pre-visit (pre-visit-from:id pre-visit-to:id) pre-visit:expr ...))
+            (~optional (~seq #:discover (discover-from:id discover-to:id) discover:expr ...))
             (~optional (~seq #:visit (v:id) visit:expr ...))
             (~optional (~seq #:return return:expr ...)))
      #`(bfs/generalized 
@@ -69,7 +69,7 @@
         #,@(if (attribute break?) #'(#:break break?) '())
         #,@(if (attribute init) #'(#:init (λ _ init ...)) '())
         #,@(if (attribute visit?) #'(#:visit? (λ (G s visit?-from visit?-to) visit? ...)) '())
-        #,@(if (attribute pre-visit) #'(#:pre-visit (λ (G s pre-visit-from pre-visit-to) pre-visit ...)) '())
+        #,@(if (attribute discover) #'(#:discover (λ (G s discover-from discover-to) discover ...)) '())
         #,@(if (attribute visit) #'(#:visit (λ (G s v) visit ...)) '())
         #,@(if (attribute return) #'(#:return (λ _ return ...)) '()))]))
              
@@ -89,7 +89,7 @@
     #:init
       (for ([u (in-vertices G)]) (π-set! u #f))
       (π-set! s #f)
-    #:pre-visit (to from)
+    #:discover (to from)
       (when (equal? from v) (set! found-v #t))
       (π-set! from to)
     #:return
