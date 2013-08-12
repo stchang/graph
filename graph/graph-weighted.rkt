@@ -7,7 +7,7 @@
 
 ; weighted, adjacency-list graph
 
-(provide (except-out (all-defined-out)))
+(provide mk-weighted-graph/undirected mk-weighted-graph/directed weighted-graph?)
 
 ;; A WeightedGraph is a (weighted-graph AdjacencyList Weights)
 (struct weighted-graph (adjlist weights) #:transparent
@@ -15,6 +15,8 @@
   [(define (in-vertices g) (in-weighted-graph-vertices g))
    (define (in-neighbors g v) (in-weighted-graph-neighbors g v))
    (define (edge-weight g u v) ; ok to return infty for non-existent edge?
+;     (unless (and (has-vertex? g u) (has-vertex? g v))
+;       (error 'edge-weight "non-existent edge ~a ~a" u v))
      (hash-ref (weighted-graph-weights g) (list u v) +inf.0))
    (define (add-directed-edge! g u v [weight #f])
      (define adj (weighted-graph-adjlist g))

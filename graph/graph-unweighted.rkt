@@ -7,7 +7,11 @@
 
 ; unweighted, adjacency-list graph
 
-(provide (except-out (all-defined-out)))
+(provide mk-unweighted-graph/undirected
+         mk-unweighted-graph/directed
+         mk-unweighted-graph/adj
+         unweighted-graph?
+         transpose)
 
 ;; A Graph is a (graph AdjacencyList)
 (struct unweighted-graph (adjlist) #:transparent 
@@ -15,6 +19,8 @@
   [(define (in-vertices g) (in-unweighted-graph-vertices g))
    (define (in-neighbors g v) (in-unweighted-graph-neighbors g v))
    (define (edge-weight g u v) 
+;     (unless (and (has-vertex? g u) (has-vertex? g v))
+;       (error 'edge-weight "non-existent edge ~a ~a" u v))
      (if (member (list u v) (in-edges g)) 1
          (error 'edge-weight "edge ~a ~a does not exist" u v)))
    (define (add-directed-edge! g u v [weight #f])
