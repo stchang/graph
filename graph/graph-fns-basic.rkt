@@ -17,24 +17,26 @@
     
   (define (init G s)
     (for ([u (in-vertices G)]) 
-      (color-set! u WHITE) (d-set! u +inf.0) (π-set! u #f))
-    (color-set! s GRAY) (d-set! s 0) (π-set! s #f))
+      #;(color-set! u WHITE) (d-set! u +inf.0) (π-set! u #f))
+    #;(color-set! s GRAY) (d-set! s 0) (π-set! s #f))
     
-  (define (process-neighbor? G u v) (white? (color v)))
+;  (define (process-neighbor? G u v) (white? (color v)))
     
-  (define (process-neighbor G u v)
-    (color-set! v GRAY)
+;  (define (process-neighbor G u v)
+  (define (process-edge G s u v)
+;    (color-set! v GRAY)
     (d-set! v (add1 (d u)))
     (π-set! v u))
     
-  (define (post-visit u) (color-set! u BLACK))
+ ; (define (post-visit u) (color-set! u BLACK))
     
-  (define (finish G s) (values color d π))
+  (define (finish G s) (values d π))
 
   (bfs/generic G s #:init init
-                   #:process-neighbor? process-neighbor?
-                   #:process-neighbor process-neighbor
-                   #:post-visit post-visit
+                   #:process-edge process-edge
+;                   #:process-neighbor? process-neighbor?
+;                   #:process-neighbor process-neighbor
+;                   #:post-visit post-visit
                    #:return finish))
 
 ;; bfs : Graph Vertex -> any/c
@@ -44,22 +46,26 @@
                      #:init-queue [Q (mk-empty-fifo)]
                      #:break [break? (λ _ #f)]
                      #:init [init void]
-                     #:pre-visit [pre-visit void]
-                     #:process-neighbor? [process-neighbor? (λ _ #t)]
-                     #:process-neighbor [process-neighbor void]
-                     #:post-visit [post-visit void]
+                     #:visit? [custom-visit?-fn #f]
+                     #:visit [visit void]
+                     #:process-edge [process-edge void]
                      #:return [finish void])
+  ; v ∈ visited means v has been seen and enqueued, ie it's no longer "white"
+  (define visited (set)) 
+  (define (mark-visited! v) (set! visited (set-add visited v)))
+  (define visit? (or custom-visit?-fn (λ (G s u v) (not (set-member? visited v)))))
   (init G s)
-  (enqueue! Q s)
-  (let loop () (unless (or (break?) (empty? Q))
-    (define u (dequeue! Q))
-    (pre-visit u)
-    (for ([v (in-neighbors G u)] 
-          #:when (process-neighbor? G u v) #:break (break?))
-      (process-neighbor G u v)
-      (enqueue! Q v))
-    (post-visit u)
-    (loop)))
+  (enqueue! Q s) ; source vertex s is always visited
+  (mark-visited! s)
+;  (let loop () (unless (or (break?) (empty? Q))
+;    (define u (dequeue! Q))
+  (for ([u (in-queue Q)])
+    (visit G s u)
+    (for ([v (in-neighbors G u)] #:when (visit? G s u v) #:break (break?))
+      (mark-visited! v)
+      (process-edge G s u v)
+      (enqueue! Q v)))
+;    (loop)))
   (finish G s))
 
 ;; returns the path in G from s to v with the fewest vertices in between
@@ -68,19 +74,20 @@
   (define found-v #f)
   
   (define (init G s)
-    (for ([u (in-vertices G)]) (color-set! u WHITE) (π-set! u #f))
-    (color-set! s GRAY) (π-set! s #f))
+    (for ([u (in-vertices G)]) #;(color-set! u WHITE) (π-set! u #f))
+    #;(color-set! s GRAY) (π-set! s #f))
   
-  (define (process-neighbor? G u v) (white? (color v)))
+;  (define (process-neighbor? G u v) (white? (color v)))
   
   (define (found-v?) found-v)
   
-  (define (process-neighbor G v1 v2)
+;  (define (process-neighbor G v1 v2)
+  (define (process-edge G s v1 v2)
     (when (equal? v2 v) (set! found-v #t))
-    (color-set! v2 GRAY)
+    #;(color-set! v2 GRAY)
     (π-set!     v2 v1))
   
-  (define (post-visit u) (color-set! u BLACK))
+;  (define (post-visit u) (color-set! u BLACK))
   
   (define (finish G s) 
     (if found-v?
@@ -90,9 +97,10 @@
   
   (bfs/generic G s #:break found-v?
                    #:init init
-                   #:process-neighbor? process-neighbor?
-                   #:process-neighbor process-neighbor
-                   #:post-visit post-visit
+                   #:process-edge process-edge
+ ;                  #:process-neighbor? process-neighbor?
+ ;                  #:process-neighbor process-neighbor
+ ;                  #:post-visit post-visit
                    #:return finish))
            
 
@@ -113,7 +121,7 @@
 (define (dfs/generalized G #:order [order (λ (vs) vs)]
                            #:break [break? (λ _ #f)]
                            #:init [init void]
-                           #:visit? [custom-visit-fn? #f]
+                           #:visit? [custom-visit?-fn #f]
                            #:prologue [prologue void]
                            #:epilogue [epilogue void]
                            #:process-unvisited? [process-unvisited? (λ _ #f)]
@@ -121,7 +129,7 @@
                            #:return [finish void])
   (define visited (set))
   (define (mark-visited! v) (set! visited (set-add visited v)))
-  (define visit? (or custom-visit-fn? (λ (G u v) (not (set-member? visited v)))))
+  (define visit? (or custom-visit?-fn (λ (G u v) (not (set-member? visited v)))))
   
   (init G)
   

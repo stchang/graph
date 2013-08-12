@@ -67,9 +67,9 @@
     (for ([v (in-vertices G)]) (d-set! v +inf.0) (π-set! v #f))
     (d-set! s 0))
     
-  (define (process-neighbor? G u v) (> (d v) (+ (d u) (w u v))))
+  (define (visit? G s u v) (> (d v) (+ (d u) (w u v))))
     
-  (define (process-neighbor G u v)
+  (define (process-edge G s u v)
     (d-set! v (+ (d u) (w u v)))
     (π-set! v u))
     
@@ -77,8 +77,8 @@
   
   (bfs/generic G s #:init-queue Q
                    #:init init
-                   #:process-neighbor? process-neighbor?
-                   #:process-neighbor process-neighbor
+                   #:visit? visit?
+                   #:process-edge process-edge
                    #:return finish))
 
 

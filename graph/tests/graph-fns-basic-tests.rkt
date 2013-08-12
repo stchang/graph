@@ -7,7 +7,7 @@
 
 ;; bfs utils ----------------------------------------------------------------------
 
-(define (all-black? h) (for/and ([c (hash-values h)]) (black? c)))
+;(define (all-black? h) (for/and ([c (hash-values h)]) (black? c)))
 
 ;; bfs tests ------------------------------------------------------------------
 
@@ -19,9 +19,9 @@
 (check-equal? (apply set '(v r s w t x u y)) 
               (apply set (sequence->list (in-vertices g22.3))))
 
-(define-values (color22.3 d22.3 π22.3) (bfs g22.3 's))
+(define-values (d22.3 π22.3) (bfs g22.3 's))
 
-(check-true (all-black? color22.3))
+;(check-true (all-black? color22.3))
 
 (check-equal? 
  d22.3

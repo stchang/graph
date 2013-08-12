@@ -51,21 +51,28 @@
       (key-set! u +inf.0) (π-set! u #f) (in-Q?-set! u #t))
     (key-set! r 0))
     
-  (define (pre-visit u) (in-Q?-set! u #f))
+  ;; default bfs skips the visit if v has been enqueued (ie it's not "white")
+  ;; but here we want to skip only if v has been dequeued (ie it's "black")
+  (define (visit? G s u v) (in-Q? v))
   
-  (define (process-neighbor? G u v) (and (in-Q? v) (< (w u v) (key v))))
-    
-  (define (process-neighbor G u v)
-    (π-set! v u)
-    (key-set! v (w u v)))
+  (define (visit G s u) (in-Q?-set! u #f))
+      
+;  (define (process-neighbor G u v)
+  (define (process-edge G r u v)
+    (when (< (w u v) (key v)) ; relax
+      (π-set! v u)
+      (key-set! v (w u v))))
     
   (define (finish G r)
     (for/list ([v (in-vertices G)] #:unless (equal? v r)) (list (π v) v)))
   
   (bfs/generic G r #:init-queue Q 
                    #:init init
-                   #:pre-visit pre-visit
-                   #:process-neighbor? process-neighbor?
-                   #:process-neighbor process-neighbor
+                   #:visit? visit?
+                   #:visit visit
+;                   #:pre-visit pre-visit
+ ;                  #:process-neighbor? process-neighbor?
+  ;                 #:process-neighbor process-neighbor
+                   #:process-edge process-edge
                    #:return finish))
                
