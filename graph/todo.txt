@@ -1,6 +1,12 @@
+******** 2013-08-12 ********
+- some larger changes to investigate:
+  - gen:graph should use gen:vertex and gen:edge ?
+  - add functional graph interface (look at Martin Erwig's FGL for Haskell)
+
 ******** 2013-08-09 ********
 - use fallbacks to implement graph methods: vertex? edge? in-edges
 - implement bfs/generic as a syntax/parse macro to avoid keyword boilerplate?
+  - DONE 2013-08-12
 
 ******** 2013-08-08 ********
 - either eliminate graph-matrix.rkt - DONE 2013-08-09
@@ -12,5 +18,5 @@
 - state somewhere that floyd warshall requires all self-edges to be 0 and no
   negative weight cycles - DONE 2013-08-09
 - implement max flow algorithms
-- refactor dfs and related fns to take a "visitor" function
+- refactor dfs and related fns to take a "visitor" function - DONE 2013-08-11
 - refactor bfs to take "visitor" fns - DONE 2013-08-09
