@@ -1,6 +1,9 @@
 #lang scribble/manual
 @(require scribble/eval
           (for-label "main.rkt" 
+                     "../queue/fifo.rkt"
+                     "../queue/priority.rkt"
+                     (except-in "../queue/gen-queue.rkt" empty?)
                      racket/contract/base
                      racket))
 
@@ -118,3 +121,33 @@ Creates a weighted graph that implements @racket[gen:graph] from a list of weigh
 @defproc[(bfs [g graph?] [source any/c])
          (values (hash/c any/c number? #:immutable #f) (hash/c any/c any/c #:immutable #f))]{
  Standard textbook breadth-first search, ie as in CLRS. Takes two arguments, a graph and a source vertex. Returns two values, a hash table mapping a vertex to the distance (in terms of number of vertices) from the source, and a hash table mapping a vertex to its predecessor in the search.}
+                                                                                            
+@defproc[(bfs/generalized 
+          [g graph?] [source any/c]
+          [#:init-queue Q queue? (mk-empty-fifo)]
+          [#:break break? (-> boolean?) (λ _ #f)]
+          [#:init init (-> graph? [source any/c] void?) void]
+          [#:visit? custom-visit?-fn (-> graph? [source any/c] [from any/c] [to any/c] boolean?) #f]
+          [#:discover discover (-> graph? [source any/c] [from any/c] [to any/c] void?) void]
+          [#:visit visit (-> graph? [source any/c] [v any/c] void?) void]
+          [#:return finish (-> graph? [source any/c] (values any/c ...)) void]) (values any/c ...)]{
+Generalized breadth-first search. Partially inspired by the C++ Boost Graph Library. See Lee et al. OOPSLA 1999 @cite["GGCL"]. Here is the rough implementation:
+@racketblock[  
+  (init G s)
+  (enqueue! Q s)
+  (mark-discovered! s)
+  (for ([u (in-queue Q)])
+    (visit G s u)
+    (for ([v (in-neighbors G u)] #:when (visit? G s u v) #:break (break?))
+      (mark-discovered! v)
+      (discover G s u v)
+      (enqueue! Q v)))
+  (finish G s)]
+Utilizes a queue that implements @racket[gen:queue]. A vertex is @deftech{discovered} when it gets added to the queue. If no @racket[custom-visit?-fn] is provided, then the function does not visit vertices that have already been discovered. When a vertex is dequeued, then @racket[visit] is called. The result of @racket[bfs/generalized] is the result of @racket[finish].}
+                                                                                                   
+                                                                                                   
+                                                                                                   @(bibliography (bib-entry #:key "GGCL"
+                          #:author "Lie-Quan Lee, Jeremy G. Siek, and Andrew Lumsdaine"
+                          #:title "The Generic Graph Component Library"
+                          #:location "OOPSLA"
+                          #:date "1999"))
