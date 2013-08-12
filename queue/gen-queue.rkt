@@ -5,4 +5,5 @@
   (enqueue! queue x)
   (peek queue)
   (dequeue! queue)
-  (empty? queue))
+  (empty? queue)
+  (in-queue queue))
