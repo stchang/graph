@@ -3,11 +3,9 @@
 (require "hash-utils.rkt" 
          "gen-graph.rkt"
          "graph-fns-basic.rkt" 
-         (only-in "../queue/priority.rkt" mk-empty-priority)
-         "graph-fns-basic.rkt")
+         (only-in "../queue/priority.rkt" mk-empty-priority))
 
-(provide (except-out (all-defined-out)))
-
+(provide (all-defined-out))
 
 ;; single-source shortest path ------------------------------------------------
 
@@ -71,24 +69,3 @@
       (d-set! from (+ (d to) (w to from)))
       (π-set! from to)
     #:return (values d π)))
-
-          
-          
-;  (define Q (mk-empty-priority (λ (u v) (< (d u) (d v)))))
-;  (define (init G s)
-;    (for ([v (in-vertices G)]) (d-set! v +inf.0) (π-set! v #f))
-;    (d-set! s 0))
-;    
-;  (define (visit? G s u v) (> (d v) (+ (d u) (w u v))))
-;    
-;  (define (pre-visit G s u v)
-;    (d-set! v (+ (d u) (w u v)))
-;    (π-set! v u))
-;    
-;  (define (finish G s) (values d π))
-;  
-;  (bfs/generalized G s #:init-queue Q
-;                       #:init init
-;                       #:visit? visit?
-;                       #:pre-visit pre-visit
-;                       #:return finish))

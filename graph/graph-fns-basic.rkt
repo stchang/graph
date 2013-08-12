@@ -3,13 +3,12 @@
 (require "hash-utils.rkt"
          "utils.rkt"
          "gen-graph.rkt"
-         (only-in "../queue/fifo.rkt" mk-empty-fifo)
-         "../queue/gen-queue.rkt")
+         "../queue/gen-queue.rkt"
+         (only-in "../queue/fifo.rkt" mk-empty-fifo))
 
 (require (for-syntax syntax/parse))
 
-(provide (except-out (all-defined-out)))
-
+(provide (all-defined-out))
 
 ;; ----------------------------------------------------------------------------
 ;; bfs and dfs
@@ -73,8 +72,10 @@
         #,@(if (attribute pre-visit) #'(#:pre-visit (λ (G s pre-visit-from pre-visit-to) pre-visit ...)) '())
         #,@(if (attribute visit) #'(#:visit (λ (G s v) visit ...)) '())
         #,@(if (attribute return) #'(#:return (λ _ return ...)) '()))]))
-         
-    
+             
+
+;; bfs-based fns --------------------------------------------------------------
+;; (see also prim and dijkstra)
 
 ;; returns the path in G from s to v with the fewest vertices in between
 ;; ie, the shortest path from s to v for undirected graphs, 
@@ -98,27 +99,16 @@
           (error 'shortest-path "no path from ~a to ~a" s v))))
 
            
-
+;; dfs ------------------------------------------------------------------------
 
 (define (dfs G)
   ;; d[u] = discovery time, f[u] = finishing time
-  (define-hashes d π f)
-  (define time 0)
+  (define-hashes d π f) (define time 0)
 
   (do-dfs G
     #:prologue (parent u) (add1! time) (d-set! u time) (π-set! u parent)
     #:epilogue (parent u) (add1! time) (f-set! u time)
     #:return (values d π f)))
-
-
-;  
-;  (define (prologue G parent u) (add1! time) (d-set! u time) (π-set! u parent))
-;  
-;  (define (epilogue G parent u) (add1! time) (f-set! u time))
-;  
-;  (define (finish G) (values d π f))
-;  
-;  (dfs/generalized G #:prologue prologue #:epilogue epilogue #:return finish))
 
 (define (dfs/generalized G #:order [order (λ (vs) vs)]
                            #:break [break? (λ _ #f)]
@@ -186,6 +176,8 @@
                '())
         #,@(if (attribute return) #'(#:return (λ _ return ...)) '()))]))
 
+;; dfs-based fns --------------------------------------------------------------
+
 (define (dag? G)
   (define-hashes color)
   (define not-dag #f)
@@ -199,30 +191,6 @@
     #:process-unvisited? (from to) (gray? (color to))
     #:process-unvisited (from to) (set! not-dag #t)
     #:return (not not-dag)))
-          
-
-;  (define (init G) (for ([u (in-vertices G)]) (color-set! u WHITE)))
-;  
-;  (define (visit? G parent u) (white? (color u)))
-;  
-;  (define (prologue G parent u) (color-set! u GRAY))
-;  
-;  (define (process-unvisited? G parent v) (gray? (color v)))
-;  (define (process-unvisited G parent v) (set! not-dag #t))
-;  
-;  
-;  (define (epilogue G parent u) (color-set! u BLACK))
-;  
-;  (define (finish G) (not not-dag))
-;    
-;  (dfs/generalized G #:break not-dag?
-;                     #:init init
-;                     #:visit? visit?
-;                     #:prologue prologue
-;                     #:epilogue epilogue
-;                     #:process-unvisited? process-unvisited?
-;                     #:process-unvisited process-unvisited
-;                     #:return finish))
 
 (define (tsort G)
   (define sorted null) 
@@ -230,9 +198,6 @@
   (do-dfs G
     #:epilogue (parent v) (set! sorted (cons v sorted)) ; add finished
     #:return sorted))
-
-  ;  (dfs/generalized G #:epilogue epilogue #:return finish))
-
   
 ;; tarjan algorithm for strongly connected components
 (define (scc G)
@@ -258,38 +223,3 @@
     #:process-unvisited? (from to) (member to S)
     #:process-unvisited (from to) (lowlink-set! from (min (lowlink from) (index to)))
     #:return SCC))
-
-  ;  (define (prologue G parent v)
-;    (index-set! v i) (lowlink-set! v i) (add1! i) (S-push v))
-;
-;  (define (epilogue G parent v)
-;    (when (build-SCC? v) (build-SCC v))
-;    (when parent (lowlink-set! parent (min (lowlink parent) (lowlink v)))))
-;
-;  (define (process-unvisited? G v unvisited) (member unvisited S))
-;  (define (process-unvisited G v unvisited)
-;    (lowlink-set! v (min (lowlink v) (index unvisited))))
-;  
-;  (define (finish G) SCC)
-;  
-
-  
-  
-;  (define (prologue G parent v)
-;    (index-set! v i) (lowlink-set! v i) (add1! i) (S-push v))
-;
-;  (define (epilogue G parent v)
-;    (when (build-SCC? v) (build-SCC v))
-;    (when parent (lowlink-set! parent (min (lowlink parent) (lowlink v)))))
-;
-;  (define (process-unvisited? G v unvisited) (member unvisited S))
-;  (define (process-unvisited G v unvisited)
-;    (lowlink-set! v (min (lowlink v) (index unvisited))))
-;  
-;  (define (finish G) SCC)
-;  
-;  (dfs/generalized G #:prologue prologue
-;                     #:epilogue epilogue
-;                     #:process-unvisited? process-unvisited?
-;                     #:process-unvisited process-unvisited
-;                     #:return finish))

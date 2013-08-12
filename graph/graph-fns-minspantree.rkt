@@ -2,15 +2,13 @@
 
 (require "hash-utils.rkt" 
          "gen-graph.rkt"
-         "../queue/gen-queue.rkt"
-         (only-in "../queue/priority.rkt" mk-empty-priority)
-         "graph-fns-basic.rkt")
+         "graph-fns-basic.rkt"
+         (only-in "../queue/priority.rkt" mk-empty-priority))
 (require data/union-find)
 
+(provide (all-defined-out))
+
 ;; minimum spanning tree fns
-
-(provide (except-out (all-defined-out)))
-
 
 ;; kruskal --------------------------------------------------------------------
 ;; uses data/union-find
@@ -58,33 +56,3 @@
         (key-set! from (w to from)))
     #:visit (u) (in-Q?-set! u #f)
     #:return (for/list ([v (in-vertices G)] #:unless (equal? v r)) (list (π v) v))))
-
-;  (define Q (mk-empty-priority (λ (u v) (< (key u) (key v)))))
-;
-;  (define (init G r)
-;    (for ([u (in-vertices G)])
-;      (key-set! u +inf.0) (π-set! u #f) (in-Q?-set! u #t))
-;    (key-set! r 0))
-;    
-;  ;; default bfs skips the visit if v has been enqueued (ie it's not "white")
-;  ;; but here we want to skip only if v has been dequeued (ie it's "black")
-;  (define (visit? G s u v) (in-Q? v))
-;
-;  (define (pre-visit G r u v)
-;    (when (< (w u v) (key v)) ; relax
-;      (π-set! v u)
-;      (key-set! v (w u v))))
-;  
-;  (define (visit G s u) (in-Q?-set! u #f))
-;      
-;    
-;  (define (finish G r)
-;    (for/list ([v (in-vertices G)] #:unless (equal? v r)) (list (π v) v)))
-;  
-;  (bfs/generalized G r #:init-queue Q 
-;                       #:init init
-;                       #:visit? visit?
-;                       #:pre-visit pre-visit
-;                       #:visit visit
-;                       #:return finish))
-               
