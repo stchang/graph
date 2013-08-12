@@ -73,7 +73,7 @@
   (define v0 (gensym))
   (define-hash new-T)
   (for* ([i vs] [j vs])
-    (if (or (equal? i j) (edge? G i j)) 
+    (if (or (equal? i j) (has-edge? G i j)) 
         (new-T-set! (list i j) #t) 
         (new-T-set! (list i j) #f)))
   (Ts-set! v0 new-T)

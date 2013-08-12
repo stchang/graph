@@ -27,9 +27,9 @@
      (add-edge@ adj v u))
    (define (add-vertex! g v)
      (add-vertex@ (unweighted-graph-adjlist g) v))
-  (define (vertex? g v) (and (member v (in-vertices g)) #t))
-  (define (edge? g u v)
-    (and (vertex? g u) (vertex? g v)
+  (define (has-vertex? g v) (and (member v (in-vertices g)) #t))
+  (define (has-edge? g u v)
+    (and (has-vertex? g u) (has-vertex? g v)
          (member v (sequence->list (in-neighbors g u)))
          #t))
   ;; returns edges as a sequence
