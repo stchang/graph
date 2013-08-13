@@ -10,8 +10,7 @@
 (provide mk-unweighted-graph/undirected
          mk-unweighted-graph/directed
          mk-unweighted-graph/adj
-         unweighted-graph?
-         transpose)
+         unweighted-graph?)
 
 ;; A Graph is a (graph AdjacencyList)
 (struct unweighted-graph (adjlist) 
@@ -49,7 +48,17 @@
   (define (in-edges g)
     (in-generator 
      (for* ([u (in-vertices g)] [v (in-neighbors g u)]) 
-       (yield (list u v)))))])
+       (yield (list u v)))))
+  (define (graph-copy g)
+    (struct-copy unweighted-graph g 
+                 [adjlist (hash-copy (unweighted-graph-adjlist g))]))
+  (define (transpose G)
+    (define adj^T (make-hash))
+    (for ([u (in-vertices G)])
+      (add-vertex@ adj^T u)
+      (for ([v (in-neighbors G u)])
+        (add-edge@ adj^T v u)))
+    (unweighted-graph adj^T))])
 
 
 ;; An AdjacencyList is a [MutableHashOf Vertex -> [Setof Vertex]]
@@ -91,11 +100,3 @@
   (in-set 
    (hash-ref (unweighted-graph-adjlist g) v 
              (λ () (error 'in-vertices "vertex ~a not in graph ~a" v g)))))
-
-(define (transpose G)
-  (define adj^T (make-hash))
-  (for ([u (in-vertices G)])
-    (add-vertex@ adj^T u)
-    (for ([v (in-neighbors G u)])
-      (add-edge@ adj^T v u)))
-  (unweighted-graph adj^T))

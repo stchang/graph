@@ -33,6 +33,8 @@
   @item{@racket[in-neighbors]: Accepts two arguments, a graph and a vertex. Returns a sequence whose elements are the vertex's neighbors in the graph.}
   @item{@racket[in-edges]: Accepts one argument, a graph. Returns a sequence whose elements are the edges of the graph.}
   @item{@racket[edge-weight]: Accepts three arguments, a graph and two vertices. Returns the weight of the edge in the graph (if it has one).}
+  @item{@racket[transpose]: Accepts one argument, a graph. Returns a new graph where the edges of the original graph are reversed.}
+  @item{@racket[graph-copy]: Accepts one graph argument and returns a copy of that graph.}
   ]
 }
 

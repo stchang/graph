@@ -7,7 +7,9 @@
 
 ; weighted, adjacency-list graph
 
-(provide mk-weighted-graph/undirected mk-weighted-graph/directed weighted-graph?)
+(provide mk-weighted-graph/undirected 
+         mk-weighted-graph/directed
+         weighted-graph?)
 
 ;; A WeightedGraph is a (weighted-graph AdjacencyList Weights)
 (struct weighted-graph (adjlist weights) 
@@ -47,7 +49,18 @@
    (define (in-edges g)
      (in-generator 
       (for* ([u (in-vertices g)] [v (in-neighbors g u)]) 
-        (yield (list u v)))))])
+        (yield (list u v)))))
+   (define (graph-copy g)
+     (struct-copy weighted-graph g 
+                  [adjlist (hash-copy (weighted-graph-adjlist g))]
+                  [weights (hash-copy (weighted-graph-weights g))]))
+   (define (transpose G)
+     (define G^T (mk-weighted-graph/undirected null))
+     (for ([u (in-vertices G)])
+       (add-vertex! G^T u)
+       (for ([v (in-neighbors G u)])
+        (add-directed-edge! G^T v u (edge-weight G u v))))
+     G^T)])
 
 
 ;; An AdjacencyList is a [MutableHashOf Vertex -> [Setof Vertex]]
@@ -95,6 +108,3 @@
   (in-set 
    (hash-ref (weighted-graph-adjlist g) v 
              (λ () (error 'in-vertices "vertex ~a not in graph ~a" v g)))))
-
-
-

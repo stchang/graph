@@ -11,4 +11,6 @@
   (in-vertices graph)
   (in-neighbors graph v)
   (in-edges graph)
-  (edge-weight graph u v))
+  (edge-weight graph u v)
+  (transpose graph)
+  (graph-copy graph))

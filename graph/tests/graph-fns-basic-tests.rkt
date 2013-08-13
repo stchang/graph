@@ -8,7 +8,7 @@
 ;                    [unweighted-graph/undirected mk-unweighted-graph/undirected]
 ;                    [unweighted-graph/directed mk-unweighted-graph/directed]
 ;                    [unweighted-graph/adj mk-unweighted-graph/adj]))
-;;(require (only-in "../graph-unweighted.rkt" transpose))
+
 (require rackunit)
 
 ;; bfs tests ------------------------------------------------------------------
