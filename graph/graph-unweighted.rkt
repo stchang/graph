@@ -14,7 +14,7 @@
          transpose)
 
 ;; A Graph is a (graph AdjacencyList)
-(struct unweighted-graph (adjlist) #:transparent 
+(struct unweighted-graph (adjlist)
   #:methods gen:graph
   [(define (in-vertices g) (in-unweighted-graph-vertices g))
    (define (in-neighbors g v) (in-unweighted-graph-neighbors g v))

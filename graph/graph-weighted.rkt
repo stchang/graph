@@ -10,7 +10,7 @@
 (provide mk-weighted-graph/undirected mk-weighted-graph/directed weighted-graph?)
 
 ;; A WeightedGraph is a (weighted-graph AdjacencyList Weights)
-(struct weighted-graph (adjlist weights) #:transparent
+(struct weighted-graph (adjlist weights)
   #:methods gen:graph
   [(define (in-vertices g) (in-weighted-graph-vertices g))
    (define (in-neighbors g v) (in-weighted-graph-neighbors g v))
