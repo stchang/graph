@@ -14,7 +14,14 @@
          transpose)
 
 ;; A Graph is a (graph AdjacencyList)
-(struct unweighted-graph (adjlist)
+(struct unweighted-graph (adjlist) 
+   #:methods gen:equal+hash
+  [(define (equal-proc g1 g2 equal?-recur) 
+     (equal?-recur (unweighted-graph-adjlist g1) (unweighted-graph-adjlist g2)))
+   (define (hash-proc g hash-recur) 
+     (* 3 (hash-recur (unweighted-graph-adjlist g))))
+   (define (hash2-proc g hash2-recur)
+     (* 4 (hash2-recur (unweighted-graph-adjlist g))))]
   #:methods gen:graph
   [(define (in-vertices g) (in-unweighted-graph-vertices g))
    (define (in-neighbors g v) (in-unweighted-graph-neighbors g v))

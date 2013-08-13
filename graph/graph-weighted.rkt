@@ -10,7 +10,17 @@
 (provide mk-weighted-graph/undirected mk-weighted-graph/directed weighted-graph?)
 
 ;; A WeightedGraph is a (weighted-graph AdjacencyList Weights)
-(struct weighted-graph (adjlist weights)
+(struct weighted-graph (adjlist weights) 
+  #:methods gen:equal+hash
+  [(define (equal-proc g1 g2 equal?-recur) 
+     (and (equal?-recur (weighted-graph-adjlist g1) (weighted-graph-adjlist g2))
+          (equal?-recur (weighted-graph-weights g1) (weighted-graph-weights g2))))
+   (define (hash-proc g hash-recur) 
+     (+ (* 3 (hash-recur (weighted-graph-adjlist g)))
+        (* 5 (hash-recur (weighted-graph-weights g)))))
+   (define (hash2-proc g hash2-recur)
+     (+ (* 6 (hash2-recur (weighted-graph-adjlist g)))
+        (* 7 (hash2-recur (weighted-graph-weights g)))))]
   #:methods gen:graph
   [(define (in-vertices g) (in-weighted-graph-vertices g))
    (define (in-neighbors g v) (in-weighted-graph-neighbors g v))

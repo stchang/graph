@@ -2,7 +2,13 @@
 (require "../graph-unweighted.rkt" 
          "../gen-graph.rkt" 
          "../graph-fns-basic.rkt"
-         "../utils.rkt")
+         "../utils.rkt"
+         "test-utils.rkt")
+;(require (rename-in graph 
+;                    [unweighted-graph/undirected mk-unweighted-graph/undirected]
+;                    [unweighted-graph/directed mk-unweighted-graph/directed]
+;                    [unweighted-graph/adj mk-unweighted-graph/adj]))
+;;(require (only-in "../graph-unweighted.rkt" transpose))
 (require rackunit)
 
 ;; bfs tests ------------------------------------------------------------------
@@ -127,18 +133,9 @@
 ; (make-hash
 ;  '((t . 15) (y . 17) (z . 13) (v . 7) (s . 8) (x . 14) (q . 16) (u . 19) (w . 9) (r . 20))))
 
-;; tsort utils ----------------------------------------------------------------
-
-(define (check-tsorted g tsorted)
-  (for ([e (in-edges g)])
-    (define rst (cdr (member (first e) tsorted)))
-    (check-false (null? (member (second e) rst)))))
 
 
-(define (do-tsort-tests g)
-  (check-true (dag? g))
-  (define tsorted (tsort g))
-  (check-tsorted g tsorted))
+
 
 ;; tsort ----------------------------------------------------------------------
 (define g22.7 
