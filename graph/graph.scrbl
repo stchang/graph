@@ -20,7 +20,7 @@
 @section{Generic Graph Interface}
 
 @defthing[gen:graph any/c]{
-  A @tech{generic interface} (see @secref["struct-generics"]) that defines a @deftech{graph}. To supply method implementations, a struct should use the @racket[#:methods] form. A @tech{graph} has the following methods:
+  A @tech[#:doc '(lib "scribblings/reference/generic.scrbl")]{generic interface} (see @secref["struct-generics"]) that defines a @deftech{graph}. To supply method implementations, a struct should use the @racket[#:methods] form. A @tech{graph} has the following methods:
 
 @itemize[
  
