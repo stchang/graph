@@ -28,12 +28,14 @@
 
 (do-tsort-tests file-deps)
 
+;; for now, use transpose + in-neighbors to find all parents
+;; TODO: add in-parents to gen:graph ?
 (define (parallel-ordering g)
   (define-hash time)
   (define g^T (transpose g))
   
   (for ([v (tsort g)])
-    (time-set! v (add1 (apply max -1 (for/list ([u (in-neighbors g^T v)]) (time u -1))))))
+    (time-set! v (add1 (apply max -1 (for/list ([u (in-neighbors g^T v)]) (time u))))))
   time)
 
 (check-equal? (parallel-ordering file-deps)
@@ -58,3 +60,23 @@
 (add-edge! file-deps-with-cycle 'bar.cpp 'dax.h)
 (check-false (dag? file-deps-with-cycle))
 (do-tsort-tests file-deps) ;  make sure graph-copy makes an actual copy
+
+;; six degrees of kevin bacon
+(define actors
+  (unweighted-graph/undirected
+   (map (λ (s) 
+          (define ss (string-split s ";")) 
+          (list (first ss) (third ss)))
+        (with-input-from-file "kevin-bacon.dat" port->lines))))
+(define-hash bacon-number)
+(for ([a (in-vertices actors)])
+  (bacon-number-set! a (sub1 (length (fewest-vertices-path actors a "Kevin Bacon")))))
+
+(define bacon-number-expected 
+  (make-hash
+   (map (λ (s) 
+          (define ss (string-split s " has a Bacon number of "))
+          (cons (first ss) (string->number (second ss))))
+        (with-input-from-file "kevin-bacon-expected.dat" port->lines))))
+
+(check-equal? bacon-number bacon-number-expected)
