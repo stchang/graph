@@ -256,7 +256,7 @@ The @racket[order] function is a sorting function that specifies where to start 
                 (code:line) 
                 (code:line #:process-unvisited? (from to) process-unvisited?-exp ...)]
                [process-unvisited?-exp expr]
-               [maybe-process-unvisite 
+               [maybe-process-unvisited
                 (code:line) 
                 (code:line #:process-unvisited (from to) process-unvisited-exp ...)]
                [process-unvisited-exp expr]
@@ -286,17 +286,17 @@ Indicates whether a graph is directed and acyclic.}
 
 @defproc[(tsort [g graph?]) list?]{Returns the vertices in the given graph, topologically sorted. Note that the returned order may not be the only valid ordering.}
 
-@defproc[(scc [g graph?]) (list/c list? ...)]{Calculates the strongly connected components of a graph using Tarjan's algorithm. Returns a list of list of vertices, where each sublist is a strongly connected subgraph.}
+@defproc[(scc [g graph?]) (list/c list? ...)]{Calculates the strongly connected components of a graph using Tarjan's algorithm @cite{tarjan-scc}. Returns a list of list of vertices, where each sublist is a strongly connected subgraph.}
                                        
 @; min span trees -------------------------------------------------------------
-@section{Minimum Spanning Tree Algorithms}
+@section{Minimum Spanning Tree}
 
 @defproc[(mst-kruskal [g graph?]) (list (list any/c any/c) ...)]{Computes the minimum spanning tree using Kruskal's algorithm and the @racket[data/union-find] data structure. Returns a list of edges.}
 
 @defproc[(mst-prim [g graph?]) (list (list any/c any/c) ...)]{Computes the minimum spanning tree of a graph using Prim's algorithm, which is based on breadth-first search. Returns a list of edges.}
 
 @; single source shortest paths -----------------------------------------------
-@section{Single-source Shortest Paths Algorithms}
+@section{Single-source Shortest Paths}
 
 @defproc[(bellman-ford [g graph?] [source any/c]) 
          (values (hash/c any/c number? #:immutable #f) (hash/c any/c any/c #:immutable #f))]{Computes the shortest paths from the given source to every other vertex using the Bellman-Ford algorithm. The function errors when the graph has a negative weight cycle, but otherwise, negative weights are allowed.
@@ -313,20 +313,49 @@ The fastest shortest paths algorithm but only works on dags.}
                                                                                             
                                                                                             
 @; all-pairs shortest paths ---------------------------------------------------
-@section{All-pairs Shortest Paths Algorithms}
+@section{All-pairs Shortest Paths}
 @defproc[(floyd-warshall [g graph?]) (hash/c (list any/c any/c) number? #:immutable #f)]{
 Computes the length of the shortest path for all pairs of vertices using the Floyd-Warshall algorithm. Returns a hash mapping a pair of vertices to the length of the shortest path between them.}
 
 @defproc[(transitive-closure [g graph?]) (hash/c (list any/c any/c) boolean? #:immutable #f)]{
 Returns a hash mapping a pair of vertices to a boolean. If true, then there exists a path from the first vertex to the second.}
                                                                                             
-                                                                                            
-                                                                                            
-                                                                                            
-                                                                                            
-                                                                                            
-@(bibliography (bib-entry #:key "GGCL"
-                          #:author "Lie-Quan Lee, Jeremy G. Siek, and Andrew Lumsdaine"
-                          #:title "The Generic Graph Component Library"
-                          #:location "OOPSLA"
-                          #:date "1999"))
+@; graph coloring -------------------------------------------------------------
+
+Graph coloring functions are only valid for undirected graphs.
+
+@section{Graph Coloring}
+@defproc[(coloring/greedy 
+          [g graph?] 
+          [#:order order (or/c 'smallest-last (-> list? list?)) 'smallest-last])
+         (values number? (hash/c any/c number? #:immutable #f))]{
+Returns a "greedy" coloring of the given graph, where the color for a vertex is the "smallest" color not used by one of its neighbors (or the number of colors is increased).
+
+The function always returns a valid coloring but the optimality (ie number of colors used) depends on the ordering in which the vertices are considered. The default is to use "smallest-last" ordering (see @racket[order-smallest-last]) but if @racket[#:order] is a procedure, then it is applied to sort the list of vertices before the coloring begins.
+
+Only works on undirected graphs.
+
+The returned "colors" are numbers starting from 0. The function also returns the total number of colors used.}
+
+@defproc[(order-smallest-last [g graph?]) list?]{
+Consumes a graph and returns the vertices of the graph in "smallest-last" order. The ordering proceeds as follows. The vertex with the smallest degree is last. Then that vertex is removed and the degrees of the remaining vertices are updated. Then the second to last vertex has the lowest remaining degree and so on.
+
+Only works for undirected graphs.}
+                                                                
+@defproc[(valid-coloring? [g graph?] [coloring (hash/c any/c number?)]) boolean?]{
+Indicates whether the given coloring (a hash that maps a vertex to a color) is valid, meaning that no edge has two vertices of the same color.
+
+This function assumes that a "color" is a number and uses @racket[=] to compare colors.}
+
+
+@(bibliography 
+  (bib-entry #:key "GGCL"
+             #:author "Lie-Quan Lee, Jeremy G. Siek, and Andrew Lumsdaine"
+             #:title "The Generic Graph Component Library"
+             #:location "OOPSLA"
+             #:date "1999")
+  (bib-entry #:key "tarjan-scc"
+             #:author "Robert E. Tarjan"
+             #:title "Depth first search and linear graph algorithms."
+             #:location "SIAM Journal on Computing, 1(2):146-160"
+             #:date "1972"))
