@@ -4,4 +4,5 @@
          "graph-fns-minspantree-tests.rkt"
          "graph-fns-singlesource-shortestpaths-tests.rkt"
          "graph-fns-allpairs-shortestpaths-tests.rkt"
+         "graph-fns-coloring-tests.rkt"
          "boost-examples.rkt")
