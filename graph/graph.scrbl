@@ -325,6 +325,11 @@ Returns a hash mapping a pair of vertices to a boolean. If true, then there exis
 Graph coloring functions are only valid for undirected graphs.
 
 @section{Graph Coloring}
+
+@defproc[(coloring [g graph?] [num-colors natural-number/c] [#:order order (-> list? list?) (λ (x) x)])
+         (or/c (hash/c any/c number? #:immutable #f) #f)]{
+Returns a coloring for the given graph using at most the specified number of colors, or @racket[#f] if no coloring is possible. Uses backtracking algorithm so takes exponential time. Optional @racket[#:order] parameter determines the order in which verticies are colored.}
+                                                                                        
 @defproc[(coloring/greedy 
           [g graph?] 
           [#:order order (or/c 'smallest-last (-> list? list?)) 'smallest-last])
