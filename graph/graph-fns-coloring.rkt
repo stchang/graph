@@ -8,6 +8,29 @@
 
 ;; graph coloring algorithms
 
+;; naive coloring algorithm using backtracking
+;; returns hash of vertex to color, or #f if coloring is not possible
+(define (coloring G num-colors #:order [order (λ (x) x)])
+  (define-hash color)
+  (let loop ([vs (order (in-vertices G))])
+    (cond 
+      [(null? vs) color]
+      [else
+       (define u (car vs))
+       (let color-select-loop ([try-col 0])
+         (and 
+          (not (= try-col num-colors)) ; fail
+          (cond 
+            [(set-member? ; calc used colors
+              (for/set ([v (in-neighbors G u)]) (color v num-colors))  
+              try-col)
+             (color-select-loop (add1 try-col))]
+            [else
+             (color-set! u try-col) ; try this color and try to color other vs
+             (or (loop (cdr vs))    ; if it works, great
+                 (color-select-loop (add1 try-col)))])))]))) ; else, backtrack
+
+
 ;; Assigns to vertex v the smallest color not used by neighbors,
 ;;  bumping up the number of colors if necessary
 ;; Always produces a valid coloring but the optimality depends on the order in
