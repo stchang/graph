@@ -2,7 +2,8 @@
 
 (require "hash-utils.rkt"
          "gen-graph.rkt"
-         "graph-fns-basic.rkt")
+         "graph-fns-basic.rkt"
+         "graph-fns-singlesource-shortestpaths.rkt")
 
 (provide (all-defined-out))
 
@@ -64,6 +65,27 @@
                   (min ((Ds k-1) i j) (+ ((Ds k-1) i k) ((Ds k-1) k j)))))
     (Ds-set! k (λ (u v) (if (equal? u v) 0 (hash-ref new-D (list u v) +inf.0))))
     new-D))
+
+;; G must be weighted
+;; uses Bellman-Ford to eliminate negative edges,
+;;   then runs dijkstra for each vertex in G
+;; should be faster than floyd-warshall for sparse graphs
+(define (johnson _g)
+  (define G (graph-copy _g)) ; copy g because we will change weights
+  (define G-prime (graph-copy G))
+  (define s (gensym))
+  (define-hashes h D)
+  (for ([v (in-vertices G)]) (add-directed-edge! G-prime s v 0))
+  (define-values (δ π) (bellman-ford G-prime s))
+  (for ([v (in-vertices G-prime)]) (h-set! (hash-ref δ v)))
+  (for ([e (in-edges _g)])
+    (match-define (list u v) e)
+    (add-directed-edge! G u v (+ (edge-weight _g u v) (h u) (- (h v)))))
+  (for ([u (in-vertices _g)])
+    (define-values (δu πu) (dijkstra G u))
+    (for ([v (in-vertices _g)])
+      (D-set! (list u v) (+ (hash-ref δu v) (h v) (- (h u))))))
+  D)
 
 (define (transitive-closure G)
   (define vs (in-vertices G))
