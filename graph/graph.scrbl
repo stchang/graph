@@ -5,6 +5,7 @@
                      "../queue/priority.rkt"
                      (except-in "../queue/gen-queue.rkt" empty?)
                      racket/contract/base
+                     racket/generic
                      racket))
 
 @title{Racket Generic Graph Library}
@@ -13,7 +14,7 @@
 
 Generic graph library for Racket. 
 
-Requires Racket 5.3 or later (due to @racket[define/generic]).
+Requires Racket 5.3 or later (due to @racket[define-generics]).
 
 @(define the-eval (make-base-eval))
 @(the-eval '(require "main.rkt"))
