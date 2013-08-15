@@ -1,6 +1,21 @@
+******** 2013-08-15 ********
+- implement gen:custom-write for graph structs
+
 ******** 2013-08-12 ********
 - some larger changes to investigate:
   - gen:graph should use gen:vertex and gen:edge ?
+    THOUGHTS: 
+    - this is tricky since an "edge" can't always exist on its own outside
+      the context of a graph
+    - it seems like an "edge" is more of a concept rather than it's own "object"
+    - For example, many graph algorithms use the pattern (for* u \in graph, v
+      \in neighbors of u), where (u,v) is an edge but it wouldn't really make
+      sense for there to be an edge data structure. Would I have to re-create
+      the struct at this point from u and v? What about the weight? Does it get
+      stored with the edge or with the graph?
+    - it seems like an edge data structure is only useful in a graph
+      implementation that is a list of edges; but then this representation
+      would be less efficient for the above pattern
   - add functional graph interface (look at Martin Erwig's FGL for Haskell)
 
 ******** 2013-08-09 ********
