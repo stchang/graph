@@ -7,6 +7,8 @@
   (has-edge? graph u v)
   (add-edge! graph u v [weight])
   (add-directed-edge! graph u v [weight])
+  (remove-edge! graph u v)
+  (remove-directed-edge! graph u v)
   (add-vertex! graph v)
   (in-vertices graph)
   (in-neighbors graph v)
