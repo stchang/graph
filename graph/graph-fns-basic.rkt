@@ -81,22 +81,27 @@
 ;; ie, the shortest path from s to v for undirected graphs, 
 ;;     or graphs where all edges have the same weight
 (define (fewest-vertices-path G s v)
-  (define-hashes color π)
-  (define found-v #f)
-  (define (found-v?) found-v)
-
-  (do-bfs G s #:break found-v?
-    #:init
-      (for ([u (in-vertices G)]) (π-set! u #f))
-      (π-set! s #f)
-    #:discover (to from)
-      (when (equal? from v) (set! found-v #t))
-      (π-set! from to)
-    #:return
-      (if found-v?
+  (cond
+    [(equal? s v) (list s)]
+    [else
+     (define-hashes π)
+     (define found-v #f)
+     (define (found-v?) found-v)
+     
+     (do-bfs G s #:break found-v?
+       #:init (for ([u (in-vertices G)]) (π-set! u #f))
+       #:discover (from to)
+         (when (equal? to v) (set! found-v #t))
+         (π-set! to from)
+       #:return
+      #;(if found-v
           (let loop ([path null] [v v])
             (if (equal? v s) (cons s path) (loop (cons v path) (π v))))
-          (error 'shortest-path "no path from ~a to ~a" s v))))
+          (error 'shortest-path "no path from ~a to ~a" s v))
+          (and found-v
+               (let loop ([path null] [v v])
+                 (if (equal? v s) (cons s path) (loop (cons v path) (π v))))
+               #;(error 'shortest-path "no path from ~a to ~a" s v)))]))
 
            
 ;; dfs ------------------------------------------------------------------------

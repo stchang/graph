@@ -11,3 +11,4 @@
 
 (define (add-edge@ adj u v) (hash-update! adj u (λ (vs) (set-add vs v)) (set)))
 (define (add-vertex@ adj v) (hash-update! adj v (λ (vs) vs) (set)))
+(define (remove-edge@ adj u v) (hash-update! adj u (λ (vs) (set-remove vs v))))
