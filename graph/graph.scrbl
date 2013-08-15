@@ -9,7 +9,7 @@
 
 @title{Racket Generic Graph Library}
 
-@defmodule[graph]
+@defmodule[graph #:use-sources ("main.rkt")]
 
 Generic graph library for Racket. 
 
@@ -24,29 +24,30 @@ Requires Racket 5.3 or later (due to @racket[define/generic]).
 @section{Generic Graph Interface}
 
 @defthing[gen:graph any/c]{
-  A @tech[#:doc '(lib "scribblings/reference/generic.scrbl")]{generic interface} (see @secref["struct-generics"]) that defines a @deftech{graph}. To supply method implementations, a struct should use the @racket[#:methods] form. A @tech{graph} has the following methods:
+  A @tech[#:doc '(lib "scribblings/reference/generic.scrbl")]{generic interface} (see @secref["struct-generics"]) that defines a @deftech{graph}. To supply method implementations, a struct should use the @racket[#:methods] form.}
+
+@defproc[(graph? [g any/c]) boolean?]{
+  Returns @racket[#t] if @racket[g] implements @racket[gen:graph] (ie, is a @tech{graph}) and @racket[#f] otherwise.}
+
+A @tech{graph} has the following methods:
 
 @itemize[
  
-  @item{@racket[has-vertex?]: Accepts two arguments, a graph and a vertex. Indicates whether the vertex is in the graph.}
-  @item{@racket[has-edge?]: Accepts threes arguments, a graph and two vertices. Indicates whether the edge is in the graph.}
-  @item{@racket[add-vertex!]: Accepts two arguments, a graph and a vertex. Imperatively adds the vertex to the graph.}
-  @item{@racket[add-edge!]: Accepts three or four arguments, a graph, two vertices, and an optional weight value. Imperatively adds the undirected edge comprised of the two vertices and the optional weight to the graph.}
-  @item{@racket[add-directed-edge!]: Accepts three or four arguments, a graph, source and destination vertices, and an optional weight value. Imperatively adds to the graph the directed, optionally weighted edge going from the source to the destination.}
-  @item{@racket[remove-edge!]: Accepts three arguments, a graph and two vertices, and imperatively removes the undirected edge.}
-  @item{@racket[remove-directed-edge!]: Accepts three arguments, a graph and two vertices, and imperatively removes the directed edge.}
-  @item{@racket[in-vertices]: Accepts one argument, a graph. Returns a list whose elements are the vertices of the graph.}
-  @item{@racket[in-neighbors]: Accepts two arguments, a graph and a vertex. Returns a sequence whose elements are the vertex's neighbors in the graph.}
-  @item{@racket[in-edges]: Accepts one argument, a graph. Returns a sequence whose elements are the edges of the graph.}
-  @item{@racket[edge-weight]: Accepts three arguments, a graph and two vertices. Returns the weight of the edge in the graph (if it has one).}
-  @item{@racket[transpose]: Accepts one argument, a graph. Returns a new graph where the edges of the original graph are reversed.}
-  @item{@racket[graph-copy]: Accepts one graph argument and returns a copy of that graph.}
+  @item{@defproc[(has-vertex? [g graph?] [v any/c]) boolean?]{Indicates whether a vertex is in the given graph.}}
+  @item{@defproc[(has-edge? [g graph?] [u any/c] [v any/c]) boolean?]{Indicates whether an edge is in the given graph.}}
+  @item{@defproc[(add-vertex! [g graph?] [v any/c]) void?]{Imperatively adds a vertex to a graph.}}
+  @item{@defproc[(add-edge! [g graph?] [u any/c] [v any/c] [weight number? 1]) void?]{Imperatively adds an undirected edge and optional weight to a graph.}}
+  @item{@defproc[(add-directed-edge! [g graph?] [u any/c] [v any/c] [weight number? q]) void?]{Imperatively adds a directed, optionally weighted edge to a graph.}}
+  @item{@defproc[(remove-edge! [g graph?] [u any/c] [v any/c]) void?]{Imperatively removes the undirected edge.}}
+  @item{@defproc[(remove-directed-edge! [g graph?] [u any/c] [v any/c]) void?]{Imperatively removes the directed edge.}}
+  @item{@defproc[(in-vertices [g graph?]) list?]{Returns a list of vertices in the graph.}}
+  @item{@defproc[(in-neighbors [g graph?] [v any/c]) sequence?]{Returns a sequence of vertex @racket[v]'s neighbors in the graph.}}
+  @item{@defproc[(in-edges [g graph?]) sequence?]{Returns a sequence of edges in the graph.}}
+  @item{@defproc[(edge-weight [g graph?] [u any/c] [v any/c]) number?]{Returns the weight of the edge in the graph (if it has one).}}
+  @item{@defproc[(transpose [g graph?]) graph?]{Returns a new graph where the edges of the original graph are reversed.}}
+  @item{@defproc[(graph-copy [g graph?]) graph?]{Returns a copy of the given graph.}}
   ]
-}
 
-@defproc[(graph? [g any/c]) boolean?]{
-  Returns @racket[#t] if @racket[g] is a @tech{graph} (ie, implements @racket[gen:graph]) and @racket[#f] otherwise.
-}
 
 @; graph constructors ---------------------------------------------------------
 @section{Graph Constructors}
@@ -56,7 +57,7 @@ Requires Racket 5.3 or later (due to @racket[define/generic]).
 
 @defproc[(unweighted-graph? [g any/c]) boolean?]{Indicates whether a graph is an unweighted graph.}
 
-@defproc[(unweighted-graph/undirected [edges (list/c (list/c any/c any/c) ...)])
+@defproc[(unweighted-graph/undirected [edges (listof (list/c any/c any/c))])
          (and/c graph? unweighted-graph?)]{
   Creates an unweighted graph that implements @racket[gen:graph] from a list of undirected edges. Each edge is represented by a list of two vertices. Vertices can be any racket values comparable with @racket[equal?].
 @examples[#:eval the-eval
@@ -68,7 +69,7 @@ Requires Racket 5.3 or later (due to @racket[define/generic]).
   ]
 }
                                           
-@defproc[(unweighted-graph/directed [edges (list/c (list/c any/c any/c) ...)])
+@defproc[(unweighted-graph/directed [edges (listof (list/c any/c any/c))])
          (and/c graph? unweighted-graph?)]{
 Creates an unweighted graph that implements @racket[gen:graph] from a list of directed edges. Each edge is represented by a list of two vertices, where the first vertex in the list is the source and the second is the destination. Vertices can be any racket values comparable with @racket[equal?].
 @examples[#:eval the-eval
@@ -79,7 +80,7 @@ Creates an unweighted graph that implements @racket[gen:graph] from a list of di
   (has-edge? g 'b 'a)
   ]}
 
-@defproc[(unweighted-graph/adj [edges (list/c (list/c any/c ...) ...)])
+@defproc[(unweighted-graph/adj [edges (listof list?)])
          (and/c graph? unweighted-graph?)]{
 Creates an unweighted graph that implements @racket[gen:graph] from an adjacency list. Each element of the list is a list of vertices where the first vertex is the source and the rest are destinations. Vertices can be any racket values comparable with @racket[equal?].
 @examples[#:eval the-eval
@@ -95,7 +96,7 @@ Creates an unweighted graph that implements @racket[gen:graph] from an adjacency
 
 @defproc[(weighted-graph? [g any/c]) boolean?]{Indicates whether a graph is a weighted graph.}
 
-@defproc[(weighted-graph/undirected [edges (list/c (list/c number? any/c any/c) ...)])
+@defproc[(weighted-graph/undirected [edges (listof (list/c number? any/c any/c))])
          (and/c graph? weighted-graph?)]{
   Creates a weighted graph that implements @racket[gen:graph] from a list of weighted, undirected edges. Each edge is represented by a list of one number and two vertices, where the number is the weight. Vertices can be any racket values comparable with @racket[equal?].
 @examples[#:eval the-eval
@@ -109,7 +110,7 @@ Creates an unweighted graph that implements @racket[gen:graph] from an adjacency
   ]
 }
                                           
-@defproc[(weighted-graph/directed [edges (list/c (list/c number? any/c any/c) ...)])
+@defproc[(weighted-graph/directed [edges (listof (list/c number? any/c any/c))])
          (and/c graph? weighted-graph?)]{
 Creates a weighted graph that implements @racket[gen:graph] from a list of weighted, directed edges. Each edge is represented by a list of one number and two vertices, where the number is the weight, and the first vertex in the list is the source and the second vertex is the destination. Vertices can be any racket values comparable with @racket[equal?]. Non-existent edges return an infinite weight, even for non-existent vertices.
 @examples[#:eval the-eval
@@ -143,7 +144,7 @@ Creates a weighted graph that implements @racket[gen:graph] from a list of weigh
           [#:visit? custom-visit?-fn (-> graph? [source any/c] [from any/c] [to any/c] boolean?) #f]
           [#:discover discover (-> graph? [source any/c] [from any/c] [to any/c] void?) void]
           [#:visit visit (-> graph? [source any/c] [v any/c] void?) void]
-          [#:return finish (-> graph? [source any/c] (values any/c ...)) void]) (values any/c ...)]{
+          [#:return finish (-> graph? [source any/c] any) void]) any]{
 Generalized breadth-first search. Partially inspired by the C++ Boost Graph Library. See Lee et al. OOPSLA 1999 @cite["GGCL"]. Here is the rough implementation:
 @racketblock[  
   (init G s)
@@ -196,7 +197,7 @@ For example, below is Dijkstra's algorithm, implemented with @racket[do-bfs]. In
 
 The @racket[#:visit] clause binds two identifiers, representing the searched nodes and @racket[#:discover] is similar. This form is somewhat brittle since @racket[#:init] and @racket[#:return] don't bind any ways and instead @racket[G] and @racket[s] are captured from the context but this hasnt been a problem in practice.
 
-@racket[bfs], @racket[fewest-vertices-path], @racket[prim], and @racket[dijkstra] all use this form.}
+@racket[bfs], @racket[fewest-vertices-path], @racket[mst-prim], and @racket[dijkstra] all use this form.}
                
 @defproc[(fewest-vertices-path [G graph?] [source any/c] [target any/c]) (or/c list? #f)]{
 Consumes a graph and two vertices, and returns the shortest path (in terms of number of vertices) between the two vertices. The result is a list of vertices, or @racket[#f] if there is no path.}
@@ -222,7 +223,7 @@ Standard textbook depth-first search algorith, ie like in CLRS. Consumes a graph
                                 (-> graph? [from any/c] [to any/c] boolean?) (λ _ #f)]
           [#:process-unvisited process-unvisited
                                (-> graph? [from any/c] [to any/c] void?) void]
-          [#:return finish (-> graph? (values any/c ...)) void]) (values any/c ...)]{
+          [#:return finish (-> graph? any) void]) any]{
 Generalized depth-first search. Partially inspired by the C++ Boost Graph Library. See Lee et al. OOPSLA 1999 @cite["GGCL"]. Here is the rough implementation:
 @racketblock[  
   (init G)
@@ -244,7 +245,7 @@ The @racket[do-visit] function is the inner loop that keeps following edges dept
 
 The @racket[order] function is a sorting function that specifies where to start the search and @racket[break] aborts the search and returns when it is true. @racket[process-unvisited?] and @racket[process-unvisited] specify code to run when a node is not visited.}
 
-                                                                                    @defform/subs[(do-dfs graph maybe-order maybe-break maybe-init maybe-visit? maybe-prologue maybe-epilogue maybe-process-unvisited? maybe-process-unvisited maybe-return)
+@defform/subs[(do-dfs graph maybe-order maybe-break maybe-init maybe-visit? maybe-prologue maybe-epilogue maybe-process-unvisited? maybe-process-unvisited maybe-return)
               ([graph graph?]
                [maybe-order (code:line) (code:line #:init-queue order)]
                [order (-> list? list?)]
@@ -292,14 +293,14 @@ Indicates whether a graph is directed and acyclic.}
 
 @defproc[(tsort [g graph?]) list?]{Returns the vertices in the given graph, topologically sorted. Note that the returned order may not be the only valid ordering.}
 
-@defproc[(scc [g graph?]) (list/c list? ...)]{Calculates the strongly connected components of a graph using Tarjan's algorithm @cite{tarjan-scc}. Returns a list of list of vertices, where each sublist is a strongly connected subgraph.}
+@defproc[(scc [g graph?]) (listof list?)]{Calculates the strongly connected components of a graph using Tarjan's algorithm @cite{tarjan-scc}. Returns a list of list of vertices, where each sublist is a strongly connected subgraph.}
                                        
 @; min span trees -------------------------------------------------------------
 @section{Minimum Spanning Tree}
 
-@defproc[(mst-kruskal [g graph?]) (list (list any/c any/c) ...)]{Computes the minimum spanning tree using Kruskal's algorithm and the @racket[data/union-find] data structure. Returns a list of edges.}
+@defproc[(mst-kruskal [g graph?]) (listof (list/c any/c any/c))]{Computes the minimum spanning tree using Kruskal's algorithm and the @racket[data/union-find] data structure. Returns a list of edges.}
 
-@defproc[(mst-prim [g graph?]) (list (list any/c any/c) ...)]{Computes the minimum spanning tree of a graph using Prim's algorithm, which is based on breadth-first search. Returns a list of edges.}
+@defproc[(mst-prim [g graph?]) (listof (list/c any/c any/c))]{Computes the minimum spanning tree of a graph using Prim's algorithm, which is based on breadth-first search. Returns a list of edges.}
 
 @; single source shortest paths -----------------------------------------------
 @section{Single-source Shortest Paths}
@@ -320,10 +321,10 @@ The fastest shortest paths algorithm but only works on dags.}
                                                                                             
 @; all-pairs shortest paths ---------------------------------------------------
 @section{All-pairs Shortest Paths}
-@defproc[(floyd-warshall [g graph?]) (hash/c (list any/c any/c) number? #:immutable #f)]{
+@defproc[(floyd-warshall [g graph?]) (hash/c (list/c any/c any/c) number? #:immutable #f)]{
 Computes the length of the shortest path for all pairs of vertices using the Floyd-Warshall algorithm. Returns a hash mapping a pair of vertices to the length of the shortest path between them.}
 
-@defproc[(transitive-closure [g graph?]) (hash/c (list any/c any/c) boolean? #:immutable #f)]{
+@defproc[(transitive-closure [g graph?]) (hash/c (list/c any/c any/c) boolean? #:immutable #f)]{
 Returns a hash mapping a pair of vertices to a boolean. If true, then there exists a path from the first vertex to the second.}
                                                                                             
 @; graph coloring -------------------------------------------------------------
@@ -361,7 +362,7 @@ This function assumes that a "color" is a number and uses @racket[=] to compare 
 @; max flow -------------------------------------------------------------------
 @section{Maximum Flow}
 @defproc[(maxflow [g graph?] [source any/c] [sink any/c])
-         (hash/c (list any/c any/c) number?)]{
+         (hash/c (list/c any/c any/c) number?)]{
 Computes the maximum flow in graph @racket[g] from @racket[source] to @racket[sink] using the Edmonds-Karp algorithm, which runs in time O(VE^2). Edmonds-Karp is an improvement on the Ford-Fulkerson algorithm in that it uses @racket[fewest-vertices-path] to find an augmenting path in each iteration.
                                    
 The function returns a hash mapping an edge to a non-negative number representing the flow along that edge. The returned returned flow is maximal and obeys a few properties:
