@@ -1,6 +1,9 @@
 ******** 2013-08-15 ********
 - implement gen:custom-write for graph structs
 - write docs for gen:queue
+- make all generic algorithms methods? with the default the current impl
+  - seems like every function that only uses generic methods should be a
+    method with the current implementation as the fallback
 
 ******** 2013-08-12 ********
 - some larger changes to investigate:
