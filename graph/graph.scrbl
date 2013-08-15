@@ -11,6 +11,10 @@
 
 @defmodule[graph]
 
+Generic graph library for Racket. 
+
+Requires Racket 5.3 or later (due to @racket[define/generic]).
+
 @(define the-eval (make-base-eval))
 @(the-eval '(require "main.rkt"))
 
@@ -194,8 +198,8 @@ The @racket[#:visit] clause binds two identifiers, representing the searched nod
 
 @racket[bfs], @racket[fewest-vertices-path], @racket[prim], and @racket[dijkstra] all use this form.}
                
-@defproc[(fewest-vertices-path [G graph?] [source any/c] [target any/c]) (list/c any/c ...)]{
-Consumes a graph and two vertices, and returns the shortest path (in terms of number of vertices) between the two vertices. The result is a list of vertices.}
+@defproc[(fewest-vertices-path [G graph?] [source any/c] [target any/c]) (or/c list? #f)]{
+Consumes a graph and two vertices, and returns the shortest path (in terms of number of vertices) between the two vertices. The result is a list of vertices, or @racket[#f] if there is no path.}
 
 @; dfs ------------------------------------------------------------------------
 @subsection{Depth-first Search}
