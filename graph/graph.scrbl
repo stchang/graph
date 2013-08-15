@@ -29,6 +29,8 @@
   @item{@racket[add-vertex!]: Accepts two arguments, a graph and a vertex. Imperatively adds the vertex to the graph.}
   @item{@racket[add-edge!]: Accepts three or four arguments, a graph, two vertices, and an optional weight value. Imperatively adds the undirected edge comprised of the two vertices and the optional weight to the graph.}
   @item{@racket[add-directed-edge!]: Accepts three or four arguments, a graph, source and destination vertices, and an optional weight value. Imperatively adds to the graph the directed, optionally weighted edge going from the source to the destination.}
+  @item{@racket[remove-edge!]: Accepts three arguments, a graph and two vertices, and imperatively removes the undirected edge.}
+  @item{@racket[remove-directed-edge!]: Accepts three arguments, a graph and two vertices, and imperatively removes the directed edge.}
   @item{@racket[in-vertices]: Accepts one argument, a graph. Returns a list whose elements are the vertices of the graph.}
   @item{@racket[in-neighbors]: Accepts two arguments, a graph and a vertex. Returns a sequence whose elements are the vertex's neighbors in the graph.}
   @item{@racket[in-edges]: Accepts one argument, a graph. Returns a sequence whose elements are the edges of the graph.}
@@ -352,6 +354,18 @@ Indicates whether the given coloring (a hash that maps a vertex to a color) is v
 
 This function assumes that a "color" is a number and uses @racket[=] to compare colors.}
 
+@; max flow -------------------------------------------------------------------
+@section{Maximum Flow}
+@defproc[(maxflow [g graph?] [source any/c] [sink any/c])
+         (hash/c (list any/c any/c) number?)]{
+Computes the maximum flow in graph @racket[g] from @racket[source] to @racket[sink] using the Edmonds-Karp algorithm, which runs in time O(VE^2). Edmonds-Karp is an improvement on the Ford-Fulkerson algorithm in that it uses @racket[fewest-vertices-path] to find an augmenting path in each iteration.
+                                   
+The function returns a hash mapping an edge to a non-negative number representing the flow along that edge. The returned returned flow is maximal and obeys a few properties:
+@itemize[@item{The flow out of the source equals the source into the sink.}
+         @item{The flow out of each non-source/sink vertex equals the flow into that vertex.}
+         @item{The flow along each edge is <= the edge's capacity (ie, weight).}]
+                                   
+This function should only be used on directed, weighted graphs. }
 
 @(bibliography 
   (bib-entry #:key "GGCL"
