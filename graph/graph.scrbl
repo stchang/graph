@@ -38,7 +38,7 @@ A @tech{graph} has the following methods:
   @item{@defproc[(has-edge? [g graph?] [u any/c] [v any/c]) boolean?]{Indicates whether an edge is in the given graph.}}
   @item{@defproc[(add-vertex! [g graph?] [v any/c]) void?]{Imperatively adds a vertex to a graph.}}
   @item{@defproc[(add-edge! [g graph?] [u any/c] [v any/c] [weight number? 1]) void?]{Imperatively adds an undirected edge and optional weight to a graph.}}
-  @item{@defproc[(add-directed-edge! [g graph?] [u any/c] [v any/c] [weight number? q]) void?]{Imperatively adds a directed, optionally weighted edge to a graph.}}
+  @item{@defproc[(add-directed-edge! [g graph?] [u any/c] [v any/c] [weight number? 0]) void?]{Imperatively adds a directed, optionally weighted edge to a graph.}}
   @item{@defproc[(remove-edge! [g graph?] [u any/c] [v any/c]) void?]{Imperatively removes the undirected edge.}}
   @item{@defproc[(remove-directed-edge! [g graph?] [u any/c] [v any/c]) void?]{Imperatively removes the directed edge.}}
   @item{@defproc[(in-vertices [g graph?]) list?]{Returns a list of vertices in the graph.}}
