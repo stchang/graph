@@ -27,7 +27,7 @@
    (define (edge-weight g u v) 
 ;     (unless (and (has-vertex? g u) (has-vertex? g v))
 ;       (error 'edge-weight "non-existent edge ~a ~a" u v))
-     (if (member (list u v) (in-edges g)) 1
+     (if (member (list u v) (sequence->list (in-edges g))) 1
          (error 'edge-weight "edge ~a ~a does not exist" u v)))
    (define (add-directed-edge! g u v [weight #f])
      (define adj (unweighted-graph-adjlist g))
