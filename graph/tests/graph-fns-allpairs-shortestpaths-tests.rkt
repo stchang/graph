@@ -100,3 +100,9 @@
               ((4 2) . #t)
               ((4 3) . #t)
               ((4 4) . #t))))
+
+
+;; johnson --------------------------------------------------------------------
+(define weights25.1johnson (johnson g25.1))
+
+(check-equal? weights25.1johnson weights25.1fw)

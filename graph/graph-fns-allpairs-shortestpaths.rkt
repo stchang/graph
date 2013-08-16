@@ -71,19 +71,20 @@
 ;;   then runs dijkstra for each vertex in G
 ;; should be faster than floyd-warshall for sparse graphs
 (define (johnson _g)
-  (define G (graph-copy _g)) ; copy g because we will change weights
+  (define G (graph-copy _g)) ; copy input _g because we will change weights
   (define G-prime (graph-copy G))
+  (define vs-in-G (in-vertices G))
   (define s (gensym))
   (define-hashes h D)
-  (for ([v (in-vertices G)]) (add-directed-edge! G-prime s v 0))
-  (define-values (δ π) (bellman-ford G-prime s))
-  (for ([v (in-vertices G-prime)]) (h-set! (hash-ref δ v)))
-  (for ([e (in-edges _g)])
+  (for ([v vs-in-G]) (add-directed-edge! G-prime s v 0))
+  (define-values (δbf πbf) (bellman-ford G-prime s))
+  (for ([v vs-in-G]) (h-set! v (hash-ref δbf v)))
+  (for ([e (in-edges G)])
     (match-define (list u v) e)
     (add-directed-edge! G u v (+ (edge-weight _g u v) (h u) (- (h v)))))
-  (for ([u (in-vertices _g)])
+  (for ([u vs-in-G])
     (define-values (δu πu) (dijkstra G u))
-    (for ([v (in-vertices _g)])
+    (for ([v vs-in-G])
       (D-set! (list u v) (+ (hash-ref δu v) (h v) (- (h u))))))
   D)
 
