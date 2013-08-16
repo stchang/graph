@@ -331,6 +331,8 @@ Returns a hash mapping a pair of vertices to a boolean. If true, then there exis
 @defproc[(johnson [g graph?]) (hash/c (list/c any/c any/c) number? #:immutable #f)]{
 Computes all-pairs shortest paths using Johnson's algorithm. Should be faster than Floyd Warshall for sparse graphs. Theoretical running time is O(VElogV).
 
+Handles negative weights by first running @racket[bellman-ford]. The uses @racket[dijkstra] for each vertex in the graph.
+
 Note, the running time could be theoretically faster with a version of Dijkstra that uses a Fibonacci heap instead of a standard heap.}
 
 
