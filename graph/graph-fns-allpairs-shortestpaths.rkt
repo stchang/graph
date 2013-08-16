@@ -66,7 +66,6 @@
     (Ds-set! k (λ (u v) (if (equal? u v) 0 (hash-ref new-D (list u v) +inf.0))))
     new-D))
 
-;; G must be weighted
 ;; uses Bellman-Ford to eliminate negative edges,
 ;;   then runs dijkstra for each vertex in G
 ;; should be faster than floyd-warshall for sparse graphs

@@ -327,7 +327,13 @@ Computes the length of the shortest path for all pairs of vertices using the Flo
 
 @defproc[(transitive-closure [g graph?]) (hash/c (list/c any/c any/c) boolean? #:immutable #f)]{
 Returns a hash mapping a pair of vertices to a boolean. If true, then there exists a path from the first vertex to the second.}
-                                                                                            
+                                                                 
+@defproc[(johnson [g graph?]) (hash/c (list/c any/c any/c) number? #:immutable #f)]{
+Computes all-pairs shortest paths using Johnson's algorithm. Should be faster than Floyd Warshall for sparse graphs. Theoretical running time is O(VElogV).
+
+Note, the running time could be theoretically faster with a version of Dijkstra that uses a Fibonacci heap instead of a standard heap.}
+
+
 @; graph coloring -------------------------------------------------------------
 
 Graph coloring functions are only valid for undirected graphs.
@@ -371,7 +377,7 @@ The function returns a hash mapping an edge to a non-negative number representin
          @item{The flow out of each non-source/sink vertex equals the flow into that vertex.}
          @item{The flow along each edge is <= the edge's capacity (ie, weight).}]
                                    
-This function should only be used on directed, weighted graphs. }
+This function should only be used on directed, weighted graphs.}
 
 @(bibliography 
   (bib-entry #:key "GGCL"
