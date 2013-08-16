@@ -379,7 +379,15 @@ The function returns a hash mapping an edge to a non-negative number representin
          @item{The flow out of each non-source/sink vertex equals the flow into that vertex.}
          @item{The flow along each edge is <= the edge's capacity (ie, weight).}]
                                    
-This function should only be used on directed, weighted graphs.}
+This function should only be used on directed graphs, otherwise things get double counted.}
+                                               
+@defproc[(bipartite? [g graph?]) (or/c #f (list/c list? list?))]{
+  Determines whether a graph is bipartite using a @racket[dfs]-based 2-@racket[coloring], thus runs in linear time. Returns @racket[#f] if the graph is not bipartite (ie, not 2-colorable), and other wise returns a list of two lists, where each sublist is the "left" and "right" sets of vertices, respectively, in the bipartite graph.}
+
+@defproc[(maximum-bipartite-matching [g graph?]) (listof (list/c any/c any/c))]{
+  Returns a list of edges representing the maximum matching of the given bipartite graph. An error is raised if the given graph is not bipartite. Uses @racket[maxflow] to compute the maximum matching.
+
+Note: this is not the Hopcroft-Karp (ie fastest) bipartite matching algorithm.}
 
 @(bibliography 
   (bib-entry #:key "GGCL"
