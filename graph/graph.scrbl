@@ -1,23 +1,20 @@
 #lang scribble/manual
 @(require scribble/eval
-          (for-label "main.rkt" 
-                     "../queue/fifo.rkt"
-                     "../queue/priority.rkt"
-                     (except-in "../queue/gen-queue.rkt" empty?)
+          (for-label graph
                      racket/contract/base
                      racket/generic
                      racket))
 
 @title{Racket Generic Graph Library}
 
-@defmodule[graph #:use-sources ("main.rkt")]
+@defmodule[graph]
 
 Generic graph library for Racket. 
 
 Requires Racket 5.3 or later (due to @racket[define-generics]).
 
 @(define the-eval (make-base-eval))
-@(the-eval '(require "main.rkt"))
+@(the-eval '(require graph))
 
 @author[@author+email["Stephen Chang" "stchang@racket-lang.org"]]
 
@@ -25,7 +22,7 @@ Requires Racket 5.3 or later (due to @racket[define-generics]).
 @section{Generic Graph Interface}
 
 @defthing[gen:graph any/c]{
-  A @tech[#:doc '(lib "scribblings/reference/generic.scrbl")]{generic interface} (see @secref["struct-generics"]) that defines a @deftech{graph}. To supply method implementations, a struct should use the @racket[#:methods] form.}
+  A @tech[#:doc '(lib "scribblings/reference/reference.scrbl")]{generic interface} (see @secref[#:doc '(lib "scribblings/reference/reference.scrbl")]{struct-generics}) that defines a @deftech{graph}. To supply method implementations, a struct should use the @racket[#:methods] form.}
 
 @defproc[(graph? [g any/c]) boolean?]{
   Returns @racket[#t] if @racket[g] implements @racket[gen:graph] (ie, is a @tech{graph}) and @racket[#f] otherwise.}
