@@ -3,6 +3,7 @@
           (for-label graph
                      racket/contract/base
                      racket/generic
+                     data/queue
                      racket))
 
 @title{Racket Generic Graph Library}
@@ -11,7 +12,7 @@
 
 Generic graph library for Racket. 
 
-Requires Racket 5.3 or later (due to @racket[define-generics]).
+Requires Racket 5.3.2 or later (due to @racket[define-generics] and @racket[enqueue-front!] in @racketmodname[data/queue]).
 
 @(define the-eval (make-base-eval))
 @(the-eval '(require graph))
