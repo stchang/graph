@@ -95,7 +95,13 @@
 
 (define (mk-unweighted-graph/adj adj)
   (define adj-hash (make-hash))
-  (for ([vs adj]) (hash-set! adj-hash (car vs) (apply set (cdr vs))))
+  (for ([vs adj]) 
+    (define u (car vs)) 
+    (define us (cdr vs))
+    (hash-set! adj-hash u (set-union (hash-ref adj-hash u (set))
+                                     (apply set us)))
+    (for ([v us] #:unless (hash-has-key? adj-hash v)) 
+      (hash-set! adj-hash v (set))))
   (unweighted-graph adj-hash))
 
 

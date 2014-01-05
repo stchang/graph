@@ -2,14 +2,23 @@
 (require "../graph-unweighted.rkt" 
          "../gen-graph.rkt" 
          "../graph-fns-basic.rkt"
+         "../graph-fns-singlesource-shortestpaths.rkt"
          "../utils.rkt"
          "test-utils.rkt")
-;(require (rename-in graph 
-;                    [unweighted-graph/undirected mk-unweighted-graph/undirected]
-;                    [unweighted-graph/directed mk-unweighted-graph/directed]
-;                    [unweighted-graph/adj mk-unweighted-graph/adj]))
-
 (require rackunit)
+
+;; adjacency list tests -- Thanks to Scott Klarenbach
+(define g-adj1 (mk-unweighted-graph/adj '((a b c) (b c d))))
+(check-true (dag? g-adj1))
+(define-values (ds-adj1 π-adj1) (bellman-ford g-adj1 'a))
+(check-equal? ds-adj1 (make-hash '((d . 2) (c . 1) (a . 0) (b . 1))))
+(check-equal? π-adj1 (make-hash '((d . b) (c . a) (a . #f) (b . a))))
+
+(define g-adj2 (mk-unweighted-graph/adj '((a b) (a c) (b c))))
+(check-equal? (apply set (in-vertices g-adj2)) (apply set '(a b c)))
+
+(check-equal? (apply set (sequence->list (in-edges g-adj2)))
+              (apply set '((a b) (a c) (b c))))
 
 ;; bfs tests ------------------------------------------------------------------
 
