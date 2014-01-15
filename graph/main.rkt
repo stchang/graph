@@ -8,7 +8,8 @@
          "graph-fns-singlesource-shortestpaths.rkt"
          "graph-fns-allpairs-shortestpaths.rkt"
          "graph-fns-coloring.rkt"
-         "graph-fns-maxflow.rkt")
+         "graph-fns-maxflow.rkt"
+         "graph-fns-graphviz.rkt")
 
 (provide (all-from-out "gen-graph.rkt")
          (rename-out [mk-unweighted-graph/undirected unweighted-graph/undirected]
@@ -21,5 +22,9 @@
                        "graph-fns-minspantree.rkt"
                        "graph-fns-singlesource-shortestpaths.rkt"
                        "graph-fns-coloring.rkt"
-                       "graph-fns-maxflow.rkt")
+                       "graph-fns-maxflow.rkt"
+                       "graph-fns-graphviz.rkt")
          floyd-warshall transitive-closure)
+
+
+
