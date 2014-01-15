@@ -57,6 +57,41 @@
     (when (= smallest-color num-colors) (add1! num-colors)))
   (values num-colors color))
 
+;; Color a graph using the Brelaz coloring method
+;; Essentially color nodes using this algorithm:
+;; - Color nodes with the most colored neighbors first
+;; - Break ties using the nodes with the most unoclored neighbors
+(define (coloring/brelaz g)
+  (define-hash color)
+ 
+  ; Used to break ties as mentioned above
+  (define (count-colored-neighbors n)
+    (length (filter (curry hash-has-key? color) (sequence->list (in-neighbors g n)))))
+ 
+  (define (count-uncolored-neighbors n)
+    (length (filter (negate (curry hash-has-key? color)) (sequence->list (in-neighbors g n)))))
+ 
+  (define graph-size (length (in-vertices g)))
+ 
+  ; Each time, color the node with the highest current brélaz-number (see above)
+  (for ([i (in-range graph-size)])
+    (define next-node 
+      (first
+       (sort
+        (filter (negate (curry hash-has-key? color)) (in-vertices g))
+        (λ (n1 n2) 
+          (or (> (count-colored-neighbors n1) (count-colored-neighbors n2))
+              (and (= (count-colored-neighbors n1) (count-colored-neighbors n2))
+                   (> (count-uncolored-neighbors n1) (count-uncolored-neighbors n2))))))))
+    
+    (for/first ([i (in-naturals)]
+                #:unless 
+                (member i (map (λ (n) (hash-ref color n #f))
+                               (sequence->list (in-neighbors g next-node)))))
+      (hash-set! color next-node i)))
+ 
+  color)
+
 (define (valid-coloring? G coloring)
   (define (color v) (hash-ref coloring v))
   (not (for/or ([e (in-edges G)]) (= (color (first e)) (color (second e))))))
