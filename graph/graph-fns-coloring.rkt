@@ -57,7 +57,9 @@
     (when (= smallest-color num-colors) (add1! num-colors)))
   (values num-colors color))
 
-;; Color a graph using the Brelaz coloring method
+;; Color a graph greedily, using the Brelaz vertex ordering heuristic
+;; (This function is separate from coloring/greedy because the order the
+;;  vertices is decided in an online manner)
 ;; Essentially color nodes using this algorithm:
 ;; - Color nodes with the most colored neighbors first
 ;; - Break ties using the nodes with the most unoclored neighbors
@@ -98,6 +100,7 @@
 
 (require (prefix-in r: data/heap))
 ;; returns the vertices of the graph in "smallest-last" order
+;; This is the Welsh-Powell heuristic
 ;; ie v with smallest degree is last, remove v, then repeat for 2nd to last, etc
 ;; only works when graph is undirected
 (define (order-smallest-last G)
