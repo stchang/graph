@@ -356,6 +356,9 @@ Only works on undirected graphs.
 
 The returned "colors" are numbers starting from 0. The function also returns the total number of colors used.}
 
+@defproc[(coloring/brelaz [g graph?]) (hash/c any/c number? #:immutable #f)]{
+Returns a "greedy" coloring of the given graph, using the Brelaz vertex ordering heuristic. Note that this function is separate from @racket[coloring/greedy] because the ordering is determined in an online manner.}
+          
 @defproc[(order-smallest-last [g graph?]) list?]{
 Consumes a graph and returns the vertices of the graph in "smallest-last" order. The ordering proceeds as follows. The vertex with the smallest degree is last. Then that vertex is removed and the degrees of the remaining vertices are updated. Then the second to last vertex has the lowest remaining degree and so on.
 
@@ -386,6 +389,11 @@ This function should only be used on directed graphs, otherwise things get doubl
   Returns a list of edges representing the maximum matching of the given bipartite graph. An error is raised if the given graph is not bipartite. Uses @racket[maxflow] to compute the maximum matching.
 
 Note: this is not the Hopcroft-Karp (ie fastest) bipartite matching algorithm.}
+
+@; util fns -------------------------------------------------------------------
+@section{Other Useful Graph Functions}
+@defproc[(graphviz [g graph?] [#:colors colors boolean? #f]) string?]{
+Returns the dotfile representation of the given graph (as a string).}
 
 @(bibliography 
   (bib-entry #:key "GGCL"
