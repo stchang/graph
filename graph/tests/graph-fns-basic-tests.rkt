@@ -1,5 +1,6 @@
 #lang racket
 (require "../graph-unweighted.rkt" 
+         "../graph-weighted.rkt"
          "../gen-graph.rkt" 
          "../graph-fns-basic.rkt"
          "../graph-fns-singlesource-shortestpaths.rkt"
@@ -197,3 +198,41 @@
 (check-equal? (set (set 'a 'b 'e) (set 'f 'g) (set 'c 'd) (set 'h))
               (apply set (map (λ (vs) (apply set vs)) scc22.9)))
 
+
+;; ----------------------------------------------------------------------------
+;; test vertex-remove!: unweighted graphs
+(define g/vertex-removed
+  (mk-unweighted-graph/adj '((a b c) (b c a) (c b a) (d c b))))
+(remove-vertex! g/vertex-removed 'a)
+(check-seqs-equal?/ignore-order (in-vertices g/vertex-removed)
+                                 '(b c d))
+(check-seqs-equal?/ignore-order (in-edges g/vertex-removed)
+                                 '((b c) (c b) (d c) (d b)))
+;; remove non-existent vertex
+(remove-vertex! g/vertex-removed 'a)
+(check-seqs-equal?/ignore-order (in-vertices g/vertex-removed)
+                                '(b c d))
+(check-seqs-equal?/ignore-order (in-edges g/vertex-removed)
+                                '((b c) (c b) (d b) (d c)))
+
+;; test vertex-remove!: weighted graphs
+(define g/wgt/vertex-removed
+  (mk-weighted-graph/directed '((1 a b) (2 a c) (3 b c) (4 b a)
+                                (5 c b) (6 c a) (7 d c) (8 d b))))
+(define edges/old (sequence->list (in-edges g/wgt/vertex-removed)))
+(remove-vertex! g/wgt/vertex-removed 'a)
+(check-seqs-equal?/ignore-order (in-vertices g/wgt/vertex-removed)
+                                 '(b c d))
+(check-seqs-equal?/ignore-order (in-edges g/wgt/vertex-removed)
+                                 '((b c) (c b) (d c) (d b)))
+
+;; non-existent edges have weight infty
+(for ([e edges/old] #:when (member 'a e))
+  (check-equal? (apply edge-weight g/wgt/vertex-removed e) +inf.0))
+
+;; remove non-existent vertex
+(remove-vertex! g/wgt/vertex-removed 'a)
+(check-seqs-equal?/ignore-order (in-vertices g/wgt/vertex-removed)
+                                '(b c d))
+(check-seqs-equal?/ignore-order (in-edges g/wgt/vertex-removed)
+                                '((b c) (c b) (d b) (d c)))

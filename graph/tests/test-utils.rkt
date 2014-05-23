@@ -10,6 +10,13 @@
   (for ([v (in-hash-keys h)]) 
     (hash-update! h v (λ (v) (if (equal? +inf.0 v) v (inexact->exact v))))))
 
+;; check sequences for equality, treating them as sets
+;; (assumes no duplicates)
+(define-syntax-rule (check-seqs-equal?/ignore-order l1 l2)
+  (check-equal? (apply set (sequence->list l1)) 
+                (apply set (sequence->list l2))))
+
+
 ;; tsort utils ----------------------------------------------------------------
 (define (check-tsorted g tsorted)
   (for ([e (in-edges g)])

@@ -10,6 +10,7 @@
   (remove-edge! graph u v)
   (remove-directed-edge! graph u v)
   (add-vertex! graph v)
+  (remove-vertex! graph v)
   (in-vertices graph)
   (in-neighbors graph v)
   (in-edges graph)

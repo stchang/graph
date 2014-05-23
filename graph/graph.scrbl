@@ -35,6 +35,7 @@ A @tech{graph} has the following methods:
   @item{@defproc[(has-vertex? [g graph?] [v any/c]) boolean?]{Indicates whether a vertex is in the given graph.}}
   @item{@defproc[(has-edge? [g graph?] [u any/c] [v any/c]) boolean?]{Indicates whether an edge is in the given graph.}}
   @item{@defproc[(add-vertex! [g graph?] [v any/c]) void?]{Imperatively adds a vertex to a graph.}}
+  @item{@defproc[(remove-vertex! [g graph?] [v any/c]) void?]{Imperatively removes a vertex from a graph. Any edges containing the vertex are also removed.}}
   @item{@defproc[(add-edge! [g graph?] [u any/c] [v any/c] [weight number? 1]) void?]{Imperatively adds an undirected edge and optional weight to a graph.}}
   @item{@defproc[(add-directed-edge! [g graph?] [u any/c] [v any/c] [weight number? 0]) void?]{Imperatively adds a directed, optionally weighted edge to a graph.}}
   @item{@defproc[(remove-edge! [g graph?] [u any/c] [v any/c]) void?]{Imperatively removes the undirected edge.}}

@@ -46,26 +46,28 @@
      (remove-edge@ adj v u))
    (define (add-vertex! g v)
      (add-vertex@ (unweighted-graph-adjlist g) v))
-  (define (has-vertex? g v) (and (member v (in-vertices g)) #t))
-  (define (has-edge? g u v)
-    (and (has-vertex? g u) (has-vertex? g v)
-         (member v (sequence->list (in-neighbors g u)))
-         #t))
-  ;; returns edges as a sequence
-  (define (in-edges g)
-    (in-generator 
-     (for* ([u (in-vertices g)] [v (in-neighbors g u)]) 
-       (yield (list u v)))))
-  (define (graph-copy g)
-    (struct-copy unweighted-graph g 
-                 [adjlist (hash-copy (unweighted-graph-adjlist g))]))
-  (define (transpose G)
-    (define adj^T (make-hash))
-    (for ([u (in-vertices G)])
-      (add-vertex@ adj^T u)
-      (for ([v (in-neighbors G u)])
-        (add-edge@ adj^T v u)))
-    (unweighted-graph adj^T))])
+   (define (remove-vertex! g v)
+     (remove-vertex@ (unweighted-graph-adjlist g) v))
+   (define (has-vertex? g v) (and (member v (in-vertices g)) #t))
+   (define (has-edge? g u v)
+     (and (has-vertex? g u) (has-vertex? g v)
+          (member v (sequence->list (in-neighbors g u)))
+          #t))
+   ;; returns edges as a sequence
+   (define (in-edges g)
+     (in-generator 
+      (for* ([u (in-vertices g)] [v (in-neighbors g u)]) 
+        (yield (list u v)))))
+   (define (graph-copy g)
+     (struct-copy unweighted-graph g 
+                  [adjlist (hash-copy (unweighted-graph-adjlist g))]))
+   (define (transpose G)
+     (define adj^T (make-hash))
+     (for ([u (in-vertices G)])
+       (add-vertex@ adj^T u)
+       (for ([v (in-neighbors G u)])
+         (add-edge@ adj^T v u)))
+     (unweighted-graph adj^T))])
 
 
 ;; An AdjacencyList is a [MutableHashOf Vertex -> [Setof Vertex]]
