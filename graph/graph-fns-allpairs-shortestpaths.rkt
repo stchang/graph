@@ -26,7 +26,7 @@
   (define (w u v) (if (equal? u v) 0 (edge-weight W u v)))
   ;; Ls is a hash mapping a vertex to a function that maps an edge to its weight
   (define-hash Ls)
-  (define vs (in-vertices W))
+  (define vs (get-vertices W))
   (Ls-set! (car vs) w)
   (for/last ([m-1 vs] ; traverse two offset vs list in parallel
              [m (drop-right (cdr vs) 1)]) ; drop last bc (L n-1) == (L n)
@@ -39,7 +39,7 @@
 (define (all-pairs-shortest-paths/faster W)
   (define (w u v) (if (equal? u v) 0 (edge-weight W u v)))
   (define-hash Ls)
-  (define vs (in-vertices W))
+  (define vs (get-vertices W))
   (Ls-set! (car vs) w)
   ;; want every (2^n)th vertex
   (let loop ([base 1] [m (car vs)] [last-L null])
@@ -54,7 +54,7 @@
 
 (define (floyd-warshall W)
   (define (w u v) (if (equal? u v) 0 (edge-weight W u v)))
-  (define vs (in-vertices W))
+  (define vs (get-vertices W))
   (define v0 (gensym))
   (define-hash Ds)
   (Ds-set! v0 w)
@@ -88,7 +88,7 @@
   D)
 
 (define (transitive-closure G)
-  (define vs (in-vertices G))
+  (define vs (get-vertices G))
   (define-hash Ts)
 
   ;; add Ts[v0]

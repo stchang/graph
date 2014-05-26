@@ -40,7 +40,8 @@ A @tech{graph} has the following methods:
   @item{@defproc[(add-directed-edge! [g graph?] [u any/c] [v any/c] [weight number? 0]) void?]{Imperatively adds a directed, optionally weighted edge to a graph.}}
   @item{@defproc[(remove-edge! [g graph?] [u any/c] [v any/c]) void?]{Imperatively removes the undirected edge.}}
   @item{@defproc[(remove-directed-edge! [g graph?] [u any/c] [v any/c]) void?]{Imperatively removes the directed edge.}}
-  @item{@defproc[(in-vertices [g graph?]) list?]{Returns a list of vertices in the graph.}}
+  @item{@defproc[(get-vertices [g graph?]) list?]{Returns a list of vertices in the graph.}}
+  @item{@defproc[(in-vertices [g graph?]) sequence?]{Returns a sequence of vertices in the graph.}}
   @item{@defproc[(in-neighbors [g graph?] [v any/c]) sequence?]{Returns a sequence of vertex @racket[v]'s neighbors in the graph.}}
   @item{@defproc[(in-edges [g graph?]) sequence?]{Returns a sequence of edges in the graph.}}
   @item{@defproc[(edge-weight [g graph?] [u any/c] [v any/c]) number?]{Returns the weight of the edge in the graph (if it has one).}}

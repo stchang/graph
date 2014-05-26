@@ -24,7 +24,8 @@
      (+ (* 6 (hash2-recur (weighted-graph-adjlist g)))
         (* 7 (hash2-recur (weighted-graph-weights g)))))]
   #:methods gen:graph
-  [(define (in-vertices g) (in-weighted-graph-vertices g))
+  [(define (get-vertices g) (get-weighted-graph-vertices g))
+   (define (in-vertices g) (in-weighted-graph-vertices g))
    (define (in-neighbors g v) (in-weighted-graph-neighbors g v))
    (define (edge-weight g u v) ; ok to return infty for non-existent edge?
 ;     (unless (and (has-vertex? g u) (has-vertex? g v))
@@ -57,7 +58,7 @@
      (remove-vertex@ (weighted-graph-adjlist g) v)
      (for ([e (hash-keys wgts)] #:when (member v e))
        (hash-remove! wgts e)))
-   (define (has-vertex? g v) (and (member v (in-vertices g)) #t))
+   (define (has-vertex? g v) (and (member v (get-vertices g)) #t))
    (define (has-edge? g u v)
      (and (has-vertex? g u) (has-vertex? g v)
           (member v (sequence->list (in-neighbors g u)))
@@ -118,7 +119,10 @@
   (weighted-graph adj weights))
 
 ;; returns vertices as a list
-(define (in-weighted-graph-vertices g) (hash-keys (weighted-graph-adjlist g)))
+;; - analogous to hash-keys vs in-hash-keys
+(define (get-weighted-graph-vertices g) (hash-keys (weighted-graph-adjlist g)))
+;; returns vertices as a sequence
+(define (in-weighted-graph-vertices g) (in-hash-keys (weighted-graph-adjlist g)))
 
 ;; returns neighbors as a sequence
 (define (in-weighted-graph-neighbors g v) 

@@ -22,7 +22,8 @@
    (define (hash2-proc g hash2-recur)
      (* 4 (hash2-recur (unweighted-graph-adjlist g))))]
   #:methods gen:graph
-  [(define (in-vertices g) (in-unweighted-graph-vertices g))
+  [(define (get-vertices g) (get-unweighted-graph-vertices g))
+   (define (in-vertices g) (in-unweighted-graph-vertices g))
    (define (in-neighbors g v) (in-unweighted-graph-neighbors g v))
    (define (edge-weight g u v) 
 ;     (unless (and (has-vertex? g u) (has-vertex? g v))
@@ -48,7 +49,7 @@
      (add-vertex@ (unweighted-graph-adjlist g) v))
    (define (remove-vertex! g v)
      (remove-vertex@ (unweighted-graph-adjlist g) v))
-   (define (has-vertex? g v) (and (member v (in-vertices g)) #t))
+   (define (has-vertex? g v) (and (member v (get-vertices g)) #t))
    (define (has-edge? g u v)
      (and (has-vertex? g u) (has-vertex? g v)
           (member v (sequence->list (in-neighbors g u)))
@@ -108,7 +109,11 @@
 
 
 ;; returns vertices as a list
-(define (in-unweighted-graph-vertices g) (hash-keys (unweighted-graph-adjlist g)))
+;; - analogous to hash-keys vs in-hash-keys
+(define (get-unweighted-graph-vertices g) (hash-keys (unweighted-graph-adjlist g)))
+;; returns vertices as a sequence
+(define (in-unweighted-graph-vertices g) (in-hash-keys (unweighted-graph-adjlist g)))
+
 
 ;; returns neighbors as a sequence
 (define (in-unweighted-graph-neighbors g v)

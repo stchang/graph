@@ -12,7 +12,7 @@
 ;; returns hash of vertex to color, or #f if coloring is not possible
 (define (coloring G num-colors #:order [order (λ (x) x)])
   (define-hash color)
-  (let loop ([vs (order (in-vertices G))])
+  (let loop ([vs (order (get-vertices G))])
     (cond 
       [(null? vs) color]
       [else
@@ -40,7 +40,7 @@
 (define (coloring/greedy G #:order [order 'smallest-last])
   (define num-colors 0)
   (define-hash color)
-  (define vs (in-vertices G))
+  (define vs (get-vertices G))
   (define ordered-vs 
     (if (eq? order 'smallest-last)
         (order-smallest-last G)
@@ -73,14 +73,14 @@
   (define (count-uncolored-neighbors n)
     (length (filter (negate (curry hash-has-key? color)) (sequence->list (in-neighbors g n)))))
  
-  (define graph-size (length (in-vertices g)))
+  (define graph-size (length (get-vertices g)))
  
   ; Each time, color the node with the highest current brélaz-number (see above)
   (for ([i (in-range graph-size)])
     (define next-node 
       (first
        (sort
-        (filter (negate (curry hash-has-key? color)) (in-vertices g))
+        (filter (negate (curry hash-has-key? color)) (get-vertices g))
         (λ (n1 n2) 
           (or (> (count-colored-neighbors n1) (count-colored-neighbors n2))
               (and (= (count-colored-neighbors n1) (count-colored-neighbors n2))
@@ -108,8 +108,8 @@
   (for ([u (in-vertices G)])
     (deg-set! u (length (sequence->list (in-neighbors G u)))))
   (define H (r:make-heap (λ (x y) (< (deg x) (deg y)))))
-  (r:heap-add-all! H (in-vertices G))
-  (define in-H (apply set (in-vertices G)))
+  (r:heap-add-all! H (get-vertices G))
+  (define in-H (apply set (get-vertices G)))
   (let loop ([res null])
     (cond 
       [(set-empty? in-H) res]

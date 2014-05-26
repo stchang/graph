@@ -16,10 +16,10 @@
 (check-equal? π-adj1 (make-hash '((d . b) (c . a) (a . #f) (b . a))))
 
 (define g-adj2 (mk-unweighted-graph/adj '((a b) (a c) (b c))))
-(check-equal? (apply set (in-vertices g-adj2)) (apply set '(a b c)))
+(check-seqs-equal?/ignore-order (in-vertices g-adj2) '(a b c))
 
-(check-equal? (apply set (sequence->list (in-edges g-adj2)))
-              (apply set '((a b) (a c) (b c))))
+(check-seqs-equal?/ignore-order (in-edges g-adj2)
+                                '((a b) (a c) (b c)))
 
 ;; bfs tests ------------------------------------------------------------------
 
@@ -28,8 +28,7 @@
   (mk-unweighted-graph/undirected
    '((r v) (r s) (s w) (w t) (w x) (x t) (t u) (x u) (x y) (y u))))
 
-(check-equal? (apply set '(v r s w t x u y)) 
-              (apply set (sequence->list (in-vertices g22.3))))
+(check-seqs-equal?/ignore-order '(v r s w t x u y) (in-vertices g22.3))
 
 (define-values (d22.3 π22.3) (bfs g22.3 's))
 
