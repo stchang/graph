@@ -11,6 +11,7 @@
   (remove-directed-edge! graph u v)
   (add-vertex! graph v)
   (remove-vertex! graph v)
+  (rename-vertex! graph u v)
   (get-vertices graph)
   (in-vertices graph)
   (in-neighbors graph v)

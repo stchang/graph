@@ -12,9 +12,9 @@
 
 ;; check sequences for equality, treating them as sets
 ;; (assumes no duplicates)
-(define-syntax-rule (check-seqs-equal?/ignore-order l1 l2)
-  (check-equal? (apply set (sequence->list l1)) 
-                (apply set (sequence->list l2))))
+(define-syntax-rule (check-seqs-as-equal-sets? s1 s2)
+  (check-equal? (apply set (sequence->list s1)) 
+                (apply set (sequence->list s2))))
 
 
 ;; tsort utils ----------------------------------------------------------------

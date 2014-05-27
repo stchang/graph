@@ -16,9 +16,9 @@
 (check-equal? π-adj1 (make-hash '((d . b) (c . a) (a . #f) (b . a))))
 
 (define g-adj2 (mk-unweighted-graph/adj '((a b) (a c) (b c))))
-(check-seqs-equal?/ignore-order (in-vertices g-adj2) '(a b c))
+(check-seqs-as-equal-sets? (in-vertices g-adj2) '(a b c))
 
-(check-seqs-equal?/ignore-order (in-edges g-adj2)
+(check-seqs-as-equal-sets? (in-edges g-adj2)
                                 '((a b) (a c) (b c)))
 
 ;; bfs tests ------------------------------------------------------------------
@@ -28,7 +28,7 @@
   (mk-unweighted-graph/undirected
    '((r v) (r s) (s w) (w t) (w x) (x t) (t u) (x u) (x y) (y u))))
 
-(check-seqs-equal?/ignore-order '(v r s w t x u y) (in-vertices g22.3))
+(check-seqs-as-equal-sets? '(v r s w t x u y) (in-vertices g22.3))
 
 (define-values (d22.3 π22.3) (bfs g22.3 's))
 
@@ -199,20 +199,22 @@
 
 
 ;; ----------------------------------------------------------------------------
-;; test vertex-remove!: unweighted graphs
+;; test remove-vertex!
+
+;; unweighted graphs:
 (define g/vertex-removed
   (mk-unweighted-graph/adj '((a b c) (b c a) (c b a) (d c b))))
 (remove-vertex! g/vertex-removed 'a)
-(check-seqs-equal?/ignore-order (in-vertices g/vertex-removed)
-                                 '(b c d))
-(check-seqs-equal?/ignore-order (in-edges g/vertex-removed)
-                                 '((b c) (c b) (d c) (d b)))
+(check-seqs-as-equal-sets? (in-vertices g/vertex-removed)
+                           '(b c d))
+(check-seqs-as-equal-sets? (in-edges g/vertex-removed)
+                           '((b c) (c b) (d c) (d b)))
 ;; remove non-existent vertex
 (remove-vertex! g/vertex-removed 'a)
-(check-seqs-equal?/ignore-order (in-vertices g/vertex-removed)
-                                '(b c d))
-(check-seqs-equal?/ignore-order (in-edges g/vertex-removed)
-                                '((b c) (c b) (d b) (d c)))
+(check-seqs-as-equal-sets? (in-vertices g/vertex-removed)
+                           '(b c d))
+(check-seqs-as-equal-sets? (in-edges g/vertex-removed)
+                           '((b c) (c b) (d b) (d c)))
 
 ;; test vertex-remove!: weighted graphs
 (define g/wgt/vertex-removed
@@ -220,10 +222,10 @@
                                 (5 c b) (6 c a) (7 d c) (8 d b))))
 (define edges/old (sequence->list (in-edges g/wgt/vertex-removed)))
 (remove-vertex! g/wgt/vertex-removed 'a)
-(check-seqs-equal?/ignore-order (in-vertices g/wgt/vertex-removed)
-                                 '(b c d))
-(check-seqs-equal?/ignore-order (in-edges g/wgt/vertex-removed)
-                                 '((b c) (c b) (d c) (d b)))
+(check-seqs-as-equal-sets? (in-vertices g/wgt/vertex-removed)
+                           '(b c d))
+(check-seqs-as-equal-sets? (in-edges g/wgt/vertex-removed)
+                           '((b c) (c b) (d c) (d b)))
 
 ;; non-existent edges have weight infty
 (for ([e edges/old] #:when (member 'a e))
@@ -231,7 +233,29 @@
 
 ;; remove non-existent vertex
 (remove-vertex! g/wgt/vertex-removed 'a)
-(check-seqs-equal?/ignore-order (in-vertices g/wgt/vertex-removed)
-                                '(b c d))
-(check-seqs-equal?/ignore-order (in-edges g/wgt/vertex-removed)
-                                '((b c) (c b) (d b) (d c)))
+(check-seqs-as-equal-sets? (in-vertices g/wgt/vertex-removed)
+                           '(b c d))
+(check-seqs-as-equal-sets? (in-edges g/wgt/vertex-removed)
+                           '((b c) (c b) (d b) (d c)))
+
+;; ----------------------------------------------------------------------------
+;; test rename-vertex!
+
+(define g/to-rename
+  (mk-unweighted-graph/adj '((a b c) (b c a) (c b a) (d c b))))
+(rename-vertex! g/to-rename 'a 'e)
+(check-seqs-as-equal-sets? (in-vertices g/to-rename) '(e b c d))
+(check-seqs-as-equal-sets? (in-edges g/to-rename)
+                           '((e b) (e c) (b c) (b e) (c b) (c e) (d c) (d b)))
+
+(rename-vertex! g/to-rename 'e 'a)
+(check-equal? g/to-rename
+              (mk-unweighted-graph/adj '((a b c) (b c a) (c b a) (d c b))))
+(check-seqs-as-equal-sets? (in-vertices g/to-rename) '(a b c d))
+(check-seqs-as-equal-sets? (in-edges g/to-rename)
+                           '((a b) (a c) (b c) (b a) (c b) (c a) (d c) (d b)))
+              
+;; rename to same name -- errors
+(check-exn exn:fail? (λ () (rename-vertex! g/to-rename 'a 'a)))
+;; rename to existing vertex -- error
+(check-exn exn:fail? (λ () (rename-vertex! g/to-rename 'a 'b)))

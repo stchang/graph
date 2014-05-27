@@ -18,3 +18,8 @@
   ;; remove the vertex from the values of other keys
   (for ([(u vs) (in-hash adj)]) 
     (hash-set! adj u (set-remove vs v))))
+(define (rename-vertex@ adj old new)
+  (hash-set! adj new (hash-ref adj old))
+  (hash-remove! adj old)
+  (for ([(u vs) (in-hash adj)] #:when (set-member? vs old))
+    (hash-set! adj u (set-add (set-remove vs old) new))))
