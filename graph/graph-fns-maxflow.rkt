@@ -1,7 +1,7 @@
 #lang racket
 
 (require "gen-graph.rkt"
-         "hash-utils.rkt"
+         "graph-property.rkt"
          "graph-fns-basic.rkt")
 
 (provide (all-defined-out))
@@ -11,9 +11,9 @@
 ;; this is the edmonds-karp algorithm O(VE^2)
 ;;   ie, ford-fulkerson + fewest-vertices-path to find augmenting path
 (define (maxflow G s t)
-  (define-hash f)
   (define G-residual (graph-copy G))
-  (define (cf u v) (- (edge-weight G-residual u v) (f (list u v) 0)))
+  (define-edge-property G-residual f)
+  (define (cf u v) (- (edge-weight G-residual u v) (f u v #:default 0)))
   (let apath-loop ([augmenting-path (fewest-vertices-path G-residual s t)])
     (when augmenting-path
       (define-values (apath-rescap critical-edges) ; ie, cf(p)
@@ -35,8 +35,8 @@
       (let flow-update-loop ([vs augmenting-path])
         (unless (null? (cdr vs))
           (define u (first vs)) (define v (second vs))
-          (f-set! (list u v) (+ (f (list u v) 0) apath-rescap))
-          (f-set! (list v u) (- (f (list u v))))
+          (f-set! u v (+ (f u v #:default 0) apath-rescap))
+          (f-set! v u (- (f u v)))
           (add-directed-edge! G-residual v u)
           (flow-update-loop (cdr vs))))
       (for ([e critical-edges])
@@ -49,9 +49,9 @@
 (define (bipartite? G)
   (define L null) (define (add-to-L! v) (set! L (cons v L))) ; #f
   (define R null) (define (add-to-R! v) (set! R (cons v R))) ; #t
-  (define-hash color) ; key = vertices, values = #t/#f
-  (define not-bipartite? #f)
-  (do-dfs G #:break (λ _ not-bipartite?)
+  (define-vertex-property G color) ; key = vertices, values = #t/#f
+  (define-graph-property not-bipartite? #f)
+  (do-dfs G #:break get-not-bipartite?
    #:prologue (parent v) 
    (color-set! v (and parent (not (color parent))))
    (if (color v) (add-to-L! v) (add-to-R! v))

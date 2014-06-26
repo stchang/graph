@@ -1,7 +1,7 @@
 #lang racket
 (require "../main.rkt"
          "test-utils.rkt"
-         "../hash-utils.rkt")
+         "../graph-property.rkt")
 (require rackunit)
 
 ;; examples from boost.org
@@ -31,11 +31,10 @@
 ;; for now, use transpose + in-neighbors to find all parents
 ;; TODO: add in-parents to gen:graph ?
 (define (parallel-ordering g)
-  (define-hash time)
   (define g^T (transpose g))
-  
-  (for ([v (tsort g)])
-    (time-set! v (add1 (apply max -1 (for/list ([u (in-neighbors g^T v)]) (time u))))))
+  (define-vertex-property g time
+    #:init (add1 (apply max -1 (for/list ([u (in-neighbors g^T $v)]) (time u))))
+    #:vs (tsort g))
   time)
 
 (check-equal? (parallel-ordering file-deps)
@@ -68,9 +67,8 @@
           (define ss (string-split s ";")) 
           (list (first ss) (third ss)))
         (with-input-from-file "kevin-bacon.dat" port->lines))))
-(define-hash bacon-number)
-(for ([a (in-vertices actors)])
-  (bacon-number-set! a (sub1 (length (fewest-vertices-path actors a "Kevin Bacon")))))
+(define-vertex-property actors bacon-number
+  #:init (sub1 (length (fewest-vertices-path actors $v "Kevin Bacon"))))
 
 (define bacon-number-expected 
   (make-hash
