@@ -1,12 +1,12 @@
 #lang racket
 
-(require "hash-utils.rkt"
+(require "graph-property.rkt"
          "utils.rkt"
          "gen-graph.rkt"
          "../queue/gen-queue.rkt"
          (only-in "../queue/fifo.rkt" mk-empty-fifo))
 
-(require (for-syntax syntax/parse))
+(require (for-syntax syntax/parse syntax/parse/experimental/template))
 
 (provide (all-defined-out))
 
@@ -18,14 +18,12 @@
 ;; returns 2 values: hash mapping vertices to distances and
 ;;  hash mapping vertices to predecessor
 (define (bfs G s)
-  (define-hashes d π)
+  (define-vertex-property G d #:init +inf.0)
+  (define-vertex-property G π #:init #f)
 
   (do-bfs G s 
-    #:init 
-      (for ([u (in-vertices G)]) (d-set! u +inf.0) (π-set! u #f))
-      (d-set! s 0) (π-set! s #f)
-    #:discover (from to)
-      (d-set! to (add1 (d from))) (π-set! to from)
+    #:init (d-set! s 0) (π-set! s #f)
+    #:discover (from to) (d-set! to (add1 (d from))) (π-set! to from)
     #:return (values d π)))
 
 ;; default Q is from data/queue
@@ -40,7 +38,8 @@
   ; v ∈ visited means v has been seen and enqueued, ie it's no longer "white"
   (define discovered (set)) 
   (define (mark-discovered! v) (set! discovered (set-add discovered v)))
-  (define visit? (or custom-visit?-fn (λ (G s u v) (not (set-member? discovered v)))))
+  (define visit? (or custom-visit?-fn 
+                     (λ (G s u v) (not (set-member? discovered v)))))
   
   (init G s)
   (enqueue! Q s) ; source vertex s is always visited
@@ -56,22 +55,23 @@
 ;; cleaner syntax for bfs/generalized
 (define-syntax (do-bfs stx)
   (syntax-parse stx 
-    [(_ G s (~optional (~seq #:init-queue Q:expr))
-            (~optional (~seq #:break break?:expr))
-            (~optional (~seq #:init init:expr ...))
-            (~optional (~seq #:visit? (visit?-from:id visit?-to:id) visit?:expr ...))
-            (~optional (~seq #:discover (discover-from:id discover-to:id) discover:expr ...))
-            (~optional (~seq #:visit (v:id) visit:expr ...))
-            (~optional (~seq #:return return:expr ...)))
-     #`(bfs/generalized 
-        G s 
-        #,@(if (attribute Q) #'(#:init-queue Q) '())
-        #,@(if (attribute break?) #'(#:break break?) '())
-        #,@(if (attribute init) #'(#:init (λ _ init ...)) '())
-        #,@(if (attribute visit?) #'(#:visit? (λ (G s visit?-from visit?-to) visit? ...)) '())
-        #,@(if (attribute discover) #'(#:discover (λ (G s discover-from discover-to) discover ...)) '())
-        #,@(if (attribute visit) #'(#:visit (λ (G s v) visit ...)) '())
-        #,@(if (attribute return) #'(#:return (λ _ return ...)) '()))]))
+    [(_ G s 
+      (~or (~optional (~seq #:init-queue Q:expr))
+           (~optional (~seq #:break break?:expr))
+           (~optional (~seq #:init init:expr ...))
+           (~optional (~seq #:visit? (v?-from:id v?-to:id) visit?:expr ...))
+           (~optional (~seq #:discover (disc-from:id disc-to:id) disc:expr ...))
+           (~optional (~seq #:visit (v:id) visit:expr ...))
+           (~optional (~seq #:return return:expr ...))) ...)
+     (template
+      (bfs/generalized G s 
+       (?? (?@ #:init-queue Q))
+       (?? (?@ #:break break?))
+       (?? (?@ #:init (λ _ init ...)))
+       (?? (?@ #:visit? (λ (G s v?-from v?-to) visit? ...)))
+       (?? (?@ #:discover (λ (G s disc-from disc-to) disc ...)))
+       (?? (?@ #:visit (λ (G s v) visit ...)))
+       (?? (?@ #:return (λ _ return ...)))))]))
              
 
 ;; bfs-based fns --------------------------------------------------------------
@@ -84,31 +84,25 @@
   (cond
     [(equal? s v) (list s)]
     [else
-     (define-hashes π)
-     (define found-v #f)
-     (define (found-v?) found-v)
+     (define-vertex-property G π #:init #f)
+     (define-graph-property found-v? #f)
      
-     (do-bfs G s #:break found-v?
-       #:init (for ([u (in-vertices G)]) (π-set! u #f))
+     (do-bfs G s #:break get-found-v?
        #:discover (from to)
-         (when (equal? to v) (set! found-v #t))
+         (when (equal? to v) (found-v?-set! #t))
          (π-set! to from)
        #:return
-      #;(if found-v
-          (let loop ([path null] [v v])
-            (if (equal? v s) (cons s path) (loop (cons v path) (π v))))
-          (error 'shortest-path "no path from ~a to ~a" s v))
-          (and found-v
-               (let loop ([path null] [v v])
-                 (if (equal? v s) (cons s path) (loop (cons v path) (π v))))
-               #;(error 'shortest-path "no path from ~a to ~a" s v)))]))
+         (and found-v?
+              (let loop ([path null] [v v])
+                (if (equal? v s) (cons s path) (loop (cons v path) (π v))))))]))
 
            
 ;; dfs ------------------------------------------------------------------------
 
 (define (dfs G)
-  ;; d[u] = discovery time, f[u] = finishing time
-  (define-hashes d π f) (define time 0)
+  ;; d[u] = discovery time, π[u] = pred, f[u] = finishing time
+  (define-vertex-properties G d π f)
+  (define time 0)
 
   (do-dfs G
     #:prologue (parent u) (add1! time) (d-set! u time) (π-set! u parent)
@@ -149,53 +143,41 @@
 ;; cleaner syntax for dfs/generalized
 (define-syntax (do-dfs stx)
   (syntax-parse stx 
-    [(_ G (~optional (~seq #:order order:expr))
+    [(_ G 
+     (~or (~optional (~seq #:order order:expr))
           (~optional (~seq #:break break?:expr))
           (~optional (~seq #:init init:expr ...))
-          (~optional (~seq #:visit? (visit?-from:id visit?-to:id) visit?:expr ...))
-          (~optional (~seq #:prologue (prologue-from:id prologue-to:id) prologue:expr ...))
-          (~optional (~seq #:epilogue (epilogue-from:id epilogue-to:id) epilogue:expr ...))
-          (~optional (~seq #:process-unvisited? 
-                           (process-unvisited?-from:id process-unvisited?-to:id) 
-                           process-unvisited?:expr ...))
-          (~optional (~seq #:process-unvisited 
-                           (process-unvisited-from:id process-unvisited-to:id)
-                           process-unvisited:expr ...))
-          (~optional (~seq #:return return:expr ...)))
-     #`(dfs/generalized G 
-        #,@(if (attribute order) #'(#:order order) '())
-        #,@(if (attribute break?) #'(#:break break?) '())
-        #,@(if (attribute init) #'(#:init (λ _ init ...)) '())
-        #,@(if (attribute visit?) #'(#:visit? (λ (G visit?-from visit?-to) visit? ...)) '())
-        #,@(if (attribute prologue) #'(#:prologue (λ (G prologue-from prologue-to) prologue ...)) '())
-        #,@(if (attribute epilogue) #'(#:epilogue (λ (G epilogue-from epilogue-to) epilogue ...)) '())
-        #,@(if (attribute process-unvisited?) 
-               #'(#:process-unvisited? 
-                  (λ (G process-unvisited?-from process-unvisited?-to) 
-                    process-unvisited? ...))
-               '())
-        #,@(if (attribute process-unvisited) 
-               #'(#:process-unvisited 
-                  (λ (G process-unvisited-from process-unvisited-to)
-                    process-unvisited ...))
-               '())
-        #,@(if (attribute return) #'(#:return (λ _ return ...)) '()))]))
+          (~optional (~seq #:visit? (v?-from:id v?-to:id) visit?:expr ...))
+          (~optional (~seq #:prologue (pro-from:id pro-to:id) pro:expr ...))
+          (~optional (~seq #:epilogue (epi-from:id epi-to:id) epi:expr ...))
+          (~optional (~seq #:process-unvisited? (pu?-from:id pu?-to:id) pu?:expr ...))
+          (~optional (~seq #:process-unvisited (pu-from:id pu-to:id) pu:expr ...))
+          (~optional (~seq #:return return:expr ...))) ...)
+     (template
+      (dfs/generalized G 
+        (?? (?@ #:order order))
+        (?? (?@ #:break break?))
+        (?? (?@ #:init (λ _ init ...)))
+        (?? (?@ #:visit? (λ (G v?-from v?-to) visit? ...)))
+        (?? (?@ #:prologue (λ (G pro-from pro-to) pro ...)))
+        (?? (?@ #:epilogue (λ (G epi-from epi-to) epi ...)))
+        (?? (?@ #:process-unvisited? (λ (G pu?-from pu?-to) pu? ...)))
+        (?? (?@ #:process-unvisited (λ (G pu-from pu-to) pu ...)))
+        (?? (?@ #:return (λ _ return ...)))))]))
 
 ;; dfs-based fns --------------------------------------------------------------
 
 (define (dag? G)
-  (define-hashes color)
-  (define not-dag #f)
-  (define (not-dag?) not-dag)
+  (define-vertex-property G color #:init WHITE)
+  (define-graph-property not-dag? #f)
   
-  (do-dfs G #:break not-dag?
-    #:init (for ([u (in-vertices G)]) (color-set! u WHITE))
+  (do-dfs G #:break get-not-dag?
     #:visit? (from to) (white? (color to))
     #:prologue (parent v) (color-set! v GRAY)
     #:epilogue (parent v) (color-set! v BLACK)
     #:process-unvisited? (from to) (gray? (color to))
-    #:process-unvisited (from to) (set! not-dag #t)
-    #:return (not not-dag)))
+    #:process-unvisited (from to) (not-dag?-set! #t)
+    #:return (not not-dag?)))
 
 (define (tsort G)
   (define sorted null) 
@@ -207,7 +189,7 @@
 ;; tarjan algorithm for strongly connected components
 (define (scc G)
   (define i 0)
-  (define-hashes index lowlink)
+  (define-vertex-properties G index lowlink)
 
   (define S null)   
   (define (S-push x) (set! S (cons x S)))
