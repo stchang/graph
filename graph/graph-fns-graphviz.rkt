@@ -2,9 +2,7 @@
 
 (provide graphviz)
 
-(require ;"hash-utils.rkt"
-         "gen-graph.rkt"
-         "graph-weighted.rkt")
+(require "gen-graph.rkt" "graph-weighted.rkt")
 
 ;; Return a graphviz definition for a graph
 ;; Pass a hash of vertex -> exact-nonnegative-integer? as coloring to color the nodes

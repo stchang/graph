@@ -22,7 +22,7 @@
           (not (= try-col num-colors)) ; fail
           (cond 
             [(set-member? ; calc used colors
-              (for/set ([v (in-neighbors G u)]) (color v num-colors))  
+              (for/set ([v (in-neighbors G u)]) (color v #:default num-colors))  
               try-col)
              (color-select-loop (add1 try-col))]
             [else
@@ -47,7 +47,8 @@
         (order vs)))
   (define num-vs (length vs)) ; default color, ie "uncolored"
   (for ([u ordered-vs])
-    (define used-colors (for/set ([v (in-neighbors G u)]) (color v num-vs)))
+    (define used-colors 
+      (for/set ([v (in-neighbors G u)]) (color v #:default num-vs)))
     ;; find smallest color unused by adjacent vertices
     (define smallest-color
       (for/last ([smallest-color (in-range num-vs)]
