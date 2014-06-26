@@ -1,6 +1,6 @@
 #lang racket
 
-(require "hash-utils.rkt"
+(require "graph-property.rkt"
          "utils.rkt"
          "gen-graph.rkt")
 
@@ -11,7 +11,7 @@
 ;; naive coloring algorithm using backtracking
 ;; returns hash of vertex to color, or #f if coloring is not possible
 (define (coloring G num-colors #:order [order (λ (x) x)])
-  (define-hash color)
+  (define-vertex-property G color)
   (let loop ([vs (order (get-vertices G))])
     (cond 
       [(null? vs) color]
@@ -39,7 +39,7 @@
 ;;  procedure that sorts the vertices.
 (define (coloring/greedy G #:order [order 'smallest-last])
   (define num-colors 0)
-  (define-hash color)
+  (define-vertex-property G color)
   (define vs (get-vertices G))
   (define ordered-vs 
     (if (eq? order 'smallest-last)
@@ -64,14 +64,15 @@
 ;; - Color nodes with the most colored neighbors first
 ;; - Break ties using the nodes with the most unoclored neighbors
 (define (coloring/brelaz g)
-  (define-hash color)
+  (define-vertex-property G color)
  
   ; Used to break ties as mentioned above
   (define (count-colored-neighbors n)
     (length (filter (curry hash-has-key? color) (sequence->list (in-neighbors g n)))))
  
   (define (count-uncolored-neighbors n)
-    (length (filter (negate (curry hash-has-key? color)) (sequence->list (in-neighbors g n)))))
+    (length (filter (negate (curry hash-has-key? color)) 
+                    (sequence->list (in-neighbors g n)))))
  
   (define graph-size (length (get-vertices g)))
  
@@ -104,9 +105,8 @@
 ;; ie v with smallest degree is last, remove v, then repeat for 2nd to last, etc
 ;; only works when graph is undirected
 (define (order-smallest-last G)
-  (define-hash deg)
-  (for ([u (in-vertices G)])
-    (deg-set! u (length (sequence->list (in-neighbors G u)))))
+  (define-vertex-property G deg 
+    #:init (λ (u) (length (sequence->list (in-neighbors G u)))))
   (define H (r:make-heap (λ (x y) (< (deg x) (deg y)))))
   (r:heap-add-all! H (get-vertices G))
   (define in-H (apply set (get-vertices G)))

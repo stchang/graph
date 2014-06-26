@@ -1,6 +1,6 @@
 #lang racket
 
-(require "hash-utils.rkt" 
+(require "graph-property.rkt"
          "gen-graph.rkt"
          "graph-fns-basic.rkt" 
          (only-in "../queue/priority.rkt" mk-empty-priority))
@@ -15,8 +15,8 @@
   (define (w u v) (edge-weight G u v))
 
   ;; init
-  (define-hashes d π)
-  (for ([v (in-vertices G)]) (d-set! v +inf.0) (π-set! v #f))
+  (define-vertex-property G d #:init +inf.0)
+  (define-vertex-property G π #:init #f)
   (d-set! s 0)
   
   ;; compute result
@@ -41,8 +41,8 @@
   (define tsorted (tsort G))
   
   ;; init
-  (define-hashes d π)
-  (for ([v (in-vertices G)]) (d-set! v +inf.0) (π-set! v #f))
+  (define-vertex-property G d #:init +inf.0)
+  (define-vertex-property G π #:init #f)
   (d-set! s 0)
 
   (for* ([u tsorted]
@@ -57,13 +57,12 @@
 ;; no negative weight edges
 (define (dijkstra G s) 
   ;; (d v) represents intermediate known shortest path from s to v
-  (define-hashes d π)
+  (define-vertex-property G d #:init +inf.0)
+  (define-vertex-property G π #:init #f)
   (define (w u v) (edge-weight G u v))
 
   (do-bfs G s #:init-queue (mk-empty-priority (λ (u v) (< (d u) (d v))))
-    #:init
-      (for ([v (in-vertices G)]) (d-set! v +inf.0) (π-set! v #f))
-      (d-set! s 0)
+    #:init (d-set! s 0)
     #:visit? (to from) (> (d from) (+ (d to) (w to from)))
     #:discover (to from)
       (d-set! from (+ (d to) (w to from)))
