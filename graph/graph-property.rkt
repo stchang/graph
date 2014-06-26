@@ -22,7 +22,10 @@
               [(_ key fail) (hash-ref hash-name key (thunk fail))]
               [prop hash-name]))
           (define (hash-name-set! key val) (hash-set! hash-name key val))
-          (?? (for ([v (in-vertices g)]) (hash-name-set! v init-val))))))]))
+          (?? (for ([v (in-vertices g)]) 
+                (if (procedure? init-val)
+                    (hash-name-set! v (init-val v))
+                    (hash-name-set! v init-val)))))))]))
 
 (define-syntax-rule (define-vertex-properties g p ...) 
   (begin (define-vertex-property g p) ...))
