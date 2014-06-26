@@ -6,4 +6,5 @@
          "graph-fns-allpairs-shortestpaths-tests.rkt"
          "graph-fns-coloring-tests.rkt"
          "graph-fns-maxflow-tests.rkt"
-         "boost-examples.rkt")
+         "boost-examples.rkt"
+         "graphviz.rkt")
