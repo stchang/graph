@@ -72,6 +72,7 @@
      (in-generator 
       (for* ([u (in-vertices g)] [v (in-neighbors g u)]) 
         (yield (list u v)))))
+   (define (get-edges g) (sequence->list (in-edges g)))
    (define (graph-copy g)
      (struct-copy weighted-graph g 
                   [adjlist (hash-copy (weighted-graph-adjlist g))]
