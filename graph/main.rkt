@@ -24,7 +24,7 @@
                        "graph-fns-coloring.rkt"
                        "graph-fns-maxflow.rkt"
                        "graph-fns-graphviz.rkt")
-         floyd-warshall transitive-closure)
+         floyd-warshall transitive-closure johnson)
 
 
 
