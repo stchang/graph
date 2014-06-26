@@ -106,7 +106,7 @@
 ;; only works when graph is undirected
 (define (order-smallest-last G)
   (define-vertex-property G deg 
-    #:init (λ (u) (length (sequence->list (in-neighbors G u)))))
+    #:init (length (sequence->list (in-neighbors G $v))))
   (define H (r:make-heap (λ (x y) (< (deg x) (deg y)))))
   (r:heap-add-all! H (get-vertices G))
   (define in-H (apply set (get-vertices G)))

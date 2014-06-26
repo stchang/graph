@@ -2,9 +2,12 @@
 
 (require (for-syntax racket/syntax syntax/parse 
                      syntax/parse/experimental/template)
-         "gen-graph.rkt")
+         "gen-graph.rkt"
+         racket/stxparam)
 
 (provide (all-defined-out))
+
+(define-syntax-parameter $v (syntax-rules ()))
 
 (define-syntax (define-vertex-property stx)
   (syntax-parse stx
@@ -23,9 +26,9 @@
               [prop hash-name]))
           (define (hash-name-set! key val) (hash-set! hash-name key val))
           (?? (for ([v (in-vertices g)]) 
-                (if (procedure? init-val)
-                    (hash-name-set! v (init-val v))
-                    (hash-name-set! v init-val)))))))]))
+                (hash-name-set! v 
+                  (syntax-parameterize ([$v (syntax-id-rules () [_ v])])
+                    init-val)))))))]))
 
 (define-syntax-rule (define-vertex-properties g p ...) 
   (begin (define-vertex-property g p) ...))

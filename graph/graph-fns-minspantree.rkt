@@ -19,7 +19,7 @@
   
   ;; map vertex to it's representative set
   ;; (different vertices may map to the same rep set)
-  (define-vertex-property G dset #:init uf-new)
+  (define-vertex-property G dset #:init (uf-new $v))
   
   (define sorted-edges (sort (get-edges G) < #:key w))
 
