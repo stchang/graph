@@ -26,6 +26,7 @@
   #:methods gen:graph
   [(define (get-vertices g) (get-weighted-graph-vertices g))
    (define (in-vertices g) (in-weighted-graph-vertices g))
+   (define (get-neighbors g v) (sequence->list (in-weighted-graph-neighbors g v)))
    (define (in-neighbors g v) (in-weighted-graph-neighbors g v))
    (define (edge-weight g u v) ; ok to return infty for non-existent edge?
 ;     (unless (and (has-vertex? g u) (has-vertex? g v))
@@ -65,7 +66,7 @@
    (define (has-vertex? g v) (and (member v (get-vertices g)) #t))
    (define (has-edge? g u v)
      (and (has-vertex? g u) (has-vertex? g v)
-          (member v (sequence->list (in-neighbors g u)))
+          (member v (get-neighbors g u))
           #t))
    ;; returns edges as a sequence
    (define (in-edges g)

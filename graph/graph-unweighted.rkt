@@ -24,11 +24,12 @@
   #:methods gen:graph
   [(define (get-vertices g) (get-unweighted-graph-vertices g))
    (define (in-vertices g) (in-unweighted-graph-vertices g))
+   (define (get-neighbors g v) (sequence->list (in-unweighted-graph-neighbors g v)))
    (define (in-neighbors g v) (in-unweighted-graph-neighbors g v))
    (define (edge-weight g u v) 
 ;     (unless (and (has-vertex? g u) (has-vertex? g v))
 ;       (error 'edge-weight "non-existent edge ~a ~a" u v))
-     (if (member (list u v) (sequence->list (in-edges g))) 1
+     (if (member (list u v) (get-edges g)) 1
          (error 'edge-weight "edge ~a ~a does not exist" u v)))
    (define (add-directed-edge! g u v [weight #f])
      (define adj (unweighted-graph-adjlist g))
@@ -56,7 +57,7 @@
    (define (has-vertex? g v) (and (member v (get-vertices g)) #t))
    (define (has-edge? g u v)
      (and (has-vertex? g u) (has-vertex? g v)
-          (member v (sequence->list (in-neighbors g u)))
+          (member v (get-neighbors g u))
           #t))
    ;; returns edges as a sequence
    (define (in-edges g)
