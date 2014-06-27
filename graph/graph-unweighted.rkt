@@ -28,10 +28,7 @@
    (define (in-neighbors g v) (in-unweighted-graph-neighbors g v))
    (define (vertex=? g u v) (equal? u v))
    (define (edge-weight g u v) 
-;     (unless (and (has-vertex? g u) (has-vertex? g v))
-;       (error 'edge-weight "non-existent edge ~a ~a" u v))
-     (if (member (list u v) (get-edges g)) 1
-         (error 'edge-weight "edge ~a ~a does not exist" u v)))
+     (if (member (list u v) (get-edges g)) 1 +inf.0))
    (define (add-directed-edge! g u v [weight #f])
      (define adj (unweighted-graph-adjlist g))
      (add-edge@ adj u v)

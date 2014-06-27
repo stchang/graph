@@ -24,7 +24,7 @@
          [e (in-edges G)])
     (match-define (list u v) e)
     ;; relax
-    (when (> (d v) (+ (d u) (apply w e)))
+    (when (> (d v) (+ (d u) (w u v)))
       (d-set! v (+ (d u) (w u v)))
       (π-set! v u)))
   

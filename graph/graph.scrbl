@@ -4,6 +4,7 @@
                      racket/contract/base
                      racket/generic
                      data/queue
+                     math/matrix
                      racket))
 
 @title{Racket Generic Graph Library}
@@ -48,7 +49,7 @@ A @tech{graph} has the following methods:
   @item{@defproc[(in-neighbors [g graph?] [v any/c]) sequence?]{Returns a sequence of vertex @racket[v]'s neighbors in the graph.}}
   @item{@defproc[(get-edges [g graph?]) list?]{Returns a list of edges in the graph.}}
   @item{@defproc[(in-edges [g graph?]) sequence?]{Returns a sequence of edges in the graph.}}
-  @item{@defproc[(edge-weight [g graph?] [u any/c] [v any/c]) number?]{Returns the weight of the edge in the graph (if it has one).}}
+  @item{@defproc[(edge-weight [g graph?] [u any/c] [v any/c]) number?]{Returns the weight of the edge in the graph (if it has one). Returns +inf.0 for non-existent edges.}}
   @item{@defproc[(transpose [g graph?]) graph?]{Returns a new graph where the edges of the original graph are reversed.}}
   @item{@defproc[(graph-copy [g graph?]) graph?]{Returns a copy of the given graph.}}
   ]
@@ -129,7 +130,33 @@ Creates a weighted graph that implements @racket[gen:graph] from a list of weigh
   (edge-weight g 'b 'd)
   ]}
 
-                               
+@; matrix graphs ------------------------------------------------------------
+@subsection{Matrix Graphs}
+
+@defproc[(matrix-graph? [g any/c]) boolean?]{Indicates whether a graph is a matrix graph.}
+
+@defform[(matrix-graph [[expr ...+] ...+])]{
+  Creates a matrix graph that implements @racket[gen:graph] from nested rows of expressions, exactly like @racket[matrix]. Vertices are the (0-based) row/column numbers and the weights are the number at each row-column. Use @racket[#f] to indicate no edge.
+                                         
+NOTE: @racket[matrix-graph] is implemented with @racket[matrix], so the same typed-untyped performance caveats probably apply.
+
+@examples[#:eval the-eval
+  (define g (matrix-graph [[0 3 8 #f -4]
+                           [#f 0 #f 1 7]
+                           [#f 4 0 #f #f]
+                           [2 #f -5 0 #f]
+                           [#f #f #f 6 0]]))
+  (graph? g)
+  (matrix-graph? g)
+  (has-edge? g 0 1)
+  (has-edge? g 1 0)
+  (edge-weight g 0 1)
+  (edge-weight g 1 0)
+  (floyd-warshall g)
+  ]
+}
+                                          
+
 @; graph properties -----------------------------------------------------------
 @section{Graph properties}
 

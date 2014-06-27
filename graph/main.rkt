@@ -3,6 +3,7 @@
 (require "gen-graph.rkt"
          "graph-unweighted.rkt"
          "graph-weighted.rkt"
+         "graph-matrix.rkt"
          "graph-fns-basic.rkt"
          "graph-fns-minspantree.rkt"
          "graph-fns-singlesource-shortestpaths.rkt"
@@ -17,8 +18,9 @@
                      [mk-unweighted-graph/directed   unweighted-graph/directed]
                      [mk-unweighted-graph/adj        unweighted-graph/adj]
                      [mk-weighted-graph/undirected   weighted-graph/undirected]
-                     [mk-weighted-graph/directed     weighted-graph/directed])
-         weighted-graph? unweighted-graph? 
+                     [mk-weighted-graph/directed     weighted-graph/directed]
+                     [mk-matrix-graph matrix-graph])
+         weighted-graph? unweighted-graph? matrix-graph?
          (all-from-out "graph-fns-basic.rkt"
                        "graph-fns-minspantree.rkt"
                        "graph-fns-singlesource-shortestpaths.rkt"

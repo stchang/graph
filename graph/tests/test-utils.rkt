@@ -9,6 +9,12 @@
 (define (hash-values-inexact->exact h)
   (for ([v (in-hash-keys h)]) 
     (hash-update! h v (λ (v) (if (equal? +inf.0 v) v (inexact->exact v))))))
+(define-syntax-rule (check-hash-equal?/exact h1 h2)
+  (for ([(k v) (in-hash h1)])
+    (if (equal? +inf.0 v)
+        (check-equal? +inf.0 (hash-ref h2 k))
+        (check-equal? (inexact->exact v)
+                      (inexact->exact (hash-ref h2 k))))))
 
 ;; check sequences for equality, treating them as sets
 ;; (assumes no duplicates)
