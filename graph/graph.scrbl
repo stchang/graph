@@ -43,8 +43,9 @@ A @tech{graph} has the following methods:
   @item{@defproc[(remove-directed-edge! [g graph?] [u any/c] [v any/c]) void?]{Imperatively removes the directed edge.}}
   @item{@defproc[(get-vertices [g graph?]) list?]{Returns a list of vertices in the graph.}}
   @item{@defproc[(in-vertices [g graph?]) sequence?]{Returns a sequence of vertices in the graph.}}
+  @item{@defproc[(get-neighbors [g graph?] [v any/c]) list?]{Returns a list of vertex @racket[v]'s neighbors in the graph.}}
   @item{@defproc[(in-neighbors [g graph?] [v any/c]) sequence?]{Returns a sequence of vertex @racket[v]'s neighbors in the graph.}}
-  @item{@defproc[(get-edges [g graph?]) sequence?]{Returns a list of edges in the graph.}}
+  @item{@defproc[(get-edges [g graph?]) list?]{Returns a list of edges in the graph.}}
   @item{@defproc[(in-edges [g graph?]) sequence?]{Returns a sequence of edges in the graph.}}
   @item{@defproc[(edge-weight [g graph?] [u any/c] [v any/c]) number?]{Returns the weight of the edge in the graph (if it has one).}}
   @item{@defproc[(transpose [g graph?]) graph?]{Returns a new graph where the edges of the original graph are reversed.}}
