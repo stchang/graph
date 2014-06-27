@@ -9,7 +9,8 @@
          "graph-fns-allpairs-shortestpaths.rkt"
          "graph-fns-coloring.rkt"
          "graph-fns-maxflow.rkt"
-         "graph-fns-graphviz.rkt")
+         "graph-fns-graphviz.rkt"
+         "graph-property.rkt")
 
 (provide (all-from-out "gen-graph.rkt")
          (rename-out [mk-unweighted-graph/undirected unweighted-graph/undirected]
@@ -24,7 +25,8 @@
                        "graph-fns-coloring.rkt"
                        "graph-fns-maxflow.rkt"
                        "graph-fns-graphviz.rkt")
-         floyd-warshall transitive-closure johnson)
+         floyd-warshall transitive-closure johnson
+         (all-from-out "graph-property.rkt"))
 
 
 
