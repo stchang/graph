@@ -30,7 +30,7 @@ Requires Racket 5.3.2 or later (due to @racket[define-generics] and @racket[enqu
 
 A @tech{graph} has the following methods:
 
-@itemize[
+@itemlist[
  
   @item{@defproc[(has-vertex? [g graph?] [v any/c]) boolean?]{Indicates whether a vertex is in the given graph.}}
   @item{@defproc[(has-edge? [g graph?] [u any/c] [v any/c]) boolean?]{Indicates whether an edge is in the given graph.}}
@@ -44,6 +44,7 @@ A @tech{graph} has the following methods:
   @item{@defproc[(get-vertices [g graph?]) list?]{Returns a list of vertices in the graph.}}
   @item{@defproc[(in-vertices [g graph?]) sequence?]{Returns a sequence of vertices in the graph.}}
   @item{@defproc[(in-neighbors [g graph?] [v any/c]) sequence?]{Returns a sequence of vertex @racket[v]'s neighbors in the graph.}}
+  @item{@defproc[(get-edges [g graph?]) sequence?]{Returns a list of edges in the graph.}}
   @item{@defproc[(in-edges [g graph?]) sequence?]{Returns a sequence of edges in the graph.}}
   @item{@defproc[(edge-weight [g graph?] [u any/c] [v any/c]) number?]{Returns the weight of the edge in the graph (if it has one).}}
   @item{@defproc[(transpose [g graph?]) graph?]{Returns a new graph where the edges of the original graph are reversed.}}
@@ -126,7 +127,124 @@ Creates a weighted graph that implements @racket[gen:graph] from a list of weigh
   (edge-weight g 'b 'd)
   ]}
 
-                                        
+                               
+@; graph properties -----------------------------------------------------------
+@section{Graph properties}
+
+The following forms associate properties with a graph. The graph itself is unchanged. These are inspired by and resemble the Boost Graph Library's @hyperlink["http://www.boost.org/doc/libs/1_42_0/libs/graph/doc/quick_tour.html"]{externally-stored properties}
+
+@defform/subs[(define-vertex-property graph prop-name maybe-init maybe-vs)
+              ([graph graph?]
+               [prop-name identifier?]
+               [maybe-init (code:line) (code:line #:init init-expr)]
+               [init-expr expr]
+               [maybe-vs (code:line) (code:line #:vs vs)]
+               [vs list?])]{
+  Creates a @deftech{vertex property} for vertices of the graph where each vertex maps to a value. This is a loose association, as keys of the mapping don't necessarily have to be vertices in the graph.
+  
+  Defines the following names:
+  
+  @itemlist[
+            
+    @item{@racket[prop-name]: 
+           
+           Can be used in three ways:
+           @itemlist[
+             @item{@racket[(prop-name v)]: Returns the value associated with the vertex.}
+             @item{@racket[(prop-name v #:default val)]: Returns the value associated with the given vertex. Returns @racket[val] if @racket[v] has no value associated with it.}
+             @item{@racket[prop-name]: Returns a @tech[#:doc '(lib "scribblings/reference/reference.scrbl")]{hash table} representation of the vertex-value mappings.}
+             ]}
+    @item{@racket[prop-name]@racketidfont{-set!}: When given a vertex and a value, associates the value with the given vertex.}
+  ]
+  
+  If an @racket[#:init] argument is supplied, each vertex in the graph is associated with the result of computing @racket[init-expr]. In the @racket[init-expr], the identifier @racket[$v] may be used to refers to the vertex whose value is being set. If vertices are added to the graph after the mapping is created, those vertices will not have a value in the mapping.
+  
+  A @racket[#:vs] argument maybe supplied to specify the order in which the vertices are initialized. The @racket[vs] list is only used if there is also an @racket[#:init] expression.
+  
+  @examples[#:eval the-eval
+   (define g (unweighted-graph/directed '((a b) (b c) (c d))))
+   (define-vertex-property g dist #:init 0)
+   (dist 'a)
+   (dist 'non-exist)
+   (dist 'non-exist #:default #f)
+   (dist-set! 'a 100)
+   (dist 'a)
+  ]
+}
+
+@defform/subs[(define-edge-property graph prop-name maybe-init maybe-for-each)
+              ([graph graph?]
+               [prop-name identifier?]
+               [maybe-init (code:line) (code:line #:init init-expr)]
+               [init-expr expr]
+               [maybe-vs (code:line) (code:line #:for-each for-each-e ...)]
+               [for-each-e expr])]{
+  Creates an @deftech{edge property} for @emph{all possible} edges in the graph (ie, every pair of vertices) where each edge maps to a value.
+  
+  Defines the following names:
+  
+  @itemlist[
+            
+    @item{@racket[prop-name]: 
+           
+           Can be used in three ways:
+           @itemlist[
+             @item{@racket[(prop-name u v)]: Returns the value associated with the pair of vertices.}
+             @item{@racket[(prop-name u v #:default val)]: Returns the value associated with the given pair of vertices. Returns @racket[val] if edge @racket[u]-@racket[v] has no value associated with it.}
+             @item{@racket[prop-name]: Returns a @tech[#:doc '(lib "scribblings/reference/reference.scrbl")]{hash table} representation of the edge-value mappings.}
+             ]}
+    @item{@racket[prop-name]@racketidfont{-set!}: When given an edge (ie two vertices) and a value, associates the value with the given edge.}
+  ]
+  
+  If an @racket[#:init] argument is supplied, each pair of vertices in the graph is associated with the result of computing @racket[init-expr]. In the @racket[init-expr], the identifiers @racket[$from] and @racket[$to] may be used to refer to the vertices whose value is being set.
+  
+  The @racket[#:for-each] keyword may be used instead of @racket[#:init] when more control of the initialization is required. The @racket[for-each-e] expressions are evaluated once per pair of vertices. The @racket[$from] and @racket[$to] identifiers are again available to refer to the vertices in the "current" edge.
+  
+  @examples[#:eval the-eval
+   (define g (unweighted-graph/directed '((a b) (b c) (c d) (d a))))
+   (define-edge-property g A #:init 0)
+   (A 'a 'b)
+   ]
+  
+  Non-edges also get a value.
+  @examples[#:eval the-eval
+   (get-edges g)
+   (A 'a 'd)]
+  But non-existent vertices still fails.
+  @examples[#:eval the-eval
+   (A 'a 'e)
+   (A 'a 'e #:default #f)]
+  @examples[#:eval the-eval
+   (A-set! 'a 'b 100)
+   (A 'a 'b)
+   (define-edge-property g B #:for-each (B-set! $from $to (format "~a-~a" $from $to)))
+   (B 'c 'd)]
+}
+
+@defform/subs[(define-graph-property prop-name v)
+              ([prop-name identifier?]
+               [v expr])]{
+  Creates a @deftech{graph property}.
+  
+  Defines the following names:
+  
+  @itemlist[
+            
+    @item{@racket[prop-name]: Bound to the result of evaluating @racket[v].}
+    @item{@racket[prop-name]@racketidfont{-set!}: Sets the property to the given value.}
+    @item{@racketidfont{get-}@racket[prop-name]: Returns the current value when called.}
+  ]
+  
+  @examples[#:eval the-eval
+   (define-graph-property a? #f)
+   a?
+   (get-a?)
+   (a?-set! #t)
+   a?
+   ]
+  
+}
+
 @; basic graph fns ------------------------------------------------------------
 
 @section{Basic Graph Functions}
@@ -180,23 +298,21 @@ Utilizes a queue that implements @racket[gen:queue]. A vertex is @deftech{discov
                [from identifier?] [to identifier?] [v identifier?])]{
 Cleaner syntax for @racket[bfs/generalized]. Essentially, this form eliminates the need to define separate functions and then pass them into @racket[bfs/generalized]'s keyword arguments. Instead, the bodies of those functions are inserted right after the corresponding keywords.
                    
-For example, below is Dijkstra's algorithm, implemented with @racket[do-bfs]. In the code, @racket[d] is a hash mapping a vertex to the intermediate shortest distance from the source and @racket[π] is a hash mapping a vertex to its predecessor in the shortest path from the source. The algorithm utilizes a priority queue that is sorted according to intermediate shortest paths. A node is "visited" when it improves one of the paths.
+For example, below is Dijkstra's algorithm, implemented with @racket[do-bfs]. In the code, @racket[dist] is a @tech{vertex property} mapping a vertex to the intermediate shortest distance from the source and @racket[pred] is a @tech{vertex property} mapping a vertex to its predecessor in the shortest path from the source. The algorithm utilizes a priority queue that is sorted according to intermediate shortest paths. A node is "visited" when it improves one of the paths.
 
 @racketblock[
-(define (dijkstra G s) 
-  (define-hashes d π)
-  (define (w u v) (edge-weight G u v))
+(define (dijkstra G src) 
+  (define-vertex-property G dist #:init +inf.0)
+  (define-vertex-property G pred #:init #f)
+  (define (wgt u v) (edge-weight G u v))
 
-  (do-bfs G s #:init-queue (mk-empty-priority (λ (u v) (< (d u) (d v))))
-    #:init
-      (for ([v (in-vertices G)]) (d-set! v +inf.0) (π-set! v #f))
-      (d-set! s 0)
-    #:visit? (to from) (> (d from) (+ (d to) (w to from)))
+  (do-bfs G src #:init-queue (mk-empty-priority (λ (u v) (< (dist u) (dist v))))
+    #:init (dist-set! src 0)
+    #:visit? (to from) (> (dist from) (+ (dist to) (wgt to from)))
     #:discover (to from)
-      (d-set! from (+ (d to) (w to from)))
-      (π-set! from to)
-    #:return (values d π)))]
-
+      (dist-set! from (+ (dist to) (wgt to from)))
+      (pred-set! from to)
+    #:return (values dist pred)))]
 The @racket[#:visit] clause binds two identifiers, representing the searched nodes and @racket[#:discover] is similar. This form is somewhat brittle since @racket[#:init] and @racket[#:return] don't bind any ways and instead @racket[G] and @racket[s] are captured from the context but this hasnt been a problem in practice.
 
 @racket[bfs], @racket[fewest-vertices-path], @racket[mst-prim], and @racket[dijkstra] all use this form.}
@@ -276,17 +392,16 @@ Analogous to @racket[do-bfs]. Nicer syntax for @racket[dfs/generalized]. Below i
              
 @racketblock[
 (define (dag? G)
-  (define-hashes color)
-  (define not-dag #f)
-  (define (not-dag?) not-dag)
-  (do-dfs G #:break not-dag?
-    #:init (for ([u (in-vertices G)]) (color-set! u WHITE))
+  (define-vertex-property G color #:init WHITE)
+  (define-graph-property not-dag? #f)
+  
+  (do-dfs G #:break get-not-dag?
     #:visit? (from to) (white? (color to))
     #:prologue (parent v) (color-set! v GRAY)
     #:epilogue (parent v) (color-set! v BLACK)
     #:process-unvisited? (from to) (gray? (color to))
-    #:process-unvisited (from to) (set! not-dag #t)
-    #:return (not not-dag)))]
+    #:process-unvisited (from to) (not-dag?-set! #t)
+    #:return (not not-dag?)))]
 
 @racket[dfs], @racket[tsort], @racket[dag?], and @racket[scc] all use this form.}
                                                                                          
@@ -379,9 +494,10 @@ This function assumes that a "color" is a number and uses @racket[=] to compare 
 Computes the maximum flow in graph @racket[g] from @racket[source] to @racket[sink] using the Edmonds-Karp algorithm, which runs in time O(VE^2). Edmonds-Karp is an improvement on the Ford-Fulkerson algorithm in that it uses @racket[fewest-vertices-path] to find an augmenting path in each iteration.
                                    
 The function returns a hash mapping an edge to a non-negative number representing the flow along that edge. The returned returned flow is maximal and obeys a few properties:
-@itemize[@item{The flow out of the source equals the source into the sink.}
-         @item{The flow out of each non-source/sink vertex equals the flow into that vertex.}
-         @item{The flow along each edge is <= the edge's capacity (ie, weight).}]
+@itemlist[
+  @item{The flow out of the source equals the source into the sink.}
+  @item{The flow out of each non-source/sink vertex equals the flow into that vertex.}
+  @item{The flow along each edge is <= the edge's capacity (ie, weight).}]
                                    
 This function should only be used on directed graphs, otherwise things get double counted.}
                                                
@@ -394,7 +510,7 @@ This function should only be used on directed graphs, otherwise things get doubl
 Note: this is not the Hopcroft-Karp (ie fastest) bipartite matching algorithm.}
 
 @; util fns -------------------------------------------------------------------
-@section{Other Useful Graph Functions}
+@section{Graphviz}
 @defproc[(graphviz [g graph?] [#:colors colors boolean? #f]) string?]{
 Returns the dotfile representation of the given graph (as a string).}
 

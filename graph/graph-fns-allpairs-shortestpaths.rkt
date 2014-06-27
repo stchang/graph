@@ -13,11 +13,10 @@
 ;; - non-existent edges have weight +inf.0
 
 (define (extend-shortest-paths W lw w)
-  (define vs (get-vertices W))
   (define-edge-property W new-L
     #:for-each
     (new-L-set! $from $to +inf.0)
-    (for ([k vs])
+    (for ([k (in-vertices W)])
       (new-L-set! $from $to (min (new-L $from $to) (+ (lw $from k) (w k $to))))))
   new-L)
 
@@ -54,10 +53,10 @@
 
 (define (floyd-warshall W)
   (define (w u v) (if (equal? u v) 0 (edge-weight W u v)))
-  (define vs (get-vertices W))
   (define v0 (gensym)) ; create new vertex
   (define-vertex-property W Ds)
   (Ds-set! v0 w)
+  (define vs (get-vertices W))
   (for/last ([k-1 (cons v0 vs)] [k vs])
     (define-edge-property W new-D
       #:init (min ((Ds k-1) $from $to) (+ ((Ds k-1) $from k) ((Ds k-1) k $to))))

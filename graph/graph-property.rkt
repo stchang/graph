@@ -17,7 +17,7 @@
                     (~optional (~seq #:vs vs))) ...)
      (with-syntax 
        ([hash-name (generate-temporary #'prop)]
-        [hash-name-set! (format-id #'prop "~a-set!" #'prop)])
+        [prop-set! (format-id #'prop "~a-set!" #'prop)])
        (template
         (begin
           (define hash-name (make-hash))
@@ -27,9 +27,9 @@
               [(_ key) (hash-ref hash-name key)]
               [(_ key #:default fail) (hash-ref hash-name key (thunk fail))]
               [prop hash-name]))
-          (define (hash-name-set! key val) (hash-set! hash-name key val))
+          (define (prop-set! key val) (hash-set! hash-name key val))
           (?? (for ([v (?? vs (in-vertices g))])
-                (hash-name-set! v 
+                (prop-set! v 
                   (syntax-parameterize ([$v (syntax-id-rules () [_ v])])
                     init-expr)))))))]))
 
@@ -39,10 +39,10 @@
 (define-syntax (define-edge-property stx)
   (syntax-parse stx
     [(_ g prop (~or (~optional (~seq #:init init-val:expr))
-                    (~optional (~seq #:for-each init-expr:expr ...))) ...)
+                    (~optional (~seq #:for-each init-expr:expr ...))))
      (with-syntax 
        ([hash-name (generate-temporary #'prop)]
-        [hash-name-set! (format-id #'prop "~a-set!" #'prop)])
+        [prop-set! (format-id #'prop "~a-set!" #'prop)])
        (template
         (begin
           (define hash-name (make-hash))
@@ -52,10 +52,10 @@
               [(_ u v) (hash-ref hash-name (list u v))]
               [(_ u v #:default fail) (hash-ref hash-name (list u v) (thunk fail))]
               [prop hash-name]))
-          (define (hash-name-set! u v val) (hash-set! hash-name (list u v) val))
+          (define (prop-set! u v val) (hash-set! hash-name (list u v) val))
           (?? (let ([vs (get-vertices g)])
                 (for* ([i vs] [j vs])
-                (hash-name-set! i j 
+                (prop-set! i j 
                   (syntax-parameterize ([$from (syntax-id-rules () [_ i])]
                                         [$to (syntax-id-rules () [_ j])])
                     init-val)))))
