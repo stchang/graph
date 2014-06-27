@@ -82,19 +82,21 @@
 ;;     or graphs where all edges have the same weight
 (define (fewest-vertices-path G s v)
   (cond
-    [(equal? s v) (list s)]
+    [(vertex=? G s v) (list s)]
     [else
      (define-vertex-property G π #:init #f)
      (define-graph-property found-v? #f)
      
      (do-bfs G s #:break get-found-v?
        #:discover (from to)
-         (when (equal? to v) (found-v?-set! #t))
+         (when (vertex=? G to v) (found-v?-set! #t))
          (π-set! to from)
        #:return
          (and found-v?
               (let loop ([path null] [v v])
-                (if (equal? v s) (cons s path) (loop (cons v path) (π v))))))]))
+                (if (vertex=? G v s) 
+                    (cons s path) 
+                    (loop (cons v path) (π v))))))]))
 
            
 ;; dfs ------------------------------------------------------------------------
@@ -197,7 +199,7 @@
   (define SCC null)
   (define (build-SCC? v) (= (lowlink v) (index v)))
   (define (build-SCC v)
-    (define-values (new-scc S-rst) (splitf-at S (λ (w) (not (equal? w v)))))
+    (define-values (new-scc S-rst) (splitf-at S (λ (w) (not (vertex=? G w v)))))
     (set! SCC (cons (cons v new-scc) SCC))
     (set! S (cdr S-rst)))
 

@@ -5,6 +5,7 @@
 (define-generics graph
   (has-vertex? graph v)
   (has-edge? graph u v)
+  (vertex=? graph u v)
   (add-edge! graph u v [weight])
   (add-directed-edge! graph u v [weight])
   (remove-edge! graph u v)

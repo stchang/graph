@@ -25,7 +25,7 @@
 
   (for ([e sorted-edges])
     (match-define (list u v) e)
-    (unless (equal? (uf-find (dset u)) (uf-find (dset v)))
+    (unless (vertex=? G (uf-find (dset u)) (uf-find (dset v)))
       (A-add! e)
       (uf-union! (dset u) (dset v))))
   
@@ -51,4 +51,5 @@
         (π-set! from to)
         (key-set! from (w to from)))
     #:visit (u) (in-Q?-set! u #f)
-    #:return (for/list ([v (in-vertices G)] #:unless (equal? v r)) (list (π v) v))))
+    #:return (for/list ([v (in-vertices G)] #:unless (vertex=? G v r))
+               (list (π v) v))))

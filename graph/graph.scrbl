@@ -34,6 +34,7 @@ A @tech{graph} has the following methods:
  
   @item{@defproc[(has-vertex? [g graph?] [v any/c]) boolean?]{Indicates whether a vertex is in the given graph.}}
   @item{@defproc[(has-edge? [g graph?] [u any/c] [v any/c]) boolean?]{Indicates whether an edge is in the given graph.}}
+  @item{@defproc[(vertex=? [g graph?] [u any/c] [v any/c]) boolean?]{Indicates whether vertices @racket[u] and @racket[v] are the same vertex, according to graph @racket[g].}
   @item{@defproc[(add-vertex! [g graph?] [v any/c]) void?]{Imperatively adds a vertex to a graph.}}
   @item{@defproc[(remove-vertex! [g graph?] [v any/c]) void?]{Imperatively removes a vertex from a graph. Any edges containing the vertex are also removed.}}
   @item{@defproc[(rename-vertex! [g graph?] [old any/c] [new any/c]) void?]{Imperatively renames vertex @racket[old] to @racket[new] in a graph. An exception is thrown if @racket[new] already exists in the graph.}}

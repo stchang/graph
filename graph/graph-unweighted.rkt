@@ -26,6 +26,7 @@
    (define (in-vertices g) (in-unweighted-graph-vertices g))
    (define (get-neighbors g v) (sequence->list (in-unweighted-graph-neighbors g v)))
    (define (in-neighbors g v) (in-unweighted-graph-neighbors g v))
+   (define (vertex=? g u v) (equal? u v))
    (define (edge-weight g u v) 
 ;     (unless (and (has-vertex? g u) (has-vertex? g v))
 ;       (error 'edge-weight "non-existent edge ~a ~a" u v))
