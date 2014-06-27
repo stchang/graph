@@ -24,7 +24,7 @@
   (do-bfs G s 
     #:init (d-set! s 0) (π-set! s #f)
     #:discover (from to) (d-set! to (add1 (d from))) (π-set! to from)
-    #:return (values d π)))
+    #:return (values (d->hash) (π->hash))))
 
 ;; default Q is from data/queue
 ;; see also bfs clients prim and dijkstra
@@ -107,7 +107,7 @@
   (do-dfs G
     #:prologue (parent u) (add1! time) (d-set! u time) (π-set! u parent)
     #:epilogue (parent u) (add1! time) (f-set! u time)
-    #:return (values d π f)))
+    #:return (values (d->hash) (π->hash) (f->hash))))
 
 (define (dfs/generalized G #:order [order (λ (vs) vs)]
                            #:break [break? (λ _ #f)]

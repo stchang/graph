@@ -147,13 +147,12 @@ The following forms associate properties with a graph. The graph itself is uncha
   @itemlist[
             
     @item{@racket[prop-name]: 
-           
-           Can be used in three ways:
+         A procedure that returns the value associated with the given vertices.
            @itemlist[
              @item{@racket[(prop-name v)]: Returns the value associated with the vertex.}
              @item{@racket[(prop-name v #:default val)]: Returns the value associated with the given vertex. Returns @racket[val] if @racket[v] has no value associated with it.}
-             @item{@racket[prop-name]: Returns a @tech[#:doc '(lib "scribblings/reference/reference.scrbl")]{hash table} representation of the vertex-value mappings.}
              ]}
+    @item{@racket[prop-name]@racketidfont{->hash}: A no-argument function that returns a @tech[#:doc '(lib "scribblings/reference/reference.scrbl")]{hash table} representation of the vertex-value mappings.}
     @item{@racket[prop-name]@racketidfont{-set!}: When given a vertex and a value, associates the value with the given vertex.}
   ]
   
@@ -169,6 +168,7 @@ The following forms associate properties with a graph. The graph itself is uncha
    (dist 'non-exist #:default #f)
    (dist-set! 'a 100)
    (dist 'a)
+   (dist->hash)
   ]
 }
 
@@ -186,13 +186,12 @@ The following forms associate properties with a graph. The graph itself is uncha
   @itemlist[
             
     @item{@racket[prop-name]: 
-           
-           Can be used in three ways:
+           A procedure that returns the value associated with the given vertices.
            @itemlist[
              @item{@racket[(prop-name u v)]: Returns the value associated with the pair of vertices.}
              @item{@racket[(prop-name u v #:default val)]: Returns the value associated with the given pair of vertices. Returns @racket[val] if edge @racket[u]-@racket[v] has no value associated with it.}
-             @item{@racket[prop-name]: Returns a @tech[#:doc '(lib "scribblings/reference/reference.scrbl")]{hash table} representation of the edge-value mappings.}
              ]}
+    @item{@racket[prop-name]@racketidfont{->hash}: A no-argument function that returns a @tech[#:doc '(lib "scribblings/reference/reference.scrbl")]{hash table} representation of the edge-value mappings.}
     @item{@racket[prop-name]@racketidfont{-set!}: When given an edge (ie two vertices) and a value, associates the value with the given edge.}
   ]
   
@@ -218,7 +217,8 @@ The following forms associate properties with a graph. The graph itself is uncha
    (A-set! 'a 'b 100)
    (A 'a 'b)
    (define-edge-property g B #:for-each (B-set! $from $to (format "~a-~a" $from $to)))
-   (B 'c 'd)]
+   (B 'c 'd)
+   (B->hash)]
 }
 
 @defform/subs[(define-graph-property prop-name v)
@@ -312,7 +312,7 @@ For example, below is Dijkstra's algorithm, implemented with @racket[do-bfs]. In
     #:discover (to from)
       (dist-set! from (+ (dist to) (wgt to from)))
       (pred-set! from to)
-    #:return (values dist pred)))]
+    #:return (values (dist->hash) (pred->hash))))]
 The @racket[#:visit] clause binds two identifiers, representing the searched nodes and @racket[#:discover] is similar. This form is somewhat brittle since @racket[#:init] and @racket[#:return] don't bind any ways and instead @racket[G] and @racket[s] are captured from the context but this hasnt been a problem in practice.
 
 @racket[bfs], @racket[fewest-vertices-path], @racket[mst-prim], and @racket[dijkstra] all use this form.}

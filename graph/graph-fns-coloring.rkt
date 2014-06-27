@@ -14,7 +14,7 @@
   (define-vertex-property G color)
   (let loop ([vs (order (get-vertices G))])
     (cond 
-      [(null? vs) color]
+      [(null? vs) (color->hash)]
       [else
        (define u (car vs))
        (let color-select-loop ([try-col 0])
@@ -56,7 +56,7 @@
         smallest-color))
     (color-set! u smallest-color)
     (when (= smallest-color num-colors) (add1! num-colors)))
-  (values num-colors color))
+  (values num-colors (color->hash)))
 
 ;; Color a graph greedily, using the Brelaz vertex ordering heuristic
 ;; (This function is separate from coloring/greedy because the order the
@@ -66,14 +66,14 @@
 ;; - Break ties using the nodes with the most unoclored neighbors
 (define (coloring/brelaz g)
   (define-vertex-property G color)
- 
+  (define colored? (curry hash-has-key? (color->hash)))
+  
   ; Used to break ties as mentioned above
-  (define (count-colored-neighbors n)
-    (length (filter (curry hash-has-key? color) (sequence->list (in-neighbors g n)))))
+  (define (count-colored-neighbors n) 
+    (length (filter colored? (get-neighbors g n))))
  
   (define (count-uncolored-neighbors n)
-    (length (filter (negate (curry hash-has-key? color)) 
-                    (sequence->list (in-neighbors g n)))))
+    (length (filter (negate colored?) (get-neighbors g n))))
  
   (define graph-size (length (get-vertices g)))
  
@@ -82,7 +82,7 @@
     (define next-node 
       (first
        (sort
-        (filter (negate (curry hash-has-key? color)) (get-vertices g))
+        (filter (negate colored?) (get-vertices g))
         (λ (n1 n2) 
           (or (> (count-colored-neighbors n1) (count-colored-neighbors n2))
               (and (= (count-colored-neighbors n1) (count-colored-neighbors n2))
@@ -90,11 +90,11 @@
     
     (for/first ([i (in-naturals)]
                 #:unless 
-                (member i (map (λ (n) (hash-ref color n #f))
-                               (sequence->list (in-neighbors g next-node)))))
-      (hash-set! color next-node i)))
+                (member i (map (λ (n) (color n #:default #f)) 
+                               (get-neighbors g next-node))))
+      (color-set! next-node i)))
  
-  color)
+  (color->hash))
 
 (define (valid-coloring? G coloring)
   (define (color v) (hash-ref coloring v))

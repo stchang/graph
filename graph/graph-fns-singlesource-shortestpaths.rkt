@@ -34,7 +34,7 @@
     (when (> (d v) (+ (d u) (w u v)))
       (error 'bellman-ford "negative weight cycle")))
   
-  (values d π))
+  (values (d->hash) (π->hash)))
 
 (define (dag-shortest-paths G s)
   (define (w u v) (edge-weight G u v))
@@ -52,7 +52,7 @@
       (d-set! v (+ (d u) (w u v)))
       (π-set! v u)))
   
-  (values d π))
+  (values (d->hash) (π->hash)))
 
 ;; no negative weight edges
 (define (dijkstra G s) 
@@ -67,4 +67,4 @@
     #:discover (to from)
       (d-set! from (+ (d to) (w to from)))
       (π-set! from to)
-    #:return (values d π)))
+    #:return (values (d->hash) (π->hash))))

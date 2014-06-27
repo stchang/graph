@@ -35,7 +35,7 @@
   (define-vertex-property g time
     #:init (add1 (apply max -1 (for/list ([u (in-neighbors g^T $v)]) (time u))))
     #:vs (tsort g))
-  time)
+  (time->hash))
 
 (check-equal? (parallel-ordering file-deps)
               (make-hash
@@ -77,4 +77,4 @@
           (cons (first ss) (string->number (second ss))))
         (with-input-from-file "kevin-bacon-expected.dat" port->lines))))
 
-(check-equal? bacon-number bacon-number-expected)
+(check-equal? (bacon-number->hash) bacon-number-expected)

@@ -18,7 +18,7 @@
     (new-L-set! $from $to +inf.0)
     (for ([k (in-vertices W)])
       (new-L-set! $from $to (min (new-L $from $to) (+ (lw $from k) (w k $to))))))
-  new-L)
+  (new-L->hash))
 
 ;; ie, the matrix multiplication method
 (define (all-pairs-shortest-paths/slow W)
@@ -29,9 +29,9 @@
   (Ls-set! (car vs) w)
   (for/last ([m-1 vs] ; traverse two offset vs list in parallel
              [m (drop-right (cdr vs) 1)]) ; drop last bc (L m-1) == (L m)
-    (define new-L (extend-shortest-paths W (Ls m-1) w))
-    (Ls-set! m (λ (u v) (if (equal? u v) 0 (hash-ref new-L (list u v) +inf.0))))
-    new-L))
+    (define new-L-hash (extend-shortest-paths W (Ls m-1) w))
+    (Ls-set! m (λ (u v) (if (equal? u v) 0 (hash-ref new-L-hash (list u v) +inf.0))))
+    new-L-hash))
 
 ;; ie, the repeat matrix squaring method
 ;; something wrong with this --- see test for g25.2
@@ -61,7 +61,7 @@
     (define-edge-property W new-D
       #:init (min ((Ds k-1) $from $to) (+ ((Ds k-1) $from k) ((Ds k-1) k $to))))
     (Ds-set! k (λ (u v) (if (equal? u v) 0 (new-D u v #:default +inf.0))))
-    new-D))
+    (new-D->hash)))
 
 ;; uses Bellman-Ford to eliminate negative edges,
 ;;   then runs dijkstra for each vertex in G
@@ -80,7 +80,7 @@
   (define-vertex-property G dij #:init (let-values ([(δ _) (dijkstra G $v)]) δ))
   (define-edge-property G D
     #:init (+ (hash-ref (dij $from) $to) (h $to) (- (h $from))))
-  D)
+  (D->hash))
 
 (define (transitive-closure G)
   ;; Ts maps vertices to an edge property hash
@@ -90,7 +90,7 @@
   (define v0 (gensym))
   (define-edge-property G new-T 
     #:init (or (equal? $from $to) (has-edge? G $from $to)))
-  (Ts-set! v0 new-T)
+  (Ts-set! v0 (new-T->hash))
   
   (define vs (get-vertices G))
   (for/last ([k-1 (cons v0 vs)] [k vs])
@@ -99,5 +99,6 @@
       (or (hash-ref (Ts k-1) (list $from $to))
           (and (hash-ref (Ts k-1) (list $from k))
                (hash-ref (Ts k-1) (list k $to)))))
-    (Ts-set! k new-T)
-    new-T))
+    (define new-T-hash (new-T->hash))
+    (Ts-set! k new-T-hash)
+    new-T-hash))

@@ -43,7 +43,7 @@
         (remove-directed-edge! G-residual (first e) (second e)))
       (apath-loop (fewest-vertices-path G-residual s t))))
   ;; filter out negative flows
-  (for/hash ([(k v) (in-hash f)] #:when (positive? v)) (values k v)))
+  (for/hash ([(k v) (in-hash (f->hash))] #:when (positive? v)) (values k v)))
 
 ; linear time bipartite check (via 2-coloring)
 (define (bipartite? G)

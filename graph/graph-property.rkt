@@ -15,23 +15,21 @@
   (syntax-parse stx
     [(_ g prop (~or (~optional (~seq #:init init-expr:expr))
                     (~optional (~seq #:vs vs))) ...)
-     (with-syntax 
-       ([hash-name (generate-temporary #'prop)]
-        [prop-set! (format-id #'prop "~a-set!" #'prop)])
-       (template
-        (begin
-          (define hash-name (make-hash))
-          (define-syntax prop
-            (syntax-id-rules (set!)
-              [(set! prop new-h) (set! hash-name new-h)]
-              [(_ key) (hash-ref hash-name key)]
-              [(_ key #:default fail) (hash-ref hash-name key (thunk fail))]
-              [prop hash-name]))
-          (define (prop-set! key val) (hash-set! hash-name key val))
-          (?? (for ([v (?? vs (in-vertices g))])
-                (prop-set! v 
-                  (syntax-parameterize ([$v (syntax-id-rules () [_ v])])
-                    init-expr)))))))]))
+     #:with hash-name (generate-temporary #'prop)
+     #:with prop-set! (format-id #'prop "~a-set!" #'prop)
+     #:with prop->hash (format-id #'prop "~a->hash" #'prop)
+     (template
+      (begin
+        (define hash-name (make-hash))
+        (define (prop key #:default 
+                      [fail (λ () (error 'prop "no ~a value for ~a" 'prop key))])
+          (hash-ref hash-name key fail))
+        (define (prop->hash) hash-name)
+        (define (prop-set! key val) (hash-set! hash-name key val))
+        (?? (for ([v (?? vs (in-vertices g))])
+              (prop-set! v 
+                (syntax-parameterize ([$v (syntax-id-rules () [_ v])])
+                  init-expr))))))]))
 
 (define-syntax-parameter $from (syntax-rules ()))
 (define-syntax-parameter $to (syntax-rules ()))
@@ -40,30 +38,29 @@
   (syntax-parse stx
     [(_ g prop (~or (~optional (~seq #:init init-val:expr))
                     (~optional (~seq #:for-each init-expr:expr ...))))
-     (with-syntax 
-       ([hash-name (generate-temporary #'prop)]
-        [prop-set! (format-id #'prop "~a-set!" #'prop)])
-       (template
-        (begin
-          (define hash-name (make-hash))
-          (define-syntax prop
-            (syntax-id-rules (set!)
-              [(set! prop new-h) (set! hash-name new-h)]
-              [(_ u v) (hash-ref hash-name (list u v))]
-              [(_ u v #:default fail) (hash-ref hash-name (list u v) (thunk fail))]
-              [prop hash-name]))
-          (define (prop-set! u v val) (hash-set! hash-name (list u v) val))
-          (?? (let ([vs (get-vertices g)])
-                (for* ([i vs] [j vs])
+     #:with hash-name (generate-temporary #'prop)
+     #:with prop-set! (format-id #'prop "~a-set!" #'prop)
+     #:with prop->hash (format-id #'prop "~a->hash" #'prop)
+     (template
+      (begin
+        (define hash-name (make-hash))
+        (define (prop u v #:default 
+                      [fail (λ () (error 'prop "no ~a value for edge ~a-~a" 
+                                         'prop u v))])
+          (hash-ref hash-name (list u v) fail))
+        (define (prop->hash) hash-name)
+        (define (prop-set! u v val) (hash-set! hash-name (list u v) val))
+        (?? (let ([vs (get-vertices g)])
+              (for* ([i vs] [j vs])
                 (prop-set! i j 
                   (syntax-parameterize ([$from (syntax-id-rules () [_ i])]
                                         [$to (syntax-id-rules () [_ j])])
                     init-val)))))
-          (?? (let ([vs (get-vertices g)])
-                (for* ([i vs] [j vs])
-                  (syntax-parameterize ([$from (syntax-id-rules () [_ i])]
-                                        [$to (syntax-id-rules () [_ j])])
-                    init-expr ...)))))))]))
+        (?? (let ([vs (get-vertices g)])
+              (for* ([i vs] [j vs])
+                (syntax-parameterize ([$from (syntax-id-rules () [_ i])]
+                                      [$to (syntax-id-rules () [_ j])])
+                  init-expr ...))))))]))
 
 (define-syntax-rule (define-vertex-properties g p ...) 
   (begin (define-vertex-property g p) ...))
