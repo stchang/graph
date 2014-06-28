@@ -2,14 +2,12 @@
 
 (require (for-syntax racket/syntax syntax/parse 
                      syntax/parse/experimental/template)
-         "gen-graph.rkt"
+         "gen-graph.rkt" "utils.rkt"
          racket/stxparam)
 
 (provide (all-defined-out))
 
 ;; TODO: make vertex and edge properties higher order?
-
-(define-syntax-parameter $v (syntax-rules ()))
 
 (define-syntax (define-vertex-property stx)
   (syntax-parse stx
@@ -30,9 +28,6 @@
               (prop-set! v 
                 (syntax-parameterize ([$v (syntax-id-rules () [_ v])])
                   init-expr))))))]))
-
-(define-syntax-parameter $from (syntax-rules ()))
-(define-syntax-parameter $to (syntax-rules ()))
 
 (define-syntax (define-edge-property stx)
   (syntax-parse stx

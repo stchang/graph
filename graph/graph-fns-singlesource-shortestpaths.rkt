@@ -3,6 +3,7 @@
 (require "graph-property.rkt"
          "gen-graph.rkt"
          "graph-fns-basic.rkt" 
+         "utils.rkt"
          (only-in "../queue/priority.rkt" mk-empty-priority))
 
 (provide (all-defined-out))

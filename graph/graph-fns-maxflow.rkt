@@ -1,6 +1,7 @@
 #lang racket
 
 (require "gen-graph.rkt"
+         "utils.rkt"
          "graph-property.rkt"
          "graph-fns-basic.rkt")
 
@@ -52,11 +53,11 @@
   (define-vertex-property G color) ; key = vertices, values = #t/#f
   (define-graph-property not-bipartite? #f)
   (do-dfs G #:break get-not-bipartite?
-   #:prologue (parent v) 
-   (color-set! v (and parent (not (color parent))))
-   (if (color v) (add-to-L! v) (add-to-R! v))
-   #:process-unvisited? (from to) (and from (xor (not (color from)) (color to)))
-   #:process-unvisited (from to) (set! not-bipartite? #t))
+   #:prologue 
+   (color-set! $to (and $from (not (color $from))))
+   (if (color $to) (add-to-L! $to) (add-to-R! $to))
+   #:process-unvisited? (and $from (xor (not (color $from)) (color $to)))
+   #:process-unvisited (set! not-bipartite? #t))
   (and (not not-bipartite?) (list L R)))
    
 (define (maximum-bipartite-matching G)

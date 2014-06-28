@@ -3,6 +3,7 @@
 (require "graph-property.rkt"
          "gen-graph.rkt"
          "graph-fns-basic.rkt"
+         "utils.rkt"
          (only-in "../queue/priority.rkt" mk-empty-priority))
 (require data/union-find)
 
@@ -45,11 +46,11 @@
     #:init (key-set! r 0)
     ;; default bfs skips the visit if v has been discovered (ie it's not "white")
     ;; but here we want to skip only if v has been dequeued (ie it's "black")
-    #:visit? (to from) (in-Q? from)
-    #:discover (to from)
-      (when (< (w to from) (key from)) ; relax
-        (π-set! from to)
-        (key-set! from (w to from)))
-    #:visit (u) (in-Q?-set! u #f)
+    #:visit? (in-Q? $to)
+    #:discover 
+      (when (< (w $from $to) (key $to)) ; relax
+        (π-set! $to $from)
+        (key-set! $to (w $from $to)))
+    #:visit (in-Q?-set! $v #f)
     #:return (for/list ([v (in-vertices G)] #:unless (vertex=? G v r))
                (list (π v) v))))

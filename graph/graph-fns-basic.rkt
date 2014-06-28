@@ -6,7 +6,8 @@
          "../queue/gen-queue.rkt"
          (only-in "../queue/fifo.rkt" mk-empty-fifo))
 
-(require (for-syntax syntax/parse syntax/parse/experimental/template))
+(require (for-syntax syntax/parse syntax/parse/experimental/template)
+         racket/stxparam)
 
 (provide (all-defined-out))
 
@@ -23,7 +24,7 @@
 
   (do-bfs G s 
     #:init (d-set! s 0) (π-set! s #f)
-    #:discover (from to) (d-set! to (add1 (d from))) (π-set! to from)
+    #:discover (d-set! $to (add1 (d $from))) (π-set! $to $from)
     #:return (values (d->hash) (π->hash))))
 
 ;; default Q is from data/queue
@@ -52,6 +53,11 @@
       (enqueue! Q v)))
   (finish G s))
 
+;; TODO: there is potential ambiguity here in the binding clauses
+;; If the programmer omits the bindings, but the first expr happens to have the
+;; form (id1 id2), then there will be a syntax error for $to and $from bc
+;; they won't be bound.
+;;
 ;; cleaner syntax for bfs/generalized
 (define-syntax (do-bfs stx)
   (syntax-parse stx 
@@ -59,18 +65,38 @@
       (~or (~optional (~seq #:init-queue Q:expr))
            (~optional (~seq #:break break?:expr))
            (~optional (~seq #:init init:expr ...))
-           (~optional (~seq #:visit? (v?-from:id v?-to:id) visit?:expr ...))
-           (~optional (~seq #:discover (disc-from:id disc-to:id) disc:expr ...))
-           (~optional (~seq #:visit (v:id) visit:expr ...))
+           (~or (~optional 
+                 (~seq #:visit? (v?-from:id v?-to:id) visit?:expr v?rst:expr ...))
+                (~optional 
+                 (~seq #:visit? v?exp:expr ...)))
+           (~or (~optional 
+                 (~seq #:discover (disc-from:id disc-to:id) disc:expr discrst:expr ...))
+                (~optional 
+                 (~seq #:discover discexp:expr ...)))
+           (~or (~optional (~seq #:visit (v:id) visit:expr visitrst:expr ...))
+                (~optional (~seq #:visit visexp:expr ...)))
            (~optional (~seq #:return return:expr ...))) ...)
      (template
       (bfs/generalized G s 
        (?? (?@ #:init-queue Q))
        (?? (?@ #:break break?))
        (?? (?@ #:init (λ _ init ...)))
-       (?? (?@ #:visit? (λ (G s v?-from v?-to) visit? ...)))
-       (?? (?@ #:discover (λ (G s disc-from disc-to) disc ...)))
-       (?? (?@ #:visit (λ (G s v) visit ...)))
+       (?? (?@ #:visit? (λ (G s v?-from v?-to) visit? v?rst ...)))
+       (?? (?@ #:visit? 
+               (λ (G s from to)
+                 (syntax-parameterize ([$from (syntax-id-rules () [_ from])]
+                                       [$to (syntax-id-rules () [_ to])])
+                   v?exp ...))))
+       (?? (?@ #:discover (λ (G s disc-from disc-to) disc discrst ...)))
+       (?? (?@ #:discover 
+               (λ (G s from to) 
+                 (syntax-parameterize ([$from (syntax-id-rules () [_ from])]
+                                       [$to (syntax-id-rules () [_ to])])
+                   discexp ...))))
+       (?? (?@ #:visit (λ (G s v) visit visitrst ...)))
+       (?? (?@ #:visit (λ (G s v-new) 
+                         (syntax-parameterize ([$v (syntax-id-rules () [_ v-new])])
+                           visexp ...))))
        (?? (?@ #:return (λ _ return ...)))))]))
              
 
@@ -88,15 +114,15 @@
      (define-graph-property found-v? #f)
      
      (do-bfs G s #:break get-found-v?
-       #:discover (from to)
-         (when (vertex=? G to v) (found-v?-set! #t))
-         (π-set! to from)
+       #:discover
+       (when (vertex=? G $to v) (found-v?-set! #t))
+       (π-set! $to $from)
        #:return
-         (and found-v?
-              (let loop ([path null] [v v])
-                (if (vertex=? G v s) 
-                    (cons s path) 
-                    (loop (cons v path) (π v))))))]))
+       (and found-v?
+            (let loop ([path null] [v v])
+              (if (vertex=? G v s) 
+                  (cons s path) 
+                  (loop (cons v path) (π v))))))]))
 
            
 ;; dfs ------------------------------------------------------------------------
@@ -104,11 +130,11 @@
 (define (dfs G)
   ;; d[u] = discovery time, π[u] = pred, f[u] = finishing time
   (define-vertex-properties G d π f)
-  (define time 0)
+  (define-graph-property time 0)
 
   (do-dfs G
-    #:prologue (parent u) (add1! time) (d-set! u time) (π-set! u parent)
-    #:epilogue (parent u) (add1! time) (f-set! u time)
+    #:prologue (time-set! (add1 time)) (d-set! $to time) (π-set! $to $from)
+    #:epilogue (time-set! (add1 time)) (f-set! $to time)
     #:return (values (d->hash) (π->hash) (f->hash))))
 
 (define (dfs/generalized G #:order [order (λ (vs) vs)]
@@ -142,6 +168,11 @@
   
   (finish G))
 
+;; TODO: there is potential ambiguity here in the binding clauses
+;; If the programmer omits the bindings, but the first expr happens to have the
+;; form (id1 id2), then there will be a syntax error for $to and $from bc
+;; they won't be bound.
+;;
 ;; cleaner syntax for dfs/generalized
 (define-syntax (do-dfs stx)
   (syntax-parse stx 
@@ -149,22 +180,62 @@
      (~or (~optional (~seq #:order order:expr))
           (~optional (~seq #:break break?:expr))
           (~optional (~seq #:init init:expr ...))
-          (~optional (~seq #:visit? (v?-from:id v?-to:id) visit?:expr ...))
-          (~optional (~seq #:prologue (pro-from:id pro-to:id) pro:expr ...))
-          (~optional (~seq #:epilogue (epi-from:id epi-to:id) epi:expr ...))
-          (~optional (~seq #:process-unvisited? (pu?-from:id pu?-to:id) pu?:expr ...))
-          (~optional (~seq #:process-unvisited (pu-from:id pu-to:id) pu:expr ...))
+          (~or (~optional 
+                (~seq #:visit? (v?-from:id v?-to:id) visit?:expr v?rst:expr ...))
+               (~optional 
+                (~seq #:visit? v?exp:expr ...)))
+          (~or (~optional 
+                (~seq #:prologue (pro-from:id pro-to:id) pro:expr prorst:expr ...))
+               (~optional 
+                (~seq #:prologue proexp:expr ...)))
+          (~or (~optional 
+                (~seq #:epilogue (epi-from:id epi-to:id) epi:expr epirst:expr ...))
+               (~optional 
+                (~seq #:epilogue epiexp:expr ...)))
+          (~or (~optional 
+                (~seq #:process-unvisited? (pu?-from:id pu?-to:id) pu?:expr pu?rst:expr ...))
+               (~optional 
+                (~seq #:process-unvisited? pu?exp:expr ...)))
+          (~or (~optional 
+                (~seq #:process-unvisited (pu-from:id pu-to:id) pu:expr purst:expr ...))
+               (~optional 
+                (~seq #:process-unvisited puexp:expr ...)))
           (~optional (~seq #:return return:expr ...))) ...)
      (template
       (dfs/generalized G 
         (?? (?@ #:order order))
         (?? (?@ #:break break?))
         (?? (?@ #:init (λ _ init ...)))
-        (?? (?@ #:visit? (λ (G v?-from v?-to) visit? ...)))
-        (?? (?@ #:prologue (λ (G pro-from pro-to) pro ...)))
-        (?? (?@ #:epilogue (λ (G epi-from epi-to) epi ...)))
-        (?? (?@ #:process-unvisited? (λ (G pu?-from pu?-to) pu? ...)))
-        (?? (?@ #:process-unvisited (λ (G pu-from pu-to) pu ...)))
+        (?? (?@ #:visit? (λ (G v?-from v?-to) visit? v?rst ...)))
+        (?? (?@ #:visit? 
+                (λ (G from to) 
+                  (syntax-parameterize ([$from (syntax-id-rules () [_ from])]
+                                        [$to (syntax-id-rules () [_ to])])
+                           v?exp ...))))
+        (?? (?@ #:prologue (λ (G pro-from pro-to) pro prorst ...)))
+        (?? (?@ #:prologue 
+                (λ (G from to) 
+                  (syntax-parameterize ([$from (syntax-id-rules () [_ from])]
+                                        [$to (syntax-id-rules () [_ to])])
+                             proexp ...))))
+        (?? (?@ #:epilogue (λ (G epi-from epi-to) epi epirst ...)))
+        (?? (?@ #:epilogue 
+                (λ (G from to) 
+                  (syntax-parameterize ([$from (syntax-id-rules () [_ from])]
+                                        [$to (syntax-id-rules () [_ to])])
+                             epiexp ...))))
+        (?? (?@ #:process-unvisited? (λ (G pu?-from pu?-to) pu? pu?rst ...)))
+        (?? (?@ #:process-unvisited? 
+                (λ (G from to) 
+                  (syntax-parameterize ([$from (syntax-id-rules () [_ from])]
+                                        [$to (syntax-id-rules () [_ to])])
+                                       pu?exp ...))))
+        (?? (?@ #:process-unvisited (λ (G pu-from pu-to) pu purst ...)))
+        (?? (?@ #:process-unvisited 
+                (λ (G from to) 
+                  (syntax-parameterize ([$from (syntax-id-rules () [_ from])]
+                                        [$to (syntax-id-rules () [_ to])])
+                                      puexp ...))))
         (?? (?@ #:return (λ _ return ...)))))]))
 
 ;; dfs-based fns --------------------------------------------------------------
@@ -174,18 +245,18 @@
   (define-graph-property not-dag? #f)
   
   (do-dfs G #:break get-not-dag?
-    #:visit? (from to) (white? (color to))
-    #:prologue (parent v) (color-set! v GRAY)
-    #:epilogue (parent v) (color-set! v BLACK)
-    #:process-unvisited? (from to) (gray? (color to))
-    #:process-unvisited (from to) (not-dag?-set! #t)
+    #:visit? (white? (color $to))
+    #:prologue (color-set! $to GRAY)
+    #:epilogue (color-set! $to BLACK)
+    #:process-unvisited? (gray? (color $to))
+    #:process-unvisited (not-dag?-set! #t)
     #:return (not not-dag?)))
 
 (define (tsort G)
   (define sorted null) 
 
   (do-dfs G
-    #:epilogue (parent v) (set! sorted (cons v sorted)) ; add finished
+    #:epilogue (set! sorted (cons $to sorted)) ; add finished
     #:return sorted))
   
 ;; tarjan algorithm for strongly connected components
@@ -204,13 +275,12 @@
     (set! S (cdr S-rst)))
 
   (do-dfs G 
-    #:prologue (parent v)
-      (index-set! v i) (lowlink-set! v i) (add1! i) (S-push v)
-    #:epilogue (parent v)
-      (when (build-SCC? v) (build-SCC v))
-      (when parent (lowlink-set! parent (min (lowlink parent) (lowlink v))))
-    #:process-unvisited? (from to) (member to S)
-    #:process-unvisited (from to) (lowlink-set! from (min (lowlink from) (index to)))
+    #:prologue (index-set! $to i) (lowlink-set! $to i) (add1! i) (S-push $to)
+    #:epilogue 
+    (when (build-SCC? $to) (build-SCC $to))
+    (when $from (lowlink-set! $from (min (lowlink $from) (lowlink $to))))
+    #:process-unvisited? (member $to S)
+    #:process-unvisited (lowlink-set! $from (min (lowlink $from) (index $to)))
     #:return SCC))
 
 

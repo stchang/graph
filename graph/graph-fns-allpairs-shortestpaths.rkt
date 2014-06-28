@@ -3,7 +3,8 @@
 (require "graph-property.rkt"
          "gen-graph.rkt"
          "graph-fns-basic.rkt"
-         "graph-fns-singlesource-shortestpaths.rkt")
+         "graph-fns-singlesource-shortestpaths.rkt"
+         "utils.rkt")
 
 (provide (all-defined-out))
 

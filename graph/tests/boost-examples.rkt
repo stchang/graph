@@ -1,7 +1,8 @@
 #lang racket
 (require "../main.rkt"
          "test-utils.rkt"
-         "../graph-property.rkt")
+         "../graph-property.rkt"
+         "../utils.rkt")
 (require rackunit)
 
 ;; examples from boost.org
