@@ -61,6 +61,8 @@ A @tech{graph} has the following methods:
 @; unweighted graphs ----------------------------------------------------------
 @subsection{Unweighted Graphs}
 
+See also the @racket[directed-graph] and @racket[undirected-graph] constructors.
+
 @defproc[(unweighted-graph? [g any/c]) boolean?]{Indicates whether a graph is an unweighted graph.}
 
 @defproc[(unweighted-graph/undirected [edges (listof (list/c any/c any/c))])
@@ -97,7 +99,6 @@ Creates an unweighted graph that implements @racket[gen:graph] from an adjacency
   (has-edge? g 'b 'a)
   ]}
 
-See also @racket[directed-graph] and @racket[undirected-graph].
              
 @; weighted graphs ------------------------------------------------------------
 @subsection{Weighted Graphs}
