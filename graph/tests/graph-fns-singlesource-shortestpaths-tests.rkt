@@ -22,6 +22,14 @@
 
 (check-exn exn:fail? (λ () (bellman-ford g24.1 's)))
 
+(define g24.1b
+  (mk-directed-graph 
+   '((s a) (s c) (s e) (a b) (c d) (d c) (e f) (f e) (b g) (d g) (f g) (h i) (i j) (j h))
+   '(3 5 2 -4 6 -3 3 -6 4 8 7 2 3 -8)))
+
+(check-exn exn:fail? (λ () (bellman-ford g24.1b 's)))
+
+
 (define g24.2
   (mk-weighted-graph/directed '((3 s t) (5 s y)
                                 (6 t x) (2 t y)
@@ -48,6 +56,29 @@
 (check-false (dag? g24.1))
 (check-false (dag? g24.2))
 (check-false (dag? g24.4))
+
+(define g24.2b
+  (mk-directed-graph 
+   '((s t) (s y) (t x) (t y) (x z) (z x) (z s) (y z) (y x) (y t))
+   '(3 5 6 2 2 7 3 6 4 1)))
+
+(define-values (d24.2b π24.2b) (bellman-ford g24.2b 's))
+(check-equal? d24.2b
+              (make-hash '((x . 9) (y . 5) (z . 11) (t . 3) (s . 0))))
+
+(define g24.4b
+  (mk-directed-graph
+   '((s t) (s y) (t x) (t y) (t z) (x t) (z x) (z s) (y z) (y x))
+   '(6 7 5 8 -4 -2 7 2 9 -3)))
+
+(define-values (d24.4b π24.4b) (bellman-ford g24.4b 's))
+(check-equal? d24.4b
+              (make-hash '((x . 4) (y . 7) (z . -2) (t . 2) (s . 0))))
+
+
+(check-false (dag? g24.1b))
+(check-false (dag? g24.2b))
+(check-false (dag? g24.4b))
 
 
 ;; dag-shortest-paths ---------------------------------------------------------

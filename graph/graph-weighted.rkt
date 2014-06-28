@@ -2,6 +2,7 @@
 
 (require "gen-graph.rkt")
 (require "adjlist-utils.rkt")
+(require "graph-unweighted.rkt")
 
 (require racket/generator)
 
@@ -9,7 +10,8 @@
 
 (provide mk-weighted-graph/undirected 
          mk-weighted-graph/directed
-         weighted-graph?)
+         weighted-graph?
+         mk-directed-graph mk-undirected-graph)
 
 ;; A WeightedGraph is a (weighted-graph AdjacencyList Weights)
 (struct weighted-graph (adjlist weights) 
@@ -124,6 +126,30 @@
            (hash-set! weights e w)]
           [else (add-vertex@ adj w+e)]))
   (weighted-graph adj weights))
+
+(define (mk-directed-graph es [ws #f])
+  (cond [ws
+         (define adj (make-hash))
+         (define weights (make-hash))
+         (for ([e es] [w ws]) 
+           (apply add-edge@ adj e)
+           (add-vertex@ adj (second e))
+           (hash-set! weights e w))
+         (weighted-graph adj weights)]
+        [else (mk-unweighted-graph/directed es)]))
+
+(define (mk-undirected-graph es [ws #f])
+  (cond [ws
+         (define adj (make-hash))
+         (define weights (make-hash))
+         (for ([e es] [w ws])
+           (apply add-edge@ adj e)
+           (apply add-edge@ adj (reverse e))
+           (hash-set! weights e w)
+           (hash-set! weights (reverse e) w))
+         (weighted-graph adj weights)]
+        [else (mk-unweighted-graph/undirected es)]))
+         
 
 ;; returns vertices as a list
 ;; - analogous to hash-keys vs in-hash-keys

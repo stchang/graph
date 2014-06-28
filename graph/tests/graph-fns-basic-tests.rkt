@@ -45,6 +45,26 @@
 (check-equal? '(s w x u) (fewest-vertices-path g22.3 's 'u))
 (check-equal? '(s w x y) (fewest-vertices-path g22.3 's 'y))
 
+;; same as above, but use mk-undirected-graph constructor
+(define g22.3b (mk-undirected-graph 
+                '((r v) (r s) (s w) (w t) (w x) (x t) (t u) (x u) (x y) (y u))))
+
+(check-seqs-as-equal-sets? '(v r s w t x u y) (in-vertices g22.3b))
+
+(define-values (d22.3b π22.3b) (bfs g22.3b 's))
+
+(check-equal? 
+ d22.3b
+ (make-hash '((t . 2) (y . 3) (u . 3) (s . 0) (v . 2) (x . 2) (w . 1) (r . 1))))
+(check-equal?
+ π22.3b
+ (make-hash '((t . w) (y . x) (u . x) (s . #f) (v . r) (x . w) (w . s) (r . s))))
+
+(check-equal? '(s r v) (fewest-vertices-path g22.3b 's 'v))
+(check-equal? '(s w t) (fewest-vertices-path g22.3b 's 't))
+(check-equal? '(s w x) (fewest-vertices-path g22.3b 's 'x))
+(check-equal? '(s w x u) (fewest-vertices-path g22.3b 's 'u))
+(check-equal? '(s w x y) (fewest-vertices-path g22.3b 's 'y))
 
 ;; dfs utils ------------------------------------------------------------------
 
@@ -84,6 +104,14 @@
 (verify-π d22.4 π22.4)
 (verify-times d22.4 f22.4)
 
+(define g22.4b (mk-directed-graph
+               '((u x) (u v) (x v) (v y) (y x) (w y) (w z) (z z))))
+
+(define-values (d22.4b π22.4b f22.4b) (dfs g22.4b))
+
+(verify-π d22.4b π22.4b)
+(verify-times d22.4b f22.4b)
+
 
 (define g22.5 
   (mk-unweighted-graph/directed
@@ -109,8 +137,16 @@
 (verify-times d22.5 f22.5)
 
 
+(define g22.5b
+  (mk-directed-graph
+   '((y x) (z y) (x z) (z w) (w x) (s z) (s w) (v s) (v w) (t v) (t u) (u t) (u v))))
+
+(define-values (d22.5b π22.5b f22.5b) (dfs g22.5b))
+(verify-π d22.5b π22.5b)
+(verify-times d22.5b f22.5b)
 
 (check-false (or (dag? g22.3) (dag? g22.4) (dag? g22.5)))
+(check-false (or (dag? g22.3b) (dag? g22.4b) (dag? g22.5b)))
 
 
 
@@ -142,6 +178,17 @@
 ; (make-hash
 ;  '((t . 15) (y . 17) (z . 13) (v . 7) (s . 8) (x . 14) (q . 16) (u . 19) (w . 9) (r . 20))))
 
+(define g22.6b 
+  (mk-directed-graph
+   '((s v) (v w) (w s) (q s) (q w) (q t) (t y) (t x) (x z) (z x) (y q) (r y) (u y) (r u))))
+
+(check-false (dag? g22.6b))
+
+; 'r start
+(define-values (d22.6b π22.6b f22.6b) (dfs g22.6b))
+
+(verify-π d22.6b π22.6b)
+(verify-times d22.6b f22.6b)
 
 
 
@@ -171,6 +218,14 @@
 
 (do-tsort-tests g22.8)
 
+(define g22.7b 
+  (mk-directed-graph
+   '((undershorts pants) (undershorts shoes) (pants belt) (pants shoes) (belt jacket)
+     (shirt belt) (shirt tie) (tie jacket) (socks shoes) watch)))
+
+(do-tsort-tests g22.7b)
+
+
 ;; strongly connected components (scc) ----------------------------------------
 
 (define g22.9-edges 
@@ -197,6 +252,14 @@
 (check-equal? (set (set 'a 'b 'e) (set 'f 'g) (set 'c 'd) (set 'h))
               (apply set (map (λ (vs) (apply set vs)) scc22.9)))
 
+(define g22.9b (mk-directed-graph g22.9-edges))
+(define g22.9b^T (mk-directed-graph (for/list ([e g22.9-edges]) (reverse e))))
+
+(check-equal? g22.9b^T (transpose g22.9b))
+
+(define scc22.9b (scc g22.9b))
+(check-equal? (set (set 'a 'b 'e) (set 'f 'g) (set 'c 'd) (set 'h))
+              (apply set (map (λ (vs) (apply set vs)) scc22.9b)))
 
 ;; ----------------------------------------------------------------------------
 ;; test remove-vertex!
@@ -220,11 +283,22 @@
 (define g/wgt/vertex-removed
   (mk-weighted-graph/directed '((1 a b) (2 a c) (3 b c) (4 b a)
                                 (5 c b) (6 c a) (7 d c) (8 d b))))
-(define edges/old (sequence->list (in-edges g/wgt/vertex-removed)))
+(define edges/old (get-edges g/wgt/vertex-removed))
 (remove-vertex! g/wgt/vertex-removed 'a)
 (check-seqs-as-equal-sets? (in-vertices g/wgt/vertex-removed)
                            '(b c d))
 (check-seqs-as-equal-sets? (in-edges g/wgt/vertex-removed)
+                           '((b c) (c b) (d c) (d b)))
+
+(define g/wgt/vr2 
+  (mk-directed-graph 
+   '((a b) (a c) (b c) (b a) (c b) (c a) (d c)  (d b))
+   '(1 2 3 4 5 6 7 8)))
+(remove-vertex! g/wgt/vr2 'a)
+
+(check-seqs-as-equal-sets? (in-vertices g/wgt/vr2)
+                           '(b c d))
+(check-seqs-as-equal-sets? (in-edges g/wgt/vr2)
                            '((b c) (c b) (d c) (d b)))
 
 ;; non-existent edges have weight infty

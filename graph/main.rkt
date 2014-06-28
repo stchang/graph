@@ -19,6 +19,8 @@
                      [mk-unweighted-graph/adj        unweighted-graph/adj]
                      [mk-weighted-graph/undirected   weighted-graph/undirected]
                      [mk-weighted-graph/directed     weighted-graph/directed]
+                     [mk-directed-graph directed-graph]
+                     [mk-undirected-graph undirected-graph]
                      [mk-matrix-graph matrix-graph])
          weighted-graph? unweighted-graph? matrix-graph?
          (all-from-out "graph-fns-basic.rkt"
