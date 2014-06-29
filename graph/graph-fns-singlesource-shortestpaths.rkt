@@ -64,8 +64,8 @@
 
   (do-bfs G s #:init-queue (mk-empty-priority (λ (u v) (< (d u) (d v))))
     #:init (d-set! s 0)
-    #:visit? (to from) (> (d from) (+ (d to) (w to from)))
-    #:discover (to from)
-      (d-set! from (+ (d to) (w to from)))
-      (π-set! from to)
+    #:visit? (> (d $to) (+ (d $from) (w $from $to)))
+    #:discover 
+      (d-set! $to (+ (d $from) (w $from $to)))
+      (π-set! $to $from)
     #:return (values (d->hash) (π->hash))))
