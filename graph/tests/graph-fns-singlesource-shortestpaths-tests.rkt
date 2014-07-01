@@ -124,6 +124,25 @@
                                 (-3 v4 v5)
                                 (-1 v5 v1) (1 v5 v2))))
 
+;; from wikipedia article
+(define g/wiki 
+  (mk-undirected-graph '((1 2) (1 3) (1 6) (2 3) (2 4) (3 4) (3 6) (4 5) (5 6))
+                       '(7 9 14 10 15 11 2 6 9)))
+(define-values (dwik πwik) (dijkstra g/wiki 1))
+(check-equal? dwik (make-hash '((1 . 0) (2 . 7) (3 . 9) (4 . 20) (5 . 20) (6 . 11))))
+(check-equal? πwik (make-hash '((1 . #f) (2 . 1) (3 . 1) (4 . 3) (5 . 6) (6 . 3))))
+
+;; boost example
+;; http://www.boost.org/doc/libs/1_55_0/libs/graph/example/dijkstra-example.cpp
+
+(define g/boo
+  (mk-directed-graph '((A C) (B B) (B D) (B E) (C B) (C D) (D E) (E A) (E B))
+                     '(1 2 1 2 7 3 1 1 1)))
+(define-values (dboo πboo) (dijkstra g/boo 'A))
+(check-equal? dboo (make-hash '((A . 0) (B . 6) (C . 1) (D . 4) (E . 5))))
+(check-equal? πboo (make-hash '((A . #f) (B . E) (C . A) (D . C) (E . D))))
+
+
 ;; linear programming test ----------------------------------------------------
 (define-values (d24.8 π24.8) (bellman-ford g24.8 'v0))
 (check-equal? d24.8
