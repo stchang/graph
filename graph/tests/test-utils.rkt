@@ -22,6 +22,10 @@
   (check-equal? (apply set (sequence->list s1)) 
                 (apply set (sequence->list s2))))
 
+(define-syntax-rule (check-expected-msts to-check expected ...)
+  (let ([res to-check])
+    (check-true (or (equal? (lists->sets res) (lists->sets expected)) ...))))
+                    
 
 ;; tsort utils ----------------------------------------------------------------
 (define (check-tsorted g tsorted)
