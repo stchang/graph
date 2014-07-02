@@ -35,22 +35,51 @@
 ;; prim -----------------------------------------------------------------------
 ;; uses priority queue based on in data/heap
 
-;; r is root vertex
-(define (mst-prim G r)
-  (define (w u v) (edge-weight G u v))
-  (define-vertex-property G key #:init +inf.0)
+;; The "visited" vertices (ie vertices that have been enqueued then dequeued)
+;; represent the current mst.
+;; The vertices in the priority queue (ie heap) represent the candidate "next"
+;; vertices to add to the mst.
+;; It might seem like the visited? check is not needed, since we're adding the 
+;; lowest weight edge on each iteration and then only enqueueing if there's
+;; improvement, but the check is needed to ensure all the edges form a mst.
+;; If we omit the check, I think we're only guaranteed a cover set.
+;;
+;; If a vertex v is already in the mst, then:
+;; - ((π v) v) is the edge connected v to the rest of the tree
+;; - (cur-min-wgt v) is the weight of that edge
+;; If a vertex v is a candidate vertex (ie, in the heap), then:
+;; - (π v) is the vertex that would connect v to the mst
+;; - where (π v) is chosen among all possible edges from v to the mst bc it has
+;;   the lowest weight, where (cur-min-wgt v) is that weight
+;;
+;; On each iteration:
+;; - candidate vertex with lowest weight connecting edge is added to the mst
+;; - neighbors of that vertex are added as candidates
+;;
+;; Notes:
+;; - a vertex can be "enqueued" agani even if it's already in the heap, 
+;;   if another edge of that vertex is later discovered to be cheaper than the
+;;   currently known cheapest edge
+;; - thus re-enqueueing a vertex that's already in the heap effectively
+;;   "re-heapifies" the heap with the new cost information
+(define (mst-prim G root-v)
+  (define (wgt u v) (edge-weight G u v))
+  ; (cur-min-wgt v) is current known min wgt edge connecting v to the mst
+  (define-vertex-property G cur-min-wgt #:init +inf.0) 
   (define-vertex-property G π #:init #f)
-  (define-vertex-property G in-Q? #:init #t)
 
-  (do-bfs G r #:init-queue (mk-empty-priority (λ (u v) (< (key u) (key v))))
-    #:init (key-set! r 0)
-    ;; default bfs skips the visit if v has been discovered (ie it's not "white")
-    ;; but here we want to skip only if v has been dequeued (ie it's "black")
-    #:visit? (in-Q? $to)
-    #:discover 
-      (when (< (w $from $to) (key $to)) ; relax
-        (π-set! $to $from)
-        (key-set! $to (w $from $to)))
-    #:visit (in-Q?-set! $v #f)
-    #:return (for/list ([v (in-vertices G)] #:unless (vertex=? G v r))
+  (define Hp (mk-empty-priority (λ (u v) (< (cur-min-wgt u) (cur-min-wgt v)))))
+  
+  (do-bfs G root-v #:init-queue Hp
+    #:init (cur-min-wgt-set! root-v 0)
+    ;; default bfs skips visit if v is discovered (ie it's been seen before) 
+    ;; (ie enqueued or visited) (ie not "white")
+    ;; but we skip only if v has been visited (ie in the mst) (ie it's "black")
+    ;; but we re-enqueue if we discover lower cost information for the vertex
+    #:enqueue? (and (not ($visited? $v)) (< (wgt $from $v) (cur-min-wgt $v)))
+    #:on-enqueue 
+      (π-set! $v $from)
+      (cur-min-wgt-set! $v (wgt $from $v))
+    ;; return list of edges in the mst
+    #:return (for/list ([v (in-vertices G)] #:unless (vertex=? G v root-v))
                (list (π v) v))))

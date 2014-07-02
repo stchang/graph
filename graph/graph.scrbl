@@ -323,7 +323,7 @@ The following forms associate properties with a graph. The graph itself is uncha
 
 @defproc[(bfs [g graph?] [source any/c])
          (values (hash/c any/c number? #:immutable #f) (hash/c any/c any/c #:immutable #f))]{
- Standard textbook breadth-first search, ie as in CLRS. Takes two arguments, a graph and a source vertex. Returns two values, a hash table mapping a vertex to the distance (in terms of number of vertices) from the source, and a hash table mapping a vertex to its predecessor in the search.}
+ Standard textbook breadth-first search, ie as in CLRS @cite["CLRS"]. Takes two arguments, a graph and a source vertex. Returns two values, a hash table mapping a vertex to the distance (in terms of number of vertices) from the source, and a hash table mapping a vertex to its predecessor in the search.}
                                                                                             
 @defproc[(bfs/generalized 
           [g graph?] [source any/c]
@@ -356,35 +356,81 @@ Utilizes a queue that implements @racket[gen:queue]. A vertex is @deftech{discov
                [break? (-> boolean?)]
                [maybe-init (code:line) (code:line #:init init-exp ...)]
                [init-exp expr]
-               [maybe-visit? (code:line) (code:line #:visit? (from to) visit?-exp ...)]
+               [maybe-visit? (code:line) 
+                             (code:line #:visit? (from to) visit?-exp ...)
+                             (code:line #:visit? visit?-exp ...)
+                             (code:line #:enqueue? (from to) enq?-exp ...)
+                             (code:line #:enqueue? enq?-exp ...)]
                [visit?-exp expr]
-               [maybe-discover (code:line) (code:line #:discover (from to) discover-exp ...)]
+               [enq?-exp expr]
+               [maybe-discover (code:line)
+                               (code:line #:discover (from to) discover-exp ...)
+                               (code:line #:discover discover-exp ...)
+                               (code:line #:on-enqueue (from to) enq-exp ...)
+                               (code:line #:on-enqueue enq-exp ...)]
                [discover-exp expr]
-               [maybe-visit (code:line) (code:line #:visit (v) visit-exp ...)]
+               [enq-exp expr]
+               [maybe-visit (code:line) 
+                            (code:line #:visit (v) visit-exp ...)
+                            (code:line #:visit visit-exp ...)
+                            (code:line #:on-dequeue (v) deq-exp ...)
+                            (code:line #:on-dequeue deq-exp ...)]
                [visit-exp expr]
+               [deq-exp expr]
                [maybe-return (code:line) (code:line #:return return-exp ...)]
                [return-exp expr]
                [from identifier?] [to identifier?] [v identifier?])]{
-Cleaner syntax for @racket[bfs/generalized]. Essentially, this form eliminates the need to define separate functions and then pass them into @racket[bfs/generalized]'s keyword arguments. Instead, the bodies of those functions are inserted right after the corresponding keywords.
-                   
-For example, below is Dijkstra's algorithm, implemented with @racket[do-bfs]. In the code, @racket[dist] is a @tech{vertex property} mapping a vertex to the intermediate shortest distance from the source and @racket[pred] is a @tech{vertex property} mapping a vertex to its predecessor in the shortest path from the source. The algorithm utilizes a priority queue that is sorted according to intermediate shortest paths. A node is "visited" when it improves one of the paths.
+Cleaner syntax for @racket[bfs/generalized]. Essentially, this form eliminates 
+the need to define separate functions and then pass them into 
+@racket[bfs/generalized]'s keyword arguments. Instead, the bodies of those 
+functions are inserted right after the corresponding keywords.
 
-@racketblock[
+The keywords @racket[#:visit?], @racket[#:discover], and @racket[#:visit]
+can bind user-supplied identifiers that represent the vertices under
+consideration. Providing these identifiers is optional. If these keyword
+arguments are invoked without identifiers, then special identifiers are
+available in the keyword argument expressions that refer to the identifiers
+under consideration. Specifically, @racket[$v] is bound the current vertex and
+@racket[$from] is its parent (when appropriate). A @racket[$to] identifier is 
+bound to the same vertex as @racket[$v], and can be used if that name makes more
+sense in the context of the program.
+
+The keywords @racket[#:visit?], @racket[#:discover], and @racket[#:visit] also
+have alternate names, @racket[#:enqueue?], @racket[#:on-enqueue], and 
+@racket[#:on-dequeue], respectively, which can be used when these names are more
+appropriate, for program readability.
+
+In any of the keyword arguments, the special identifiers @racket[$discovered?],
+@racket[$seen?], and @racket[$visited?] are also available, where 
+@racket[($seen? v)] indicates whether the vertex has been seen, ie whether the 
+vertex has ever been added to the queue (@racket[($discovered? v)] is the same 
+as @racket[$seen?]), and @racket[($visited? v)] indicates whether the vertex has
+been visited, ie pulled off the queue.
+
+For example, below is Dijkstra's algorithm, implemented with @racket[do-bfs]. 
+The code defines two @tech{vertex property}s: @racket[d] maps a vertex to the 
+currently known shortest distance from the source and @racket[π] maps a vertex 
+to its predecessor in the shortest path from the source. The algorithm utilizes 
+a priority queue (ie, heap) that is sorted according to intermediate shortest 
+paths. A node is added to the heap when it improves one of the paths. The 
+algorithm makes use of the special identifiers @racket[$v] and @racket[$from].
+
+@#reader scribble/comment-reader (racketblock
 (define (dijkstra G src) 
-  (define-vertex-property G dist #:init +inf.0)
-  (define-vertex-property G pred #:init #f)
+  (define-vertex-property G d #:init +inf.0) ; length of currently known shortest path
+  (define-vertex-property G π #:init #f) ; (π v) is predecessor of v on shortest path
   (define (wgt u v) (edge-weight G u v))
 
-  (do-bfs G src #:init-queue (mk-empty-priority (λ (u v) (< (dist u) (dist v))))
-    #:init (dist-set! src 0)
-    #:visit? (to from) (> (dist from) (+ (dist to) (wgt to from)))
-    #:discover (to from)
-      (dist-set! from (+ (dist to) (wgt to from)))
-      (pred-set! from to)
-    #:return (values (dist->hash) (pred->hash))))]
-The @racket[#:visit] clause binds two identifiers, representing the searched nodes and @racket[#:discover] is similar. This form is somewhat brittle since @racket[#:init] and @racket[#:return] don't bind any ways and instead @racket[G] and @racket[s] are captured from the context but this hasnt been a problem in practice.
+  (do-bfs G src #:init-queue (mk-empty-priority (λ (u v) (< (d u) (d v))))
+    #:init (d-set! src 0)
+    #:enqueue? (> (d $v) (+ (d $from) (wgt $from $v)))
+    #:on-enqueue 
+      (d-set! $v (+ (d $from) (wgt $from $v)))
+      (π-set! $v $from)
+    #:return (values (d->hash) (π->hash))))
+    )
 
-@racket[bfs], @racket[fewest-vertices-path], @racket[mst-prim], and @racket[dijkstra] all use this form.}
+@racket[bfs], @racket[fewest-vertices-path], @racket[mst-prim], and @racket[dijkstra] all use the @racket[do-bfs] form.}
                
 @defproc[(fewest-vertices-path [G graph?] [source any/c] [target any/c]) (or/c list? #f)]{
 Consumes a graph and two vertices, and returns the shortest path (in terms of number of vertices) between the two vertices. The result is a list of vertices, or @racket[#f] if there is no path.}
@@ -395,7 +441,10 @@ Consumes a graph and two vertices, and returns the shortest path (in terms of nu
 @defproc[(dfs [g graph?])
          (values (hash/c any/c number? #:immutable #f) (hash/c any/c any/c #:immutable #f)
                  (hash/c any/c number? #:immutable #f))]{
-Standard textbook depth-first search algorith, ie like in CLRS. Consumes a graph and returns three hashes: one that maps a vertex to its "discovery time", another that maps a vertex to its predecessor in the search, and a third that maps a vertex to its "finishing time".}
+Standard textbook depth-first search algorith, ie like in CLRS @cite["CLRS"]. 
+Consumes a graph and returns three hashes: one that maps a vertex to its 
+"discovery time", another that maps a vertex to its predecessor in the search, 
+and a third that maps a vertex to its "finishing time".}
                                                         
                                                         
 @defproc[(dfs/generalized 
@@ -440,19 +489,27 @@ The @racket[order] function is a sorting function that specifies where to start 
                [break? (-> boolean?)]
                [maybe-init (code:line) (code:line #:init init-exp ...)]
                [init-exp expr]
-               [maybe-visit? (code:line) (code:line #:visit? (from to) visit?-exp ...)]
+               [maybe-visit? (code:line)
+                             (code:line #:visit? (from to) visit?-exp ...)
+                             (code:line #:visit? visit?-exp ...)]
                [visit?-exp expr]
-               [maybe-prologue (code:line) (code:line #:prologue (parent v) prologue-exp ...)]
+               [maybe-prologue (code:line) 
+                               (code:line #:prologue (parent v) prologue-exp ...)
+                               (code:line #:prologue prologue-exp ...)]
                [prologue-exp expr]
-               [maybe-epilogue (code:line) (code:line #:epilogue (parent v) epilogue-exp ...)]
+               [maybe-epilogue (code:line) 
+                               (code:line #:epilogue (parent v) epilogue-exp ...)
+                               (code:line #:epilogue epilogue-exp ...)]
                [epilogue-exp expr]
                [maybe-process-unvisited? 
                 (code:line) 
-                (code:line #:process-unvisited? (from to) process-unvisited?-exp ...)]
+                (code:line #:process-unvisited? (from to) process-unvisited?-exp ...)
+                (code:line #:process-unvisited? process-unvisited?-exp ...)]
                [process-unvisited?-exp expr]
                [maybe-process-unvisited
                 (code:line) 
-                (code:line #:process-unvisited (from to) process-unvisited-exp ...)]
+                (code:line #:process-unvisited (from to) process-unvisited-exp ...)
+                (code:line #:process-unvisited process-unvisited-exp ...)]
                [process-unvisited-exp expr]
                [maybe-return (code:line) (code:line #:return return-exp ...)]
                [return-exp expr]
@@ -497,7 +554,9 @@ Indicates whether a graph is directed and acyclic.}
 Returns two hashes, one that maps a vertex to its distance (in total edge weights) from the source and one that maps a vertex to its predecessor in the shortest path from the source.}
                                           
 @defproc[(dijkstra [g graph?] [source any/c])
-         (values (hash/c any/c number? #:immutable #f) (hash/c any/c any/c #:immutable #f))]{
+         (values (hash/c any/c number? #:immutable #f) @defthing[$discovered? identifier?]{A function that queries the "seen" vertices in certain contexts. 
+              
+              See @racket[do-bfs].}(hash/c any/c any/c #:immutable #f))]{
 Similarly computes shortest paths from the source to every other vertex. Faster than Bellman-Ford but no negative weight edges are allowed. Based on breadth-first search.}
 
                                                                                             @defproc[(dag-shortest-paths [g graph?] [source any/c]) 
@@ -518,7 +577,9 @@ Computes all-pairs shortest paths using Johnson's algorithm. Should be faster th
 
 Handles negative weights by first running @racket[bellman-ford]. The uses @racket[dijkstra] for each vertex in the graph.
 
-Note, the running time could be theoretically faster with a version of Dijkstra that uses a Fibonacci heap instead of a standard heap.}
+Note, the running time could be theoretically faster wi@defthing[$discovered? identifier?]{A function that queries the "seen" vertices in certain contexts. 
+              
+              See @racket[do-bfs].}th a version of Dijkstra that uses a Fibonacci heap instead of a standard heap.}
 
 
 @; graph coloring -------------------------------------------------------------
@@ -533,7 +594,9 @@ Returns a coloring for the given graph using at most the specified number of col
                                                                                         
 @defproc[(coloring/greedy 
           [g graph?] 
-          [#:order order (or/c 'smallest-last (-> list? list?)) 'smallest-last])
+          [#:order order (or/c 'smallest-last (-> list?@defthing[$discovered? identifier?]{A function that queries the "seen" vertices in certain contexts. 
+              
+              See @racket[do-bfs].} list?)) 'smallest-last])
          (values number? (hash/c any/c number? #:immutable #f))]{
 Returns a "greedy" coloring of the given graph, where the color for a vertex is the "smallest" color not used by one of its neighbors (or the number of colors is increased).
 
@@ -551,7 +614,9 @@ Consumes a graph and returns the vertices of the graph in "smallest-last" order.
 
 Only works for undirected graphs.}
                                                                 
-@defproc[(valid-coloring? [g graph?] [coloring (hash/c any/c number?)]) boolean?]{
+@defproc[(valid-coloring? [g graph?] [coloring (hash/c @defthing[$discovered? identifier?]{A function that queries the "seen" vertices in certain contexts. 
+              
+              See @racket[do-bfs].}any/c number?)]) boolean?]{
 Indicates whether the given coloring (a hash that maps a vertex to a color) is valid, meaning that no edge has two vertices of the same color.
 
 This function assumes that a "color" is a number and uses @racket[=] to compare colors.}
@@ -583,6 +648,31 @@ Note: this is not the Hopcroft-Karp (ie fastest) bipartite matching algorithm.}
 @defproc[(graphviz [g graph?] [#:colors colors boolean? #f]) string?]{
 Returns the dotfile representation of the given graph (as a string).}
 
+@; other
+@section{Other}
+@defthing[$v identifier?]{An identifier that's bound to the "current" vertex in certain contexts. 
+              
+              See @racket[define-vertex-property] and @racket[do-bfs].}
+
+@defthing[$from identifier?]{An identifier that's bound to the "from" vertex in certain contexts. 
+              
+              See @racket[define-edge-property] and @racket[do-bfs].}
+@defthing[$to identifier?]{An identifier that's bound to the "to" vertex certain contexts. 
+              
+              See @racket[define-edge-property] and @racket[do-bfs].}
+@defthing[$discovered? identifier?]{A function that queries the "seen" vertices in certain contexts. 
+              
+              See @racket[do-bfs].}
+@defthing[$seen? identifier?]{A function that queries the "seen" vertices in certain contexts. 
+                              Same as @racket[$discovered?].
+              
+              See @racket[do-bfs].}
+@defthing[$visited? identifier?]{A function that queries the "visited" vertices in certain contexts. 
+              
+              See @racket[do-bfs].}
+
+
+
 @(bibliography 
   (bib-entry #:key "GGCL"
              #:author "Lie-Quan Lee, Jeremy G. Siek, and Andrew Lumsdaine"
@@ -593,4 +683,9 @@ Returns the dotfile representation of the given graph (as a string).}
              #:author "Robert E. Tarjan"
              #:title "Depth first search and linear graph algorithms."
              #:location "SIAM Journal on Computing, 1(2):146-160"
-             #:date "1972"))
+             #:date "1972")
+  (bib-entry #:key "CLRS"
+             #:author "Charles E. Leiserson, Clifford Stein, Thomas H. Cormen, and Ronald Rivest"
+             #:title "Introduction to Algorithms, 2nd ed."
+             #:is-book? #t
+             #:date "2001"))

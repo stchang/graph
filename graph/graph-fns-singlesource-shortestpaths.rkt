@@ -55,17 +55,26 @@
   
   (values (d->hash) (π->hash)))
 
-;; no negative weight edges
+;; Once a vertex is "visited" (ie dequeued), we know we have it's shortest path,
+;; so we don't need to maintain a "seen" list. It's sufficient to check only for
+;; shortest path improvement as criteria to add to the queue, and we're still
+;; guaranteed termination.
+;;
+;; It's ok to re-enqueue a vertex that's already in the heap. It just means 
+;; we've found an improvement and re-enqueueing essentially "re-heapifies"
+;; the heap.
+;; Notes:
+;; - can't have negative weight edges
 (define (dijkstra G s) 
-  ;; (d v) represents intermediate known shortest path from s to v
+  ;; (d v) represents current known shortest path from s to v
   (define-vertex-property G d #:init +inf.0)
   (define-vertex-property G π #:init #f)
   (define (w u v) (edge-weight G u v))
 
   (do-bfs G s #:init-queue (mk-empty-priority (λ (u v) (< (d u) (d v))))
     #:init (d-set! s 0)
-    #:visit? (> (d $to) (+ (d $from) (w $from $to)))
-    #:discover 
-      (d-set! $to (+ (d $from) (w $from $to)))
-      (π-set! $to $from)
+    #:enqueue? (> (d $v) (+ (d $from) (w $from $v)))
+    #:on-enqueue 
+      (d-set! $v (+ (d $from) (w $from $v)))
+      (π-set! $v $from)
     #:return (values (d->hash) (π->hash))))

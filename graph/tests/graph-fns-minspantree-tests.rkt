@@ -16,10 +16,9 @@
                      '((a b) (a h) (c i) (c f) (f g) (g h) (c d) (d e))
                      '((a b) (b c) (c i) (c f) (f g) (g h) (c d) (d e)))
 
-(check-true (or (equal? (lists->sets (mst-prim g23.1 'a))
-                        (lists->sets '((a b) (b c) (c i) (c f) (f g) (g h) (c d) (d e))))
-                (equal? (lists->sets (mst-prim g23.1 'a))
-                        (lists->sets '((a b) (a h) (c i) (c f) (f g) (g h) (c d) (d e))))))
+(check-expected-msts (mst-prim g23.1 'a)
+                     '((a b) (b c) (c i) (c f) (f g) (g h) (c d) (d e))
+                     '((a b) (a h) (c i) (c f) (f g) (g h) (c d) (d e)))
 
 ;; since g23.1 is an undirected graph, the previous test is correct but this test
 ;; additionally checks that edges are going in the right direction

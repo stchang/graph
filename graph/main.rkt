@@ -11,7 +11,8 @@
          "graph-fns-coloring.rkt"
          "graph-fns-maxflow.rkt"
          "graph-fns-graphviz.rkt"
-         "graph-property.rkt")
+         "graph-property.rkt"
+         "utils.rkt")
 
 (provide (all-from-out "gen-graph.rkt")
          (rename-out [mk-unweighted-graph/undirected unweighted-graph/undirected]
@@ -30,7 +31,8 @@
                        "graph-fns-maxflow.rkt"
                        "graph-fns-graphviz.rkt")
          floyd-warshall transitive-closure johnson
-         (all-from-out "graph-property.rkt"))
+         (all-from-out "graph-property.rkt")
+         $v $from $to $seen? $discovered? $visited?)
 
 
 

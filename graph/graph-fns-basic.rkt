@@ -19,41 +19,51 @@
 ;; returns 2 values: hash mapping vertices to distances and
 ;;  hash mapping vertices to predecessor
 (define (bfs G s)
-  (define-vertex-property G d #:init +inf.0)
+  (define-vertex-property G d #:init +inf.0) ; d = num edges
   (define-vertex-property G π #:init #f)
 
   (do-bfs G s 
     #:init (d-set! s 0) (π-set! s #f)
-    #:discover (d-set! $to (add1 (d $from))) (π-set! $to $from)
+    #:discover (d-set! $v (add1 (d $from))) (π-set! $v $from)
     #:return (values (d->hash) (π->hash))))
 
 ;; default Q is from data/queue
 ;; see also bfs clients prim and dijkstra
+;; NOTE: The keyword names are not quite accurate but I'm leaving them as is
+;;       for backwards compatibility. 
+;;   - Specifically, #:discover should be #:on-enqueue, since it's called every
+;;   time a vertex is enqueued to be visited and not just the first time.
+;;   It's correct in the default case, however, because a vertex is not enqueued
+;;   if it's already been discovered, but not for other cases like dij or prim.
+;;   - #:visit? is ok but sometimes reads funny if #:visit is not specified. It
+;;   could alternatively be called #:enqueue?. And following this naming heme, 
+;;   #:visit could also be #:on-dequeue.
 (define (bfs/generalized G s #:init-queue [Q (mk-empty-fifo)]
                              #:break [break? (λ _ #f)]
                              #:init [init void]
                              #:visit? [custom-visit?-fn #f]
-                             #:discover [discover void]
+                             #:discover [on-enqueue void]
                              #:visit [visit void]
                              #:return [finish void])
-  ; v ∈ visited means v has been seen and enqueued, ie it's no longer "white"
+  ;; This discovered set is not needed anymore if using do-bfs or bfs,
+  ;; but leaving it here for now for backwards compatibility.
   (define discovered (set)) 
   (define (mark-discovered! v) (set! discovered (set-add discovered v)))
-  (define visit? (or custom-visit?-fn 
-                     (λ (G s u v) (not (set-member? discovered v)))))
+  (define enqueue? (or custom-visit?-fn
+                       (λ (G s u v) (not (set-member? discovered v)))))
   
   (init G s)
   (enqueue! Q s) ; source vertex s is always visited
   (mark-discovered! s)
   (for ([u (in-queue Q)])
     (visit G s u)
-    (for ([v (in-neighbors G u)] #:when (visit? G s u v) #:break (break?))
+    (for ([v (in-neighbors G u)] #:when (enqueue? G s u v) #:break (break?))
       (mark-discovered! v)
-      (discover G s u v)
+      (on-enqueue G s u v)
       (enqueue! Q v)))
   (finish G s))
 
-;; TODO: there is potential ambiguity here in the binding clauses
+;; TODO: there is potential ambiguity here in the clauses that bind
 ;; If the programmer omits the bindings, but the first expr happens to have the
 ;; form (id1 id2), then there will be a syntax error for $to and $from bc
 ;; they won't be bound.
@@ -68,60 +78,126 @@
            (~or (~optional 
                  (~seq #:visit? (v?-from:id v?-to:id) visit?:expr v?rst:expr ...))
                 (~optional 
-                 (~seq #:visit? v?exp:expr ...)))
+                 (~seq #:visit? v?exp:expr ...))
+                (~optional 
+                 (~seq #:enqueue? (e?-from:id e?-to:id) enq?:expr e?rst:expr ...))
+                (~optional 
+                 (~seq #:enqueue? e?exp:expr ...)))
            (~or (~optional 
                  (~seq #:discover (disc-from:id disc-to:id) disc:expr discrst:expr ...))
                 (~optional 
-                 (~seq #:discover discexp:expr ...)))
+                 (~seq #:discover discexp:expr ...))
+                (~optional 
+                 (~seq #:on-enqueue (onenq-from:id onenq-to:id) onenq:expr onenqrst:expr ...))
+                (~optional 
+                 (~seq #:on-enqueue onenqexp:expr ...)))
            (~or (~optional (~seq #:visit (v:id) visit:expr visitrst:expr ...))
-                (~optional (~seq #:visit visexp:expr ...)))
+                (~optional (~seq #:visit visexp:expr ...))
+                (~optional (~seq #:on-dequeue (ondeqv:id) ondeq:expr ondeqrst:expr ...))
+                (~optional (~seq #:on-dequeue ondeqexp:expr ...)))
            (~optional (~seq #:return return:expr ...))) ...)
      (template
-      (bfs/generalized G s 
-       (?? (?@ #:init-queue Q))
-       (?? (?@ #:break break?))
-       (?? (?@ #:init (λ _ init ...)))
-       (?? (?@ #:visit? (λ (G s v?-from v?-to) visit? v?rst ...)))
-       (?? (?@ #:visit? 
-               (λ (G s from to)
-                 (syntax-parameterize ([$from (syntax-id-rules () [_ from])]
-                                       [$to (syntax-id-rules () [_ to])])
-                   v?exp ...))))
-       (?? (?@ #:discover (λ (G s disc-from disc-to) disc discrst ...)))
-       (?? (?@ #:discover 
-               (λ (G s from to) 
-                 (syntax-parameterize ([$from (syntax-id-rules () [_ from])]
-                                       [$to (syntax-id-rules () [_ to])])
-                   discexp ...))))
-       (?? (?@ #:visit (λ (G s v) visit visitrst ...)))
-       (?? (?@ #:visit (λ (G s v-new) 
-                         (syntax-parameterize ([$v (syntax-id-rules () [_ v-new])])
-                           visexp ...))))
-       (?? (?@ #:return (λ _ return ...)))))]))
+      (begin
+        (define-vertex-property G discovered? #:init #f)
+        (define (mark-discovered! u) (discovered?-set! u #t))
+        (mark-discovered! s)
+        (define-vertex-property G visited? #:init #f)
+        (define (mark-visited! u) (visited?-set! u #t))
+        (syntax-parameterize 
+         ([$discovered? (syntax-rules () [(_ u) (discovered? u)])]
+          [$seen? (syntax-rules () [(_ u) (discovered? u)])]
+          [$visited? (syntax-rules () [(_ u) (visited? u)])])
+        (bfs/generalized G s 
+          (?? (?@ #:init-queue Q))
+          (?? (?@ #:break break?))
+          (?? (?@ #:init (λ _ init ...)))
+          ;; #:visit? possible clauses
+          (??
+           ;; #:visit?
+           (?@ #:visit? (λ (G s v?-from v?-to) visit? v?rst ...))
+           (??
+            (?@ #:visit? 
+                (λ (G s from to)
+                  (syntax-parameterize ([$from (syntax-id-rules () [_ from])]
+                                        [$to (syntax-id-rules () [_ to])]
+                                        [$v (syntax-id-rules () [_ to])])
+                                       v?exp ...)))
+            (??
+             ;; #:enqueue?
+             (?@ #:visit? (λ (G s e?-from e?-to) enq? e?rst ...))
+             (??
+              (?@ #:visit? 
+                  (λ (G s from to)
+                    (syntax-parameterize ([$from (syntax-id-rules () [_ from])]
+                                          [$to (syntax-id-rules () [_ to])]
+                                          [$v (syntax-id-rules () [_ to])])
+                                         e?exp ...)))
+              ;; else
+              (?@ #:visit? (λ (G s from to) (not (discovered? to))))))))
+          ;; #:discover possible clauses
+          ;; #:discover
+          (?? (?@ #:discover (λ (G s disc-from disc-to) 
+                               (mark-discovered! disc-to) disc discrst ...))
+              (?? (?@ #:discover 
+                      (λ (G s from to) 
+                        (mark-discovered! to)
+                        (syntax-parameterize ([$from (syntax-id-rules () [_ from])]
+                                              [$to (syntax-id-rules () [_ to])]
+                                              [$v (syntax-id-rules () [_ to])])
+                                             discexp ...)))
+                  ;; #:on-enqueue
+                  (?? (?@ #:discover (λ (G s onenq-from onenq-to) 
+                                       (mark-discovered! onenq-to) onenq onenqrst ...))
+                      (?? (?@ #:discover 
+                              (λ (G s from to) 
+                                (mark-discovered! to)
+                                (syntax-parameterize ([$from (syntax-id-rules () [_ from])]
+                                                      [$to (syntax-id-rules () [_ to])]
+                                                      [$v (syntax-id-rules () [_ to])])
+                                                     onenqexp ...)))
+                          ;; else
+                          (?@ #:discover (λ G s from to) (mark-discovered! to))))))
+          ;; #:visit possible clauses
+          ;; #:visit
+          (?? (?@ #:visit (λ (G s v) (mark-visited! v) visit visitrst ...))
+              (?? (?@ #:visit (λ (G s u) 
+                                (mark-visited! u)
+                                (syntax-parameterize ([$v (syntax-id-rules () [_ u])])
+                                                     visexp ...)))
+                  ;; #:on-dequeue
+                  (?? (?@ #:visit (λ (G s ondeqv) 
+                                    (mark-visited! ondeqv) ondeq ondeqrst ...))
+                      (?? (?@ #:visit (λ (G s u) 
+                                        (mark-visited! u)
+                                        (syntax-parameterize ([$v (syntax-id-rules () [_ u])])
+                                                             ondeqexp ...)))
+                          ;; else
+                          (?@ #:visit (λ (G s u) (mark-visited! u)))))))
+          (?? (?@ #:return (λ _ return ...)))))))]))
              
 
 ;; bfs-based fns --------------------------------------------------------------
 ;; (see also prim and dijkstra)
 
-;; returns the path in G from s to v with the fewest vertices in between
-;; ie, the shortest path from s to v for undirected graphs, 
+;; returns the path in G from src to targ with the fewest vertices in between
+;; ie, the shortest path from src to targ for undirected graphs, 
 ;;     or graphs where all edges have the same weight
-(define (fewest-vertices-path G s v)
+(define (fewest-vertices-path G src targ)
   (cond
-    [(vertex=? G s v) (list s)]
+    [(vertex=? G src targ) (list src)]
     [else
      (define-vertex-property G π #:init #f)
-     (define-graph-property found-v? #f)
+     (define-graph-property found-targ? #f)
      
-     (do-bfs G s #:break get-found-v?
+     (do-bfs G src #:break get-found-targ?
        #:discover
-       (when (vertex=? G $to v) (found-v?-set! #t))
-       (π-set! $to $from)
+       (when (vertex=? G $v targ) (found-targ?-set! #t))
+       (π-set! $v $from)
        #:return
-       (and found-v?
-            (let loop ([path null] [v v])
-              (if (vertex=? G v s) 
-                  (cons s path) 
+       (and found-targ?
+            (let loop ([path null] [v targ]) ; reverse the found path
+              (if (vertex=? G v src) 
+                  (cons src path) 
                   (loop (cons v path) (π v))))))]))
 
            
