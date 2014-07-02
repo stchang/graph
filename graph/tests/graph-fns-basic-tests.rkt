@@ -333,3 +333,7 @@
 (check-exn exn:fail? (λ () (rename-vertex! g/to-rename 'a 'a)))
 ;; rename to existing vertex -- error
 (check-exn exn:fail? (λ () (rename-vertex! g/to-rename 'a 'b)))
+
+;; check #f fewest-vertices-path
+(define g/no-path (mk-directed-graph '((a b) (c d))))
+(check-false (fewest-vertices-path g/no-path 'a 'd))

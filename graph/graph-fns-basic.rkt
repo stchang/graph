@@ -38,27 +38,25 @@
 ;;   - #:visit? is ok but sometimes reads funny if #:visit is not specified. It
 ;;   could alternatively be called #:enqueue?. And following this naming heme, 
 ;;   #:visit could also be #:on-dequeue.
+;;
+;; For #:visit?, seen/discovered status is still the default behavior but the
+;; tracking of seen vertices is moved to do-bfs.
 (define (bfs/generalized G s #:init-queue [Q (mk-empty-fifo)]
                              #:break [break? (λ _ #f)]
                              #:init [init void]
-                             #:visit? [custom-visit?-fn #f]
+                             #:visit? [enqueue? (λ _ #t)]
                              #:discover [on-enqueue void]
                              #:visit [visit void]
                              #:return [finish void])
-  ;; This discovered set is not needed anymore if using do-bfs or bfs,
-  ;; but leaving it here for now for backwards compatibility.
-  (define discovered (set)) 
-  (define (mark-discovered! v) (set! discovered (set-add discovered v)))
-  (define enqueue? (or custom-visit?-fn
-                       (λ (G s u v) (not (set-member? discovered v)))))
-  
   (init G s)
   (enqueue! Q s) ; source vertex s is always visited
-  (mark-discovered! s)
-  (for ([u (in-queue Q)])
+  (broke? #f)
+
+  (for ([u (in-queue Q)]#:break (broke?))
     (visit G s u)
-    (for ([v (in-neighbors G u)] #:when (enqueue? G s u v) #:break (break?))
-      (mark-discovered! v)
+    (for ([v (in-neighbors G u)] 
+          #:when (enqueue? G s u v) 
+          #:break (and (break? G s u v) (broke? #t)))
       (on-enqueue G s u v)
       (enqueue! Q v)))
   (finish G s))
@@ -73,7 +71,8 @@
   (syntax-parse stx 
     [(_ G s 
       (~or (~optional (~seq #:init-queue Q:expr))
-           (~optional (~seq #:break break?:expr))
+           (~or (~optional (~seq #:break (b?-from:id b?-to:id) b?:expr b?rst:expr ...))
+                (~optional (~seq #:break b?exp:expr ...)))
            (~optional (~seq #:init init:expr ...))
            (~or (~optional 
                  (~seq #:visit? (v?-from:id v?-to:id) visit?:expr v?rst:expr ...))
@@ -109,7 +108,14 @@
           [$visited? (syntax-rules () [(_ u) (visited? u)])])
         (bfs/generalized G s 
           (?? (?@ #:init-queue Q))
-          (?? (?@ #:break break?))
+          (?? (?@ #:break (λ (G s b?-from b?-to) b? b?rst ...)))
+          (?? (?@ #:break
+                  (λ (G s from to)
+                    (syntax-parameterize ([$from (syntax-id-rules () [_ from])]
+                                          [$to (syntax-id-rules () [_ to])]
+                                          [$v (syntax-id-rules () [_ to])])
+                      (let ([res (let () b?exp ...)]) ; check proc? for backwards compat
+                        (if (procedure? res) (res G s from to) res))))))
           (?? (?@ #:init (λ _ init ...)))
           ;; #:visit? possible clauses
           (??
@@ -173,7 +179,10 @@
                                                              ondeqexp ...)))
                           ;; else
                           (?@ #:visit (λ (G s u) (mark-visited! u)))))))
-          (?? (?@ #:return (λ _ return ...)))))))]))
+          (?? (?@ #:return 
+                   (λ _
+                     (syntax-parameterize ([$broke? (syntax-id-rules () [_ (broke?)])])
+                                          return ...))))))))]))
              
 
 ;; bfs-based fns --------------------------------------------------------------
@@ -187,14 +196,11 @@
     [(vertex=? G src targ) (list src)]
     [else
      (define-vertex-property G π #:init #f)
-     (define-graph-property found-targ? #f)
-     
-     (do-bfs G src #:break get-found-targ?
-       #:discover
-       (when (vertex=? G $v targ) (found-targ?-set! #t))
-       (π-set! $v $from)
+     (do-bfs G src 
+       #:break (and (vertex=? G $v targ) (π-set! $v $from))
+       #:discover (π-set! $v $from)
        #:return
-       (and found-targ?
+       (and $broke?
             (let loop ([path null] [v targ]) ; reverse the found path
               (if (vertex=? G v src) 
                   (cons src path) 
@@ -209,11 +215,11 @@
   (define-graph-property time 0)
 
   (do-dfs G
-    #:prologue (time-set! (add1 time)) (d-set! $to time) (π-set! $to $from)
-    #:epilogue (time-set! (add1 time)) (f-set! $to time)
+    #:prologue (time-set! (add1 time)) (d-set! $v time) (π-set! $v $from)
+    #:epilogue (time-set! (add1 time)) (f-set! $v time)
     #:return (values (d->hash) (π->hash) (f->hash))))
 
-(define (dfs/generalized G #:order [order (λ (vs) vs)]
+(define (dfs/generalized G #:order [order (λ (x) x)]
                            #:break [break? (λ _ #f)]
                            #:init [init void]
                            #:visit? [custom-visit?-fn #f]
@@ -228,17 +234,18 @@
   
   (init G)
   
+  (broke? #f)
   ;; inner loop: keep following (unvisited) links
   (define (do-visit parent u)
     (mark-visited! u)
     (prologue G parent u)
-    (for ([v (in-neighbors G u)] #:break (break?))
+    (for ([v (in-neighbors G u)] #:break (or (broke?) (and (break? G u v) (broke? #t))))
       (cond [(visit? G u v) (do-visit u v)]
             [(process-unvisited? G u v) (process-unvisited G u v)]))
     (epilogue G parent u))
   
   ;; outer loop: picks a new start node when previous search reaches dead end
-  (for ([u (order (in-vertices G))] #:break (break?))
+  (for ([u (order (get-vertices G))] #:break (or (broke?) (and (break? G #f u) (broke? #t))))
     (cond [(visit? G #f u) (do-visit #f u)]
           [(process-unvisited? G #f u) (process-unvisited G #f u)]))
   
@@ -254,7 +261,8 @@
   (syntax-parse stx 
     [(_ G 
      (~or (~optional (~seq #:order order:expr))
-          (~optional (~seq #:break break?:expr))
+           (~or (~optional (~seq #:break (b?-from:id b-?to:id) b?:expr b?rst:expr ...))
+                (~optional (~seq #:break b?exp:expr ...)))
           (~optional (~seq #:init init:expr ...))
           (~or (~optional 
                 (~seq #:visit? (v?-from:id v?-to:id) visit?:expr v?rst:expr ...))
@@ -280,59 +288,72 @@
      (template
       (dfs/generalized G 
         (?? (?@ #:order order))
-        (?? (?@ #:break break?))
+          (?? (?@ #:break (λ (G b?-from b?-to) b? b?rst ...)))
+          (?? (?@ #:break 
+                  (λ (G from to)
+                    (syntax-parameterize ([$from (syntax-id-rules () [_ from])]
+                                          [$to (syntax-id-rules () [_ to])]
+                                          [$v (syntax-id-rules () [_ to])])
+                      (let ([res (let () b?exp ...)]) ; check proc? for backwards compat
+                        (if (procedure? res) (res G from to) res))))))
         (?? (?@ #:init (λ _ init ...)))
         (?? (?@ #:visit? (λ (G v?-from v?-to) visit? v?rst ...)))
         (?? (?@ #:visit? 
                 (λ (G from to) 
                   (syntax-parameterize ([$from (syntax-id-rules () [_ from])]
-                                        [$to (syntax-id-rules () [_ to])])
+                                        [$to (syntax-id-rules () [_ to])]
+                                        [$v (syntax-id-rules () [_ to])])
                            v?exp ...))))
         (?? (?@ #:prologue (λ (G pro-from pro-to) pro prorst ...)))
         (?? (?@ #:prologue 
                 (λ (G from to) 
                   (syntax-parameterize ([$from (syntax-id-rules () [_ from])]
-                                        [$to (syntax-id-rules () [_ to])])
+                                        [$to (syntax-id-rules () [_ to])]
+                                        [$v (syntax-id-rules () [_ to])])
                              proexp ...))))
         (?? (?@ #:epilogue (λ (G epi-from epi-to) epi epirst ...)))
         (?? (?@ #:epilogue 
                 (λ (G from to) 
                   (syntax-parameterize ([$from (syntax-id-rules () [_ from])]
-                                        [$to (syntax-id-rules () [_ to])])
+                                        [$to (syntax-id-rules () [_ to])]
+                                        [$v (syntax-id-rules () [_ to])])
                              epiexp ...))))
         (?? (?@ #:process-unvisited? (λ (G pu?-from pu?-to) pu? pu?rst ...)))
         (?? (?@ #:process-unvisited? 
                 (λ (G from to) 
                   (syntax-parameterize ([$from (syntax-id-rules () [_ from])]
-                                        [$to (syntax-id-rules () [_ to])])
+                                        [$to (syntax-id-rules () [_ to])]
+                                        [$v (syntax-id-rules () [_ to])])
                                        pu?exp ...))))
         (?? (?@ #:process-unvisited (λ (G pu-from pu-to) pu purst ...)))
         (?? (?@ #:process-unvisited 
                 (λ (G from to) 
                   (syntax-parameterize ([$from (syntax-id-rules () [_ from])]
-                                        [$to (syntax-id-rules () [_ to])])
+                                        [$to (syntax-id-rules () [_ to])]
+                                        [$v (syntax-id-rules () [_ to])])
                                       puexp ...))))
-        (?? (?@ #:return (λ _ return ...)))))]))
+        (?? (?@ #:return 
+                (λ _ 
+                  (syntax-parameterize ([$broke? (syntax-id-rules () [_ (broke?)])])
+                                       return ...))))))]))
 
 ;; dfs-based fns --------------------------------------------------------------
 
 (define (dag? G)
   (define-vertex-property G color #:init WHITE)
-  (define-graph-property not-dag? #f)
   
-  (do-dfs G #:break get-not-dag?
-    #:visit? (white? (color $to))
-    #:prologue (color-set! $to GRAY)
-    #:epilogue (color-set! $to BLACK)
-    #:process-unvisited? (gray? (color $to))
-    #:process-unvisited (not-dag?-set! #t)
-    #:return (not not-dag?)))
+  (do-dfs G 
+    #:break (gray? (color $v)) ; seeing a gray vertex means a loop
+    #:visit? (white? (color $v))
+    #:prologue (color-set! $v GRAY)
+    #:epilogue (color-set! $v BLACK)
+    #:return (not $broke?))) ; didnt break means no loop = acyclic
 
 (define (tsort G)
   (define sorted null) 
 
   (do-dfs G
-    #:epilogue (set! sorted (cons $to sorted)) ; add finished
+    #:epilogue (set! sorted (cons $v sorted)) ; add finished
     #:return sorted))
   
 ;; tarjan algorithm for strongly connected components
@@ -351,12 +372,12 @@
     (set! S (cdr S-rst)))
 
   (do-dfs G 
-    #:prologue (index-set! $to i) (lowlink-set! $to i) (add1! i) (S-push $to)
+    #:prologue (index-set! $v i) (lowlink-set! $v i) (add1! i) (S-push $v)
     #:epilogue 
-    (when (build-SCC? $to) (build-SCC $to))
-    (when $from (lowlink-set! $from (min (lowlink $from) (lowlink $to))))
-    #:process-unvisited? (member $to S)
-    #:process-unvisited (lowlink-set! $from (min (lowlink $from) (index $to)))
+    (when (build-SCC? $v) (build-SCC $v))
+    (when $from (lowlink-set! $from (min (lowlink $from) (lowlink $v))))
+    #:process-unvisited? (member $v S)
+    #:process-unvisited (lowlink-set! $from (min (lowlink $from) (index $v)))
     #:return SCC))
 
 

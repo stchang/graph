@@ -10,6 +10,8 @@
 (define-syntax-parameter $discovered? (syntax-rules ()))
 (define-syntax-parameter $seen? (syntax-rules ()))
 (define-syntax-parameter $visited? (syntax-rules ()))
+(define broke? (make-parameter #f))
+(define-syntax-parameter $broke? (syntax-rules ()))
 
 
 (define WHITE 'white)
@@ -19,10 +21,3 @@
 (define (white? c) (eq? WHITE c))
 (define (gray? c) (eq? GRAY c))
 (define (black? c) (eq? BLACK c))
-
-;;; ??? is multi-arg version of syntax/parse/experimental/template's ??
-;(define-syntax ???
-;  (syntax-rules ()
-;    [(_ e) (?? e)]
-;    [(_ e1 e2) (?? e1 e2)]
-;    [(_ e es ...) (?? e (??? es ...))]))

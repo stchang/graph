@@ -69,5 +69,5 @@
       (begin
         (define prop v)
         (define (prop-set! x) (set! prop x))
-        (define (prop-get) prop)))]))
+        (define (prop-get . args) prop)))]))
                       

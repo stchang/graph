@@ -328,32 +328,42 @@ The following forms associate properties with a graph. The graph itself is uncha
 @defproc[(bfs/generalized 
           [g graph?] [source any/c]
           [#:init-queue Q queue? (mk-empty-fifo)]
-          [#:break break? (-> boolean?) (λ _ #f)]
+          [#:break break? (-> graph? [source any/c] [from any/c] [to any/c] boolean?) (λ _ #f)]
           [#:init init (-> graph? [source any/c] void?) void]
           [#:visit? custom-visit?-fn (-> graph? [source any/c] [from any/c] [to any/c] boolean?) #f]
           [#:discover discover (-> graph? [source any/c] [from any/c] [to any/c] void?) void]
           [#:visit visit (-> graph? [source any/c] [v any/c] void?) void]
           [#:return finish (-> graph? [source any/c] any) void]) any]{
-Generalized breadth-first search. Partially inspired by the C++ Boost Graph Library. See Lee et al. OOPSLA 1999 @cite["GGCL"]. Here is the rough implementation:
+Generalized breadth-first search. Partially inspired by the C++ Boost Graph 
+Library. See Lee et al. OOPSLA 1999 @cite["GGCL"]. Here is the rough implementation:
 @racketblock[  
   (init G s)
   (enqueue! Q s)
   (mark-discovered! s)
   (for ([u (in-queue Q)])
     (visit G s u)
-    (for ([v (in-neighbors G u)] #:when (visit? G s u v) #:break (break?))
+    (for ([v (in-neighbors G u)] #:when (visit? G s u v) #:break (break? G s u v))
       (mark-discovered! v)
       (discover G s u v)
       (enqueue! Q v)))
   (finish G s)]
-Utilizes a queue that implements @racket[gen:queue]. A vertex is @deftech{discovered} when it gets added to the queue. If no @racket[custom-visit?-fn] is provided, then the function does not visit vertices that have already been discovered. When a vertex is dequeued, then @racket[visit] is called. The result of @racket[bfs/generalized] is the result of @racket[finish].}
+Utilizes a queue that implements @racket[gen:queue]. A vertex is 
+@deftech{discovered} when it gets added to the queue. If no 
+@racket[custom-visit?-fn] is provided, then the default behavior is to not 
+enqueue/visit vertices that have already been discovered (ie seen). The function
+checks the @racket[#:break] condition when a vertex is discovered (ie being 
+considered for enqueueing). When a vertex is dequeued,
+then @racket[visit] is called. The result of @racket[bfs/generalized] is the result 
+of @racket[finish].}
 
 @defform/subs[(do-bfs graph source maybe-init-queue maybe-break maybe-init maybe-visit? maybe-discover maybe-visit maybe-return)
               ([graph graph?]
                [maybe-init-queue (code:line) (code:line #:init-queue queue)]
                [queue queue?]
-               [maybe-break (code:line) (code:line #:break break?)]
-               [break? (-> boolean?)]
+               [maybe-break (code:line) 
+                            (code:line #:break (from to) break-exp ...)
+                            (code:line #:break break-exp)]
+               [break-exp expr]
                [maybe-init (code:line) (code:line #:init init-exp ...)]
                [init-exp expr]
                [maybe-visit? (code:line) 
@@ -385,7 +395,7 @@ the need to define separate functions and then pass them into
 @racket[bfs/generalized]'s keyword arguments. Instead, the bodies of those 
 functions are inserted right after the corresponding keywords.
 
-The keywords @racket[#:visit?], @racket[#:discover], and @racket[#:visit]
+The keywords @racket[#:break], @racket[#:visit?], @racket[#:discover], and @racket[#:visit]
 can bind user-supplied identifiers that represent the vertices under
 consideration. Providing these identifiers is optional. If these keyword
 arguments are invoked without identifiers, then special identifiers are
@@ -406,6 +416,10 @@ In any of the keyword arguments, the special identifiers @racket[$discovered?],
 vertex has ever been added to the queue (@racket[($discovered? v)] is the same 
 as @racket[$seen?]), and @racket[($visited? v)] indicates whether the vertex has
 been visited, ie pulled off the queue.
+
+In the @racket[#:return] expressions, the @racket[$broke?] special identifier
+indicates whether the search was terminated early according to the 
+@racket[#:break] condition.
 
 For example, below is Dijkstra's algorithm, implemented with @racket[do-bfs]. 
 The code defines two @tech{vertex property}s: @racket[d] maps a vertex to the 
@@ -449,44 +463,67 @@ and a third that maps a vertex to its "finishing time".}
                                                         
 @defproc[(dfs/generalized 
           [g graph?]
-          [#:order order (-> (list/c any/c) (list/c any/c)) (λ (x) x)]
-          [#:break break? (-> boolean?) (λ _ #f)]
+          [#:order order (-> list? list?) (λ (x) x)]
+          [#:break break? (-> graph? [from any/c] [to any/c] boolean?) (λ _ #f)]
           [#:init init (-> graph? void?) void]
           [#:visit? custom-visit?-fn (-> graph? [from any/c] [to any/c] boolean?) #f]
-          [#:prologue prologue (-> graph? [parent any/c] [v any/c] void?) void]
-          [#:epilogue epilogue (-> graph? [parent any/c] [v any/c] void?) void]
+          [#:prologue prologue (-> graph? [from any/c] [v any/c] void?) void]
+          [#:epilogue epilogue (-> graph? [from any/c] [v any/c] void?) void]
           [#:process-unvisited? process-unvisited? 
                                 (-> graph? [from any/c] [to any/c] boolean?) (λ _ #f)]
           [#:process-unvisited process-unvisited
                                (-> graph? [from any/c] [to any/c] void?) void]
           [#:return finish (-> graph? any) void]) any]{
-Generalized depth-first search. Partially inspired by the C++ Boost Graph Library. See Lee et al. OOPSLA 1999 @cite["GGCL"]. Here is the rough implementation:
-@racketblock[  
-  (init G)
+Generalized depth-first search. Partially inspired by the C++ Boost Graph 
+Library. See Lee et al. OOPSLA 1999 @cite["GGCL"]. Here is the rough 
+implementation:
 
+@#reader scribble/comment-reader (racketblock
+  (init G)
+  
+  ;; inner loop: keep following unvisited links
   (define (do-visit parent u)
     (mark-visited! u)
     (prologue G parent u)
-    (for ([v (in-neighbors G u)] #:break (break?))
+    (for ([v (in-neighbors G u)] #:break (break? G u v))
       (cond [(visit? G u v) (do-visit u v)]
             [(process-unvisited? G u v) (process-unvisited G u v)]))
     (epilogue G parent u))
   
-  (for ([u (order (in-vertices G))] #:break (break?))
+  ;; outer loop: start at new vertex when previous search hits dead end
+  (for ([u (order (get-vertices G))] #:break (break? G #f u))
     (cond [(visit? G #f u) (do-visit #f u)]
           [(process-unvisited? G #f u) (process-unvisited G #f u)]))
   
-  (finish G)]
-The @racket[do-visit] function is the inner loop that keeps following edges depth-first until the search gets stuck. The "visit" part of the code is separated into two functions, the @racket[prologue], which represents the descending part of the visit, and @racket[epilogue], which gets called on the way back up. The outer @racket[for] loop picks a new start to restart the search when it gets stuck. Nodes that are already visited are marked and are not searched again. The algorithm terminates when all nodes are visited. The result of @racket[dfs/generalized] is the result of @racket[finish]. 
+  (finish G))
 
-The @racket[order] function is a sorting function that specifies where to start the search and @racket[break] aborts the search and returns when it is true. @racket[process-unvisited?] and @racket[process-unvisited] specify code to run when a node is not visited.}
+The @racket[do-visit] function is the inner loop that keeps following edges 
+depth-first until the search gets stuck. The "visit" part of the code is 
+separated into two functions, the @racket[prologue], which represents the 
+descending part of the visit, and @racket[epilogue], which gets called on the 
+way back up. The outer @racket[for] loop picks a new start to restart the 
+search when it gets stuck. Nodes that are already visited are marked and are 
+not searched again. The algorithm terminates when all nodes are visited. The 
+result of @racket[dfs/generalized] is the result of @racket[finish]. 
+
+If an @racket[order] function is supplied, the outer loop 
+uses it to sort the vertices before determining which vertex to visit next. 
+The @racket[break?] predicate 
+aborts the search and returns when it is true. @racket[process-unvisited?] and 
+@racket[process-unvisited] specify code to run when a node is not visited.
+
+The functions that require both a "from" and a "to" vertex argument are given 
+@racket[#f] for the parent when there is none.
+}
 
 @defform/subs[(do-dfs graph maybe-order maybe-break maybe-init maybe-visit? maybe-prologue maybe-epilogue maybe-process-unvisited? maybe-process-unvisited maybe-return)
               ([graph graph?]
-               [maybe-order (code:line) (code:line #:init-queue order)]
-               [order (-> list? list?)]
-               [maybe-break (code:line) (code:line #:break break?)]
-               [break? (-> boolean?)]
+               [maybe-order (code:line) (code:line #:order order)]
+               [order list?]
+               [maybe-break (code:line) 
+                            (code:line #:break (from to) break-exp ...)
+                            (code:line #:break break-exp ...)]
+               [break-exp expr]
                [maybe-init (code:line) (code:line #:init init-exp ...)]
                [init-exp expr]
                [maybe-visit? (code:line)
@@ -494,11 +531,11 @@ The @racket[order] function is a sorting function that specifies where to start 
                              (code:line #:visit? visit?-exp ...)]
                [visit?-exp expr]
                [maybe-prologue (code:line) 
-                               (code:line #:prologue (parent v) prologue-exp ...)
+                               (code:line #:prologue (from to) prologue-exp ...)
                                (code:line #:prologue prologue-exp ...)]
                [prologue-exp expr]
                [maybe-epilogue (code:line) 
-                               (code:line #:epilogue (parent v) epilogue-exp ...)
+                               (code:line #:epilogue (from to) epilogue-exp ...)
                                (code:line #:epilogue epilogue-exp ...)]
                [epilogue-exp expr]
                [maybe-process-unvisited? 
@@ -514,20 +551,46 @@ The @racket[order] function is a sorting function that specifies where to start 
                [maybe-return (code:line) (code:line #:return return-exp ...)]
                [return-exp expr]
                [from identifier?] [to identifier?] [parent identifier?] [v identifier?])]{
-Analogous to @racket[do-bfs]. Nicer syntax for @racket[dfs/generalized]. Below is @racket[dag?] as an example, which indicates whether a graph is directed and acyclic. The function uses the classic three vertex coloring, where white indicates unseen, gray indicates discovered, and black indicates done. Encountering a gray node while searching indicates a cycle, so the function keeps track of a flag that is set when a gray node is seen, and the @racket[#:break] function returns the value of this flag, terminating the search as soon as a cycle is found.
+Analogous to @racket[do-bfs]. Nicer syntax for @racket[dfs/generalized]. 
+Essentially, this form eliminates the need to define separate functions and 
+then pass them into @racket[dfs/generalized]'s keyword arguments. Instead, the 
+bodies of those functions are inserted right after the corresponding keywords.
+
+The keywords @racket[#:break], @racket[#:visit?], @racket[#:prologue],
+@racket[#:epilogue], @racket[#:process-unvisited?], and @racket[#:process-unvisited]
+can bind user-supplied identifiers that represent the vertices under
+consideration. Providing these identifiers is optional. If these keyword
+arguments are invoked without identifiers, then special identifiers are
+available in the keyword argument expressions that refer to the identifiers
+under consideration. Specifically, @racket[$v] is bound the current vertex and
+@racket[$from] is its parent (when appropriate). A @racket[$to] identifier is 
+bound to the same vertex as @racket[$v], and can be used if that name makes more
+sense in the context of the program.
+
+In the @racket[#:return] expressions, the @racket[$broke?] special identifier
+indicates whether the search was terminated early according to the 
+@racket[#:break] condition.
+
+Below 
+is @racket[dag?] as an example, which indicates whether a graph is directed and 
+acyclic. The function uses the classic three vertex coloring, where white 
+indicates unseen, gray indicates discovered, and black indicates done. 
+Encountering a gray node while searching indicates a cycle, so the function 
+keeps track of a @tech{graph property} (ie a flag) that is set when a gray node 
+is seen, and the @racket[#:break] function returns the value of this flag, 
+terminating the search as soon as a cycle is found.
              
-@racketblock[
+@#reader scribble/comment-reader (racketblock
 (define (dag? G)
   (define-vertex-property G color #:init WHITE)
-  (define-graph-property not-dag? #f)
   
-  (do-dfs G #:break get-not-dag?
-    #:visit? (from to) (white? (color to))
-    #:prologue (parent v) (color-set! v GRAY)
-    #:epilogue (parent v) (color-set! v BLACK)
-    #:process-unvisited? (from to) (gray? (color to))
-    #:process-unvisited (from to) (not-dag?-set! #t)
-    #:return (not not-dag?)))]
+  (do-dfs G 
+    #:break (gray? (color $v)) ; seeing a gray vertex means a loop
+    #:visit? (white? (color $v))
+    #:prologue (color-set! $v GRAY)
+    #:epilogue (color-set! $v BLACK)
+    #:return (not $broke?)))
+)
 
 @racket[dfs], @racket[tsort], @racket[dag?], and @racket[scc] all use this form.}
                                                                                          
@@ -554,12 +617,10 @@ Indicates whether a graph is directed and acyclic.}
 Returns two hashes, one that maps a vertex to its distance (in total edge weights) from the source and one that maps a vertex to its predecessor in the shortest path from the source.}
                                           
 @defproc[(dijkstra [g graph?] [source any/c])
-         (values (hash/c any/c number? #:immutable #f) @defthing[$discovered? identifier?]{A function that queries the "seen" vertices in certain contexts. 
-              
-              See @racket[do-bfs].}(hash/c any/c any/c #:immutable #f))]{
+         (values (hash/c any/c number? #:immutable #f) (hash/c any/c any/c #:immutable #f))]{
 Similarly computes shortest paths from the source to every other vertex. Faster than Bellman-Ford but no negative weight edges are allowed. Based on breadth-first search.}
 
-                                                                                            @defproc[(dag-shortest-paths [g graph?] [source any/c]) 
+@defproc[(dag-shortest-paths [g graph?] [source any/c]) 
          (values (hash/c any/c number? #:immutable #f) (hash/c any/c any/c #:immutable #f))]{
 The fastest shortest paths algorithm but only works on dags.}
                                                                                             
@@ -577,9 +638,7 @@ Computes all-pairs shortest paths using Johnson's algorithm. Should be faster th
 
 Handles negative weights by first running @racket[bellman-ford]. The uses @racket[dijkstra] for each vertex in the graph.
 
-Note, the running time could be theoretically faster wi@defthing[$discovered? identifier?]{A function that queries the "seen" vertices in certain contexts. 
-              
-              See @racket[do-bfs].}th a version of Dijkstra that uses a Fibonacci heap instead of a standard heap.}
+Note, the running time could be theoretically faster with a version of Dijkstra that uses a Fibonacci heap instead of a standard heap.}
 
 
 @; graph coloring -------------------------------------------------------------
@@ -594,9 +653,7 @@ Returns a coloring for the given graph using at most the specified number of col
                                                                                         
 @defproc[(coloring/greedy 
           [g graph?] 
-          [#:order order (or/c 'smallest-last (-> list?@defthing[$discovered? identifier?]{A function that queries the "seen" vertices in certain contexts. 
-              
-              See @racket[do-bfs].} list?)) 'smallest-last])
+          [#:order order (or/c 'smallest-last (-> list? list?)) 'smallest-last])
          (values number? (hash/c any/c number? #:immutable #f))]{
 Returns a "greedy" coloring of the given graph, where the color for a vertex is the "smallest" color not used by one of its neighbors (or the number of colors is increased).
 
@@ -614,9 +671,7 @@ Consumes a graph and returns the vertices of the graph in "smallest-last" order.
 
 Only works for undirected graphs.}
                                                                 
-@defproc[(valid-coloring? [g graph?] [coloring (hash/c @defthing[$discovered? identifier?]{A function that queries the "seen" vertices in certain contexts. 
-              
-              See @racket[do-bfs].}any/c number?)]) boolean?]{
+@defproc[(valid-coloring? [g graph?] [coloring (hash/c any/c number?)]) boolean?]{
 Indicates whether the given coloring (a hash that maps a vertex to a color) is valid, meaning that no edge has two vertices of the same color.
 
 This function assumes that a "color" is a number and uses @racket[=] to compare colors.}
@@ -652,14 +707,14 @@ Returns the dotfile representation of the given graph (as a string).}
 @section{Other}
 @defthing[$v identifier?]{An identifier that's bound to the "current" vertex in certain contexts. 
               
-              See @racket[define-vertex-property] and @racket[do-bfs].}
+              See @racket[define-vertex-property], @racket[do-bfs], and @racket[do-dfs].}
 
 @defthing[$from identifier?]{An identifier that's bound to the "from" vertex in certain contexts. 
               
-              See @racket[define-edge-property] and @racket[do-bfs].}
+              See @racket[define-edge-property], @racket[do-bfs], and @racket[do-dfs].}
 @defthing[$to identifier?]{An identifier that's bound to the "to" vertex certain contexts. 
               
-              See @racket[define-edge-property] and @racket[do-bfs].}
+              See @racket[define-edge-property], @racket[do-bfs], and @racket[do-dfs].}
 @defthing[$discovered? identifier?]{A function that queries the "seen" vertices in certain contexts. 
               
               See @racket[do-bfs].}
@@ -670,6 +725,9 @@ Returns the dotfile representation of the given graph (as a string).}
 @defthing[$visited? identifier?]{A function that queries the "visited" vertices in certain contexts. 
               
               See @racket[do-bfs].}
+@defthing[$broke? identifier?]{Indicates whether the @racket[#:break] condition was triggered in some contexts.
+              
+              See @racket[do-bfs] and @racket[do-dfs].}.}
 
 
 

@@ -51,14 +51,14 @@
   (define L null) (define (add-to-L! v) (set! L (cons v L))) ; #f
   (define R null) (define (add-to-R! v) (set! R (cons v R))) ; #t
   (define-vertex-property G color) ; key = vertices, values = #t/#f
-  (define-graph-property not-bipartite? #f)
-  (do-dfs G #:break get-not-bipartite?
+  (do-dfs G 
+   #:break (and $from ; break if both are colored and colored the same
+                (with-handlers ([exn:fail? (λ _ #f)]) ; catch if not colored
+                  (xor (not (color $from)) (color $v))))
    #:prologue 
-   (color-set! $to (and $from (not (color $from))))
-   (if (color $to) (add-to-L! $to) (add-to-R! $to))
-   #:process-unvisited? (and $from (xor (not (color $from)) (color $to)))
-   #:process-unvisited (set! not-bipartite? #t))
-  (and (not not-bipartite?) (list L R)))
+     (color-set! $v (and $from (not (color $from)))) ; set color to opposite of parent
+     (if (color $v) (add-to-L! $v) (add-to-R! $v))
+   #:return (and (not $broke?) (list L R))))
    
 (define (maximum-bipartite-matching G)
   (define L-R (bipartite? G))
