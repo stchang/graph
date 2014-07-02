@@ -79,3 +79,124 @@
         (with-input-from-file "kevin-bacon-expected.dat" port->lines))))
 
 (check-equal? (bacon-number->hash) bacon-number-expected)
+
+;; more examples from http://www.boost.org/doc/libs/1_55_0/libs/graph/example/
+
+;; bfs: http://www.boost.org/doc/libs/1_55_0/libs/graph/example/bfs-example2.cpp
+(define g/bfs2 (undirected-graph 
+                '((r s) (r v) (s w) (w r) (w t) (w x) (x t) (t u) (x y) (u y))))
+(define-values (d/bfs2 π/bfs2) (bfs g/bfs2 's))
+
+;; boost output: '(s r w v t x u y)
+(let ([res (sort (hash-keys d/bfs2) < #:key (λ (v) (hash-ref d/bfs2 v)))])
+  (define res/sets 
+    (match res
+      [`(,a ,b ,c ,d ,e ,f ,g ,h)
+       `(,(set a)
+         ,(set b c)
+         ,(set d e f)
+         ,(set g h))]))
+  (check-equal? res/sets (list (set 's)
+                               (set 'r 'w)
+                               (set 'v 't 'x)
+                               (set 'u 'y))))
+
+;; another bfs: http://www.boost.org/doc/libs/1_55_0/libs/graph/example/bfs-name-printer.cpp
+(define g/bfs-name
+  (undirected-graph '((a b) (a d) (b d) (c a) (c e) (d c) (d e))))
+(let-values ([(d π) (bfs g/bfs-name 'a)])
+  (define res (sort (hash-keys d) < #:key (λ (v) (hash-ref d v))))
+  (define res/sets
+    (match res
+      [`(,a ,b ,c ,d ,e)
+       `(,(set a)
+         ,(set b c d)
+         ,(set e))]))
+  (check-equal? res/sets (list (set'a)
+                               (set 'b 'c 'd)
+                               (set 'e))))
+
+;; dfs parens: http://www.boost.org/doc/libs/1_55_0/libs/graph/example/dfs_parenthesis.cpp
+
+(define g/parens
+  (undirected-graph '((0 2) (1 1) (1 3) (2 1) (2 3) (3 1) (3 4) (4 0) (4 1))))
+(check-equal?
+ (with-output-to-string
+  (λ ()
+    (do-dfs g/parens
+     #:prologue (printf "(~a" $v)
+     #:epilogue (printf "~a)" $v))))
+ "(0(2(1(3(44)3)1)2)0)")
+
+;; graph copying
+(define g/for-copy
+  (undirected-graph '((a c) (a d) (b a) (b d) (c f) (d c) (d e) (d f) (e b) (e g) (f e) (f g))))
+(define g/copy (graph-copy g/for-copy))
+(check-false (eq? g/for-copy g/copy))
+(check-equal? g/for-copy g/copy)
+
+; bipartite: http://www.boost.org/doc/libs/1_55_0/libs/graph/example/bipartite_example.cpp
+(define g/bi 
+  (undirected-graph 
+   '((0 1) (1 2) (0 4) (2 6) (4 5) (5 6) (4 7) (6 7) (3 4) (3 8) (7 10) (8 9) (9 1))))
+(let ([res (bipartite? g/bi)])
+  (check-not-false res)
+  (define white (set 0 2 3 5 7 9))
+  (define black (set 1 4 6 8 10))
+  (check-true (or (and (equal? white (apply set (first res)))
+                       (equal? black (apply set (second res))))
+                  (and (equal? black (apply set (first res)))
+                       (equal? white (apply set (second res)))))))
+
+(define g/non-bi
+  (undirected-graph
+   '((0 1) (0 4) (1 2) (2 6) (3 6) (3 8) (4 5) (4 7) (5 6) (6 7) (7 9) (8 9))))
+(check-false (bipartite? g/non-bi))
+
+;; cc-internet: http://www.boost.org/doc/libs/1_55_0/libs/graph/example/cc-internet.cpp
+(define g/net
+  (undirected-graph
+   '(("engr-fe21.gw.nd.edu" "shub-e27.gw.nd.edu")
+     ("shub-e27.gw.nd.edu" "chicago1-nbr1.bbnplanet.net")
+     ("shub-e27.gw.nd.edu" "core1-ord1-oc48.ord2.above.net")
+     ("chicago1-nbr1.bbnplanet.net" "above-bbn-45Mbps.ord.above.net")
+     ("above-bbn-45Mbps.ord.above.net" "engr-fe21.gw.nd.edu")
+     ("above-bbn-45Mbps.ord.above.net" "core1-ord1-oc48.ord2.above.net")
+     ("core1-ord1-oc48.ord2.above.net" "vabi1-gige-1-1.google.com")
+     ("vabi1-gige-1-1.google.com" "chicago1-nbr1.bbnplanet.net")
+     
+     ("cambridge1-nbr2.bbnplanet.net" "boston1-br1.bbnplanet.net")
+     ("ihtfp.mit.edu" "boston1-br1.bbnplanet.net")
+     ("cambridge1-nbr2.bbnplanet.net" "radole.lcs.mit.edu")
+     ("ihtfp.mit.edu" "radole.lcs.mit.edu")
+     
+     ("helios.ee.lbl.gov" "lilac-dmc.Berkeley.EDU")
+     ("lilac-dmc.Berkeley.EDU" "ccngw-ner-cc.Berkeley.EDU")
+     ("ccngw-ner-cc.Berkeley.EDU" "ccn-nerif35.Berkeley.EDU")
+     ("ccn-nerif35.Berkeley.EDU" "rip.Berkeley.EDU")
+     ("helios.ee.lbl.gov" "ccn-nerif35.Berkeley.EDU")
+     ("lilac-dmc.Berkeley.EDU" "rip.Berkeley.EDU")
+     
+     ("nycmny1-cr1.bbnplanet.net" "teledk.bbnplanet.net")
+     ("teledk.bbnplanet.net" "albnxg1.ip.tele.dk")
+     ("albnxg1.ip.tele.dk" "gw-dkuug.oeb.tdk.ne")
+     ("nycmny1-cr1.bbnplanet.net" "gw-dkuug.oeb.tdk.ne")
+     ("nycmny1-cr1.bbnplanet.net" "albnxg1.ip.tele.dk"))))
+
+(define-graph-property ccs null)
+(define-graph-property cc null)
+(let ([res
+       (do-dfs g/net
+               #:prologue 
+               (unless $from 
+                 (unless (null? cc) (ccs-set! (cons cc ccs)))
+                 (cc-set! null))
+               (cc-set! (cons $v cc))
+               #:return (cons cc ccs))])
+  (define expected
+    '((vabi1-gige-1-1.google.com engr-fe21.gw.nd.edu above-bbn-45Mbps.ord.above.net core1-ord1-oc48.ord2.above.net shub-e27.gw.nd.edu chicago1-nbr1.bbnplanet.net)
+      (albnxg1.ip.tele.dk teledk.bbnplanet.net nycmny1-cr1.bbnplanet.net gw-dkuug.oeb.tdk.ne)
+      (helios.ee.lbl.gov rip.Berkeley.EDU lilac-dmc.Berkeley.EDU ccngw-ner-cc.Berkeley.EDU ccn-nerif35.Berkeley.EDU)
+      (ihtfp.mit.edu boston1-br1.bbnplanet.net cambridge1-nbr2.bbnplanet.net radole.lcs.mit.edu)))
+  (check-equal? (apply set (map (λ (cc) (apply set (map string->symbol cc))) res))
+                (apply set (map (λ (cc) (apply set cc)) expected))))
