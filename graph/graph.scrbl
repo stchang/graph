@@ -61,7 +61,8 @@ A @tech{graph} has the following methods:
 @; unweighted graphs ----------------------------------------------------------
 @subsection{Unweighted Graphs}
 
-See also the @racket[directed-graph] and @racket[undirected-graph] constructors.
+See also the @racket[directed-graph] and @racket[undirected-graph] constructors, 
+which create either a weighted or unweighted graph.
 
 @defproc[(unweighted-graph? [g any/c]) boolean?]{Indicates whether a graph is an unweighted graph.}
 
@@ -102,6 +103,9 @@ Creates an unweighted graph that implements @racket[gen:graph] from an adjacency
              
 @; weighted graphs ------------------------------------------------------------
 @subsection{Weighted Graphs}
+
+See also the @racket[directed-graph] and @racket[undirected-graph] constructors, 
+which create either a weighted or unweighted graph.
 
 @defproc[(weighted-graph? [g any/c]) boolean?]{Indicates whether a graph is a weighted graph.}
 
@@ -176,7 +180,10 @@ Creates either a weighted or unweighted graph that implements @racket[gen:graph]
 @defproc[(matrix-graph? [g any/c]) boolean?]{Indicates whether a graph is a matrix graph.}
 
 @defform[(matrix-graph [[expr ...+] ...+])]{
-  Creates a matrix graph that implements @racket[gen:graph] from nested rows of expressions, exactly like @racket[matrix]. Vertices are the (0-based) row/column numbers and the weights are the number at each row-column. Use @racket[#f] to indicate no edge.
+  Creates a matrix graph that implements @racket[gen:graph] from nested rows of 
+expressions, exactly like @racket[matrix] form. Vertices are the (0-based) 
+row/column numbers and the weights are the number at each row-column. Use 
+@racket[#f] to indicate no edge.
                                          
 NOTE: @racket[matrix-graph] is implemented with @racket[matrix], so the same typed-untyped performance caveats probably apply.
 
@@ -209,7 +216,14 @@ The following forms associate properties with a graph. The graph itself is uncha
                [init-expr expr]
                [maybe-vs (code:line) (code:line #:vs vs)]
                [vs list?])]{
-  Creates a @deftech{vertex property} for vertices of the graph where each vertex maps to a value. This is a loose association, as keys of the mapping don't necessarily have to be vertices in the graph.
+  Creates a @deftech{vertex property} for vertices of the graph where each 
+vertex maps to a value. This is a loose association, as keys of the mapping 
+don't necessarily have to be vertices in the graph. 
+
+Essentially, a vertex property is just a hash table with vertex keys that has
+some convenient accessors. The accessors do not enforce
+that vertices must be in the graph to support algorithms that make use of 
+imaginary vertices.
   
   Defines the following names:
   
@@ -218,14 +232,19 @@ The following forms associate properties with a graph. The graph itself is uncha
     @item{@racket[prop-name]: 
          A procedure that returns the value associated with the given vertices.
            @itemlist[
-             @item{@racket[(prop-name v)]: Returns the value associated with the vertex.}
+             @item{@racket[(prop-name v)]: Returns the value associated with the vertex @racket[v].}
              @item{@racket[(prop-name v #:default val)]: Returns the value associated with the given vertex. Returns @racket[val] if @racket[v] has no value associated with it.}
              ]}
     @item{@racket[prop-name]@racketidfont{->hash}: A no-argument function that returns a @tech[#:doc '(lib "scribblings/reference/reference.scrbl")]{hash table} representation of the vertex-value mappings.}
     @item{@racket[prop-name]@racketidfont{-set!}: When given a vertex and a value, associates the value with the given vertex.}
   ]
   
-  If an @racket[#:init] argument is supplied, each vertex in the graph is associated with the result of computing @racket[init-expr]. In the @racket[init-expr], the identifier @racket[$v] may be used to refers to the vertex whose value is being set. If vertices are added to the graph after the mapping is created, those vertices will not have a value in the mapping.
+  If an @racket[#:init] argument is supplied, each vertex in the graph is 
+  associated with the result of computing @racket[init-expr]. In the 
+  @racket[init-expr], the identifier @racket[$v] may be used to refer to the 
+  vertex whose value is being set. The @racket[init-expr] is evaluated only
+  once. If vertices are added to the graph after the mapping is created, 
+  those vertices will not have a value in the mapping until the setter is called.
   
   A @racket[#:vs] argument maybe supplied to specify the order in which the vertices are initialized. The @racket[vs] list is only used if there is also an @racket[#:init] expression.
   
@@ -238,6 +257,8 @@ The following forms associate properties with a graph. The graph itself is uncha
    (dist-set! 'a 100)
    (dist 'a)
    (dist->hash)
+   (define-vertex-property g itself #:init $v)
+   (itself 'a)
   ]
 }
 
@@ -248,8 +269,14 @@ The following forms associate properties with a graph. The graph itself is uncha
                [init-expr expr]
                [maybe-vs (code:line) (code:line #:for-each for-each-e ...)]
                [for-each-e expr])]{
-  Creates an @deftech{edge property} for @emph{all possible} edges in the graph (ie, every pair of vertices) where each edge maps to a value.
+  Creates an @deftech{edge property} for @emph{all possible} edges in the graph
+ (ie, every pair of vertices) where each edge maps to a value.
   
+ Essentially, an edge property is just a hash table with edges as keys that has
+some convenient accessors. The accessors do not enforce
+that edges must be in the graph to support algorithms that make use of 
+imaginary edges.
+
   Defines the following names:
   
   @itemlist[
@@ -285,6 +312,8 @@ The following forms associate properties with a graph. The graph itself is uncha
   @examples[#:eval the-eval
    (A-set! 'a 'b 100)
    (A 'a 'b)
+   (define-edge-property g C #:init 100)
+   (C->hash)
    (define-edge-property g B #:for-each (B-set! $from $to (format "~a-~a" $from $to)))
    (B 'c 'd)
    (B->hash)]
@@ -323,7 +352,7 @@ The following forms associate properties with a graph. The graph itself is uncha
 
 @defproc[(bfs [g graph?] [source any/c])
          (values (hash/c any/c number? #:immutable #f) (hash/c any/c any/c #:immutable #f))]{
- Standard textbook breadth-first search, ie as in CLRS @cite["CLRS"]. Takes two arguments, a graph and a source vertex. Returns two values, a hash table mapping a vertex to the distance (in terms of number of vertices) from the source, and a hash table mapping a vertex to its predecessor in the search.}
+ Standard textbook breadth-first search, ie as @cite["CLRS"]. Takes two arguments, a graph and a source vertex. Returns two values, a hash table mapping a vertex to the distance (in terms of number of vertices) from the source, and a hash table mapping a vertex to its predecessor in the search.}
                                                                                             
 @defproc[(bfs/generalized 
           [g graph?] [source any/c]
@@ -362,7 +391,7 @@ of @racket[finish].}
                [queue queue?]
                [maybe-break (code:line) 
                             (code:line #:break (from to) break-exp ...)
-                            (code:line #:break break-exp)]
+                            (code:line #:break break-exp ...)]
                [break-exp expr]
                [maybe-init (code:line) (code:line #:init init-exp ...)]
                [init-exp expr]
@@ -399,10 +428,10 @@ The keywords @racket[#:break], @racket[#:visit?], @racket[#:discover], and @rack
 can bind user-supplied identifiers that represent the vertices under
 consideration. Providing these identifiers is optional. If these keyword
 arguments are invoked without identifiers, then special identifiers are
-available in the keyword argument expressions that refer to the identifiers
+available in the keyword argument expressions that refer to the vertices
 under consideration. Specifically, @racket[$v] is bound the current vertex and
 @racket[$from] is its parent (when appropriate). A @racket[$to] identifier is 
-bound to the same vertex as @racket[$v], and can be used if that name makes more
+bound to the same vertex as @racket[$v], and is provided in case that name makes more
 sense in the context of the program.
 
 The keywords @racket[#:visit?], @racket[#:discover], and @racket[#:visit] also
@@ -420,6 +449,10 @@ been visited, ie pulled off the queue.
 In the @racket[#:return] expressions, the @racket[$broke?] special identifier
 indicates whether the search was terminated early according to the 
 @racket[#:break] condition.
+
+Note: For backwards compatibility, if @racket[break-exp] is a function, then
+it's passed as a function to @racket[bfs/generalized], rather than as the body
+of another function.
 
 For example, below is Dijkstra's algorithm, implemented with @racket[do-bfs]. 
 The code defines two @tech{vertex property}s: @racket[d] maps a vertex to the 
@@ -455,7 +488,7 @@ Consumes a graph and two vertices, and returns the shortest path (in terms of nu
 @defproc[(dfs [g graph?])
          (values (hash/c any/c number? #:immutable #f) (hash/c any/c any/c #:immutable #f)
                  (hash/c any/c number? #:immutable #f))]{
-Standard textbook depth-first search algorith, ie like in CLRS @cite["CLRS"]. 
+Standard textbook depth-first search algorith, ie like in @cite["CLRS"]. 
 Consumes a graph and returns three hashes: one that maps a vertex to its 
 "discovery time", another that maps a vertex to its predecessor in the search, 
 and a third that maps a vertex to its "finishing time".}
@@ -502,15 +535,16 @@ depth-first until the search gets stuck. The "visit" part of the code is
 separated into two functions, the @racket[prologue], which represents the 
 descending part of the visit, and @racket[epilogue], which gets called on the 
 way back up. The outer @racket[for] loop picks a new start to restart the 
-search when it gets stuck. Nodes that are already visited are marked and are 
-not searched again. The algorithm terminates when all nodes are visited. The 
+search when it gets stuck. Vertices that are already visited are marked and are 
+not searched again. The algorithm terminates when all vertices are visited, or 
+the @racket[#:break] condition is triggered. The 
 result of @racket[dfs/generalized] is the result of @racket[finish]. 
 
 If an @racket[order] function is supplied, the outer loop 
 uses it to sort the vertices before determining which vertex to visit next. 
 The @racket[break?] predicate 
 aborts the search and returns when it is true. @racket[process-unvisited?] and 
-@racket[process-unvisited] specify code to run when a node is not visited.
+@racket[process-unvisited] specify code to run when a vertex is not visited.
 
 The functions that require both a "from" and a "to" vertex argument are given 
 @racket[#f] for the parent when there is none.
@@ -550,7 +584,7 @@ The functions that require both a "from" and a "to" vertex argument are given
                [process-unvisited-exp expr]
                [maybe-return (code:line) (code:line #:return return-exp ...)]
                [return-exp expr]
-               [from identifier?] [to identifier?] [parent identifier?] [v identifier?])]{
+               [from identifier?] [to identifier?] [v identifier?])]{
 Analogous to @racket[do-bfs]. Nicer syntax for @racket[dfs/generalized]. 
 Essentially, this form eliminates the need to define separate functions and 
 then pass them into @racket[dfs/generalized]'s keyword arguments. Instead, the 
@@ -571,14 +605,16 @@ In the @racket[#:return] expressions, the @racket[$broke?] special identifier
 indicates whether the search was terminated early according to the 
 @racket[#:break] condition.
 
+Note: For backwards compatibility, if @racket[break-exp] is a function, then
+it's passed as a function to @racket[dfs/generalized], rather than as the body
+of another function.
+
 Below 
 is @racket[dag?] as an example, which indicates whether a graph is directed and 
 acyclic. The function uses the classic three vertex coloring, where white 
 indicates unseen, gray indicates discovered, and black indicates done. 
-Encountering a gray node while searching indicates a cycle, so the function 
-keeps track of a @tech{graph property} (ie a flag) that is set when a gray node 
-is seen, and the @racket[#:break] function returns the value of this flag, 
-terminating the search as soon as a cycle is found.
+Encountering a gray node while searching indicates a cycle so this is 
+checked as the @racket[#:break] condition.
              
 @#reader scribble/comment-reader (racketblock
 (define (dag? G)
@@ -727,7 +763,7 @@ Returns the dotfile representation of the given graph (as a string).}
               See @racket[do-bfs].}
 @defthing[$broke? identifier?]{Indicates whether the @racket[#:break] condition was triggered in some contexts.
               
-              See @racket[do-bfs] and @racket[do-dfs].}.}
+              See @racket[do-bfs] and @racket[do-dfs].}
 
 
 
