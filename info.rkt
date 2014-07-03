@@ -3,4 +3,4 @@
 (define deps '("base" "data-lib" "math-lib"))
 (define build-deps 
   '("rackunit-lib" "racket-doc" "scribble-lib" "data-doc" "math-doc"))
-(define version "0.1")
+(define version "0.2")
