@@ -296,7 +296,7 @@
                              pu:expr purst:expr ...))
             (~optional (~seq #:process-unvisited puexp:expr ...)))
        (~optional (~seq #:combine combine))
-       (~or (~optional (~seq #:return (ret-add:id) ret:expr retrst:expr ...))
+       (~or (~optional (~seq #:return (ret-acc:id) ret:expr retrst:expr ...))
             (~optional (~seq #:return retexp:expr ...)))) ...)
      (template
       (dfs/generalized G 
