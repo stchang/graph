@@ -222,34 +222,40 @@
 (define (dfs/generalized G #:order [order (λ (x) x)]
                            #:break [break? (λ _ #f)]
                            #:init [init void]
+                           #:inner-init [inner-init (λ (acc) acc)]
                            #:visit? [custom-visit?-fn #f]
-                           #:prologue [prologue void]
-                           #:epilogue [epilogue void]
+                           #:prologue [prologue (λ (G u v acc) acc)]
+                           #:epilogue [epilogue (λ (G u v acc) acc)]
                            #:process-unvisited? [process-unvisited? (λ _ #f)]
-                           #:process-unvisited [process-unvisited void]
-                           #:return [finish void])
+                           #:process-unvisited [process-unvisited (λ (G u v acc) acc)]
+                           #:combine [combine (λ (x acc) x)]
+                           #:return [finish (λ (G acc) acc)])
   (define visited (set))
   (define (mark-visited! v) (set! visited (set-add visited v)))
   (define visit? (or custom-visit?-fn (λ (G u v) (not (set-member? visited v)))))
   
-  (init G)
-  
   (broke? #f)
   ;; inner loop: keep following (unvisited) links
-  (define (do-visit parent u)
+  (define (do-visit parent u acc)
     (mark-visited! u)
-    (prologue G parent u)
-    (for ([v (in-neighbors G u)] #:break (or (broke?) (and (break? G u v) (broke? #t))))
-      (cond [(visit? G u v) (do-visit u v)]
-            [(process-unvisited? G u v) (process-unvisited G u v)]))
-    (epilogue G parent u))
+    (define new-acc
+      (for/fold ([acc (prologue G parent u acc)])
+        ([v (in-neighbors G u)] #:break (or (broke?) (and (break? G u v) (broke? #t))))
+        (cond [(visit? G u v) (do-visit u v acc)]
+              [(process-unvisited? G u v) (process-unvisited G u v acc)]
+              [else acc])))
+    (epilogue G parent u new-acc))
   
   ;; outer loop: picks a new start node when previous search reaches dead end
-  (for ([u (order (get-vertices G))] #:break (or (broke?) (and (break? G #f u) (broke? #t))))
-    (cond [(visit? G #f u) (do-visit #f u)]
-          [(process-unvisited? G #f u) (process-unvisited G #f u)]))
+  (define new-acc 
+    (for/fold ([acc (init G)])
+      ([u (order (get-vertices G))] 
+       #:break (or (broke?) (and (break? G #f u) (broke? #t))))
+      (cond [(visit? G #f u) (combine (do-visit #f u (inner-init acc)) acc)]
+            [(process-unvisited? G #f u) (process-unvisited G #f u acc)]
+            [else acc])))
   
-  (finish G))
+  (finish G new-acc))
 
 ;; TODO: there is potential ambiguity here in the binding clauses
 ;; If the programmer omits the bindings, but the first expr happens to have the
@@ -264,26 +270,29 @@
            (~or (~optional (~seq #:break (b?-from:id b-?to:id) b?:expr b?rst:expr ...))
                 (~optional (~seq #:break b?exp:expr ...)))
           (~optional (~seq #:init init:expr ...))
+          (~or (~optional (~seq #:inner-init (init-acc:id) iinit:expr iinitrst:expr ...))
+               (~optional (~seq #:inner-init iinitexp:expr ...)))
           (~or (~optional 
                 (~seq #:visit? (v?-from:id v?-to:id) visit?:expr v?rst:expr ...))
                (~optional 
                 (~seq #:visit? v?exp:expr ...)))
           (~or (~optional 
-                (~seq #:prologue (pro-from:id pro-to:id) pro:expr prorst:expr ...))
+                (~seq #:prologue (pro-from:id pro-to:id pro-acc:id) pro:expr prorst:expr ...))
                (~optional 
                 (~seq #:prologue proexp:expr ...)))
           (~or (~optional 
-                (~seq #:epilogue (epi-from:id epi-to:id) epi:expr epirst:expr ...))
+                (~seq #:epilogue (epi-from:id epi-to:id epi-acc:id) epi:expr epirst:expr ...))
                (~optional 
                 (~seq #:epilogue epiexp:expr ...)))
           (~or (~optional 
-                (~seq #:process-unvisited? (pu?-from:id pu?-to:id) pu?:expr pu?rst:expr ...))
+                (~seq #:process-unvisited? (pu?-from:id pu?-to:id pu?-acc:id) pu?:expr pu?rst:expr ...))
                (~optional 
                 (~seq #:process-unvisited? pu?exp:expr ...)))
           (~or (~optional 
-                (~seq #:process-unvisited (pu-from:id pu-to:id) pu:expr purst:expr ...))
+                (~seq #:process-unvisited (pu-from:id pu-to:id pu-acc:id) pu:expr purst:expr ...))
                (~optional 
                 (~seq #:process-unvisited puexp:expr ...)))
+          (~optional (~seq #:combine combine))
           (~optional (~seq #:return return:expr ...))) ...)
      (template
       (dfs/generalized G 
@@ -297,6 +306,8 @@
                       (let ([res (let () b?exp ...)]) ; check proc? for backwards compat
                         (if (procedure? res) (res G from to) res))))))
         (?? (?@ #:init (λ _ init ...)))
+        (?? (?@ #:inner-init (λ (init-acc) iinit iinitrst ...)))
+        (?? (?@ #:inner-init (λ (acc) iinitexp ...)))
         (?? (?@ #:visit? (λ (G v?-from v?-to) visit? v?rst ...)))
         (?? (?@ #:visit? 
                 (λ (G from to) 
@@ -304,36 +315,37 @@
                                         [$to (syntax-id-rules () [_ to])]
                                         [$v (syntax-id-rules () [_ to])])
                            v?exp ...))))
-        (?? (?@ #:prologue (λ (G pro-from pro-to) pro prorst ...)))
+        (?? (?@ #:prologue (λ (G pro-from pro-to pro-acc) pro prorst ...)))
         (?? (?@ #:prologue 
-                (λ (G from to) 
+                (λ (G from to acc) 
                   (syntax-parameterize ([$from (syntax-id-rules () [_ from])]
                                         [$to (syntax-id-rules () [_ to])]
                                         [$v (syntax-id-rules () [_ to])])
                              proexp ...))))
-        (?? (?@ #:epilogue (λ (G epi-from epi-to) epi epirst ...)))
+        (?? (?@ #:epilogue (λ (G epi-from epi-to epi-acc) epi epirst ...)))
         (?? (?@ #:epilogue 
-                (λ (G from to) 
+                (λ (G from to acc) 
                   (syntax-parameterize ([$from (syntax-id-rules () [_ from])]
                                         [$to (syntax-id-rules () [_ to])]
                                         [$v (syntax-id-rules () [_ to])])
                              epiexp ...))))
-        (?? (?@ #:process-unvisited? (λ (G pu?-from pu?-to) pu? pu?rst ...)))
+        (?? (?@ #:process-unvisited? (λ (G pu?-from pu?-to pu?-acc) pu? pu?rst ...)))
         (?? (?@ #:process-unvisited? 
                 (λ (G from to) 
                   (syntax-parameterize ([$from (syntax-id-rules () [_ from])]
                                         [$to (syntax-id-rules () [_ to])]
                                         [$v (syntax-id-rules () [_ to])])
                                        pu?exp ...))))
-        (?? (?@ #:process-unvisited (λ (G pu-from pu-to) pu purst ...)))
+        (?? (?@ #:process-unvisited (λ (G pu-from pu-to pu-acc) pu purst ...)))
         (?? (?@ #:process-unvisited 
-                (λ (G from to) 
+                (λ (G from to acc) 
                   (syntax-parameterize ([$from (syntax-id-rules () [_ from])]
                                         [$to (syntax-id-rules () [_ to])]
                                         [$v (syntax-id-rules () [_ to])])
                                       puexp ...))))
+        (?? (?@ #:combine combine))
         (?? (?@ #:return 
-                (λ _ 
+                (λ (G acc) 
                   (syntax-parameterize ([$broke? (syntax-id-rules () [_ (broke?)])])
                                        return ...))))))]))
 
@@ -350,13 +362,16 @@
     #:return (not $broke?))) ; didnt break means no loop = acyclic
 
 (define (tsort G)
-  (define sorted null) 
+;  (define sorted null) 
 
   (do-dfs G
-    #:epilogue (set! sorted (cons $v sorted)) ; add finished
-    #:return sorted))
+    #:init null
+    ;#:epilogue (set! sorted (cons $v sorted)) ; add finished
+    #:epilogue (u v acc) (cons v acc)))
+;    #:return sorted))
   
 ;; tarjan algorithm for strongly connected components
+;; G must be directed
 (define (scc G)
   (define i 0)
   (define-vertex-properties G index lowlink)
@@ -372,7 +387,7 @@
     (set! S (cdr S-rst)))
 
   (do-dfs G 
-    #:prologue (index-set! $v i) (lowlink-set! $v i) (add1! i) (S-push $v)
+    #:prologue (S-push $v) (index-set! $v i) (lowlink-set! $v i) (add1! i) 
     #:epilogue 
     (when (build-SCC? $v) (build-SCC $v))
     (when $from (lowlink-set! $from (min (lowlink $from) (lowlink $v))))
@@ -380,5 +395,12 @@
     #:process-unvisited (lowlink-set! $from (min (lowlink $from) (index $v)))
     #:return SCC))
 
-
-      
+;; connected components
+;; G is undirected
+;; cc : graph -> [Listof [Listof vertices]]
+(define (cc G)
+  (do-dfs G
+   #:init null ; final result is list of lists
+   #:inner-init null ; each cc is list of vertices
+   #:prologue (u v acc) (cons v acc)
+   #:combine cons))

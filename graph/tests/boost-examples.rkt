@@ -153,6 +153,7 @@
    '((0 1) (0 4) (1 2) (2 6) (3 6) (3 8) (4 5) (4 7) (5 6) (6 7) (7 9) (8 9))))
 (check-false (bipartite? g/non-bi))
 
+;; connected components
 ;; cc-internet: http://www.boost.org/doc/libs/1_55_0/libs/graph/example/cc-internet.cpp
 (define g/net
   (undirected-graph
@@ -183,10 +184,16 @@
      ("nycmny1-cr1.bbnplanet.net" "gw-dkuug.oeb.tdk.ne")
      ("nycmny1-cr1.bbnplanet.net" "albnxg1.ip.tele.dk"))))
 
-(define-graph-property ccs null)
-(define-graph-property cc null)
+;(define-graph-property ccs null)
+;(define-graph-property cc null)
 (let ([res
-       (do-dfs g/net
+       (cc g/net)
+       #;(do-dfs g/net
+               #:init null
+               #:inner-init null
+               #:prologue (u v acc) (cons v acc)
+               #:combine cons)
+       #;(do-dfs g/net
                #:prologue 
                (unless $from 
                  (unless (null? cc) (ccs-set! (cons cc ccs)))
