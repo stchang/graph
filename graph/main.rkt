@@ -32,7 +32,7 @@
                        "graph-fns-graphviz.rkt")
          floyd-warshall transitive-closure johnson
          (all-from-out "graph-property.rkt")
-         $v $from $to $seen? $discovered? $visited? $broke?)
+         $v $from $to $seen? $discovered? $visited? $broke? $acc)
 
 
 

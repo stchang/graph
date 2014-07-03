@@ -12,6 +12,7 @@
 (define-syntax-parameter $visited? (syntax-rules ()))
 (define broke? (make-parameter #f))
 (define-syntax-parameter $broke? (syntax-rules ()))
+(define-syntax-parameter $acc (syntax-rules ()))
 
 
 (define WHITE 'white)

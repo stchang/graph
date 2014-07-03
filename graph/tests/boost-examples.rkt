@@ -184,22 +184,7 @@
      ("nycmny1-cr1.bbnplanet.net" "gw-dkuug.oeb.tdk.ne")
      ("nycmny1-cr1.bbnplanet.net" "albnxg1.ip.tele.dk"))))
 
-;(define-graph-property ccs null)
-;(define-graph-property cc null)
-(let ([res
-       (cc g/net)
-       #;(do-dfs g/net
-               #:init null
-               #:inner-init null
-               #:prologue (u v acc) (cons v acc)
-               #:combine cons)
-       #;(do-dfs g/net
-               #:prologue 
-               (unless $from 
-                 (unless (null? cc) (ccs-set! (cons cc ccs)))
-                 (cc-set! null))
-               (cc-set! (cons $v cc))
-               #:return (cons cc ccs))])
+(let ([res (cc g/net)])
   (define expected
     '((vabi1-gige-1-1.google.com engr-fe21.gw.nd.edu above-bbn-45Mbps.ord.above.net core1-ord1-oc48.ord2.above.net shub-e27.gw.nd.edu chicago1-nbr1.bbnplanet.net)
       (albnxg1.ip.tele.dk teledk.bbnplanet.net nycmny1-cr1.bbnplanet.net gw-dkuug.oeb.tdk.ne)

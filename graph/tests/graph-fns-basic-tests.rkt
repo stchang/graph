@@ -81,7 +81,7 @@
 ;; numbers from 1 to 2x
 (define (verify-times d f)
   (check-equal? (+ (apply + (hash-values d)) (apply + (hash-values f)))
-                (for/sum ([i (add1 (* 2 (length (hash-keys d))))]) i)))
+                (for/sum ([i (* 2 (length (hash-keys d)))]) i)))
 
 
 ;; dfs tests ------------------------------------------------------------------

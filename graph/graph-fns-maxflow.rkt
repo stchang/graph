@@ -48,17 +48,18 @@
 
 ; linear time bipartite check (via 2-coloring)
 (define (bipartite? G)
-  (define L null) (define (add-to-L! v) (set! L (cons v L))) ; #f
-  (define R null) (define (add-to-R! v) (set! R (cons v R))) ; #t
+  (define (add-to-L v l-r) (list (cons v (first l-r)) (second l-r))) ; #f
+  (define (add-to-R v l-r) (list (first l-r) (cons v (second l-r)))) ; #t
   (define-vertex-property G color) ; key = vertices, values = #t/#f
   (do-dfs G 
+   #:init (list null null) ; return two lists L and R
    #:break (and $from ; break if both are colored and colored the same
                 (with-handlers ([exn:fail? (λ _ #f)]) ; catch if not colored
                   (xor (not (color $from)) (color $v))))
    #:prologue 
      (color-set! $v (and $from (not (color $from)))) ; set color to opposite of parent
-     (if (color $v) (add-to-L! $v) (add-to-R! $v))
-   #:return (and (not $broke?) (list L R))))
+     (if (color $v) (add-to-L $v $acc) (add-to-R $v $acc))
+   #:return (and (not $broke?) $acc)))
    
 (define (maximum-bipartite-matching G)
   (define L-R (bipartite? G))
@@ -72,6 +73,7 @@
       (remove-directed-edge! G-prime v u)))
   (for ([v R]) (add-directed-edge! G-prime v t))
   (define res (maxflow G-prime s t))
-  (for/list ([e (in-hash-keys res #;(maxflow G-prime s t))]
-             #:unless (or (eq? (first e) s) (eq? (second e) t))) e))
+  (filter-not 
+   (λ (e) (or (vertex=? G-prime (first e) s) (vertex=? G-prime (second e) t)))
+   (hash-keys res)))
   
