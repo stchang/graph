@@ -60,7 +60,7 @@
 (define-syntax-rule (define-vertex-properties g p ...) 
   (begin (define-vertex-property g p) ...))
 
-(define-syntax (define-graph-property stx)
+#;(define-syntax (define-graph-property stx)
   (syntax-parse stx
     [(_ prop v) 
      #:with prop-set! (format-id #'prop "~a-set!" #'prop)
