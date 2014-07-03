@@ -15,22 +15,18 @@
 ;; uses data/union-find
 
 (define (mst-kruskal G)
-  (define (w e) (apply edge-weight G e))
-  (define A null) (define (A-add! e) (set! A (cons e A)))
+  (define (wgt e) (apply edge-weight G e))
+  (define sorted-edges (sort (get-edges G) < #:key wgt))
   
   ;; map vertex to it's representative set
-  ;; (different vertices may map to the same rep set)
+  ;;  (different vertices may map to the same rep set)
   (define-vertex-property G dset #:init (uf-new $v))
   
-  (define sorted-edges (sort (get-edges G) < #:key w))
-
-  (for ([e sorted-edges])
-    (match-define (list u v) e)
-    (unless (vertex=? G (uf-find (dset u)) (uf-find (dset v)))
-      (A-add! e)
-      (uf-union! (dset u) (dset v))))
-  
-  A)
+  (for/fold ([A null]) ([e sorted-edges]
+    #:unless (vertex=? G (uf-find (dset (first e))) 
+                         (uf-find (dset (second e)))))
+    (uf-union! (dset (first e)) (dset (second e)))
+    (cons e A)))
 
 ;; prim -----------------------------------------------------------------------
 ;; uses priority queue based on in data/heap
