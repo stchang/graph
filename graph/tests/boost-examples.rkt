@@ -192,3 +192,23 @@
       (ihtfp.mit.edu boston1-br1.bbnplanet.net cambridge1-nbr2.bbnplanet.net radole.lcs.mit.edu)))
   (check-equal? (apply set (map (λ (cc) (apply set (map string->symbol cc))) res))
                 (apply set (map (λ (cc) (apply set cc)) expected))))
+
+;; scc: http://www.boost.org/doc/libs/1_55_0/libs/graph/example/strong_components.cpp
+(define g/scc (unweighted-graph/adj '((a b f h)
+                                      (b c a)
+                                      (c d b)
+                                      (d e)
+                                      (e d)
+                                      (f g)
+                                      (g f d)
+                                      (h i)
+                                      (i h j e c)
+                                      (j))))
+
+(define sccs (scc g/scc))
+(check-equal? (length sccs) 4)
+(check-equal? (apply set (map (λ (cc) (apply set cc)) sccs))
+              (set (set 'a 'b 'c 'h 'i)
+                   (set 'd 'e)
+                   (set 'f 'g)
+                   (set 'j)))
