@@ -64,9 +64,9 @@
   (define-vertex-property G cur-min-wgt #:init +inf.0) 
   (define-vertex-property G π #:init #f)
 
-  (define Hp (mk-empty-priority (λ (u v) (< (cur-min-wgt u) (cur-min-wgt v)))))
+  (define hp (mk-empty-priority (λ (u v) (< (cur-min-wgt u) (cur-min-wgt v)))))
   
-  (do-bfs G root-v #:init-queue Hp
+  (do-bfs G root-v #:init-queue hp
     #:init (cur-min-wgt-set! root-v 0)
     ;; default bfs skips visit if v is discovered (ie it's been seen before) 
     ;; (ie enqueued or visited) (ie not "white")
@@ -74,8 +74,8 @@
     ;; but we re-enqueue if we discover lower cost information for the vertex
     #:enqueue? (and (not ($visited? $v)) (< (wgt $from $v) (cur-min-wgt $v)))
     #:on-enqueue 
-      (π-set! $v $from)
       (cur-min-wgt-set! $v (wgt $from $v))
+      (π-set! $v $from)
     ;; return list of edges in the mst
     #:return (for/list ([v (in-vertices G)] #:unless (vertex=? G v root-v))
                (list (π v) v))))

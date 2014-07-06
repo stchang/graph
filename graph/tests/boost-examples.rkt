@@ -184,14 +184,17 @@
      ("nycmny1-cr1.bbnplanet.net" "gw-dkuug.oeb.tdk.ne")
      ("nycmny1-cr1.bbnplanet.net" "albnxg1.ip.tele.dk"))))
 
-(let ([res (cc g/net)])
+(let ([res (cc g/net)]
+      [res/bfs (cc/bfs g/net)])
   (define expected
     '((vabi1-gige-1-1.google.com engr-fe21.gw.nd.edu above-bbn-45Mbps.ord.above.net core1-ord1-oc48.ord2.above.net shub-e27.gw.nd.edu chicago1-nbr1.bbnplanet.net)
       (albnxg1.ip.tele.dk teledk.bbnplanet.net nycmny1-cr1.bbnplanet.net gw-dkuug.oeb.tdk.ne)
       (helios.ee.lbl.gov rip.Berkeley.EDU lilac-dmc.Berkeley.EDU ccngw-ner-cc.Berkeley.EDU ccn-nerif35.Berkeley.EDU)
       (ihtfp.mit.edu boston1-br1.bbnplanet.net cambridge1-nbr2.bbnplanet.net radole.lcs.mit.edu)))
   (check-equal? (apply set (map (λ (cc) (apply set (map string->symbol cc))) res))
-                (apply set (map (λ (cc) (apply set cc)) expected))))
+                (apply set (map (λ (cc) (apply set cc)) expected)))
+  (check-equal? (apply set (map (λ (cc) (apply set cc)) expected))
+                (apply set (map (λ (cc) (apply set (map string->symbol cc))) res/bfs))))
 
 ;; scc: http://www.boost.org/doc/libs/1_55_0/libs/graph/example/strong_components.cpp
 (define g/scc (unweighted-graph/adj '((a b f h)

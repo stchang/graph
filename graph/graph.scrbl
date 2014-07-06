@@ -337,22 +337,24 @@ imaginary edges.
           [#:break break? (-> graph? [source any/c] [from any/c] [to any/c] boolean?) (λ _ #f)]
           [#:init init (-> graph? [source any/c] void?) void]
           [#:visit? custom-visit?-fn (-> graph? [source any/c] [from any/c] [to any/c] boolean?) #f]
-          [#:discover discover (-> graph? [source any/c] [from any/c] [to any/c] void?) void]
-          [#:visit visit (-> graph? [source any/c] [v any/c] void?) void]
-          [#:return finish (-> graph? [source any/c] any) void]) any]{
+          [#:discover discover (-> graph? [source any/c] [from any/c] [to any/c] [acc any/c] any/c)
+                      (λ (G s u v acc) acc)]
+          [#:visit visit (-> graph? [source any/c] [v any/c] [acc any/c] any/c)
+                   (λ (G s v acc) acc)]
+          [#:return finish (-> graph? [source any/c] [acc any/c] any) (λ (G s acc) acc)]) any]{
 Generalized breadth-first search. Partially inspired by the C++ Boost Graph 
 Library. See Lee et al. OOPSLA 1999 @cite["GGCL"]. Here is the rough implementation:
 @racketblock[  
-  (init G s)
   (enqueue! Q s)
   (mark-discovered! s)
-  (for ([u (in-queue Q)])
-    (visit G s u)
-    (for ([v (in-neighbors G u)] #:when (visit? G s u v) #:break (break? G s u v))
-      (mark-discovered! v)
-      (discover G s u v)
-      (enqueue! Q v)))
-  (finish G s)]
+  (define new-acc
+    (for/fold ([acc (init G s)]) ([u (in-queue Q)])
+      (for ([inner-acc (visit G s u acc)])
+        ([v (in-neighbors G u)] #:when (visit? G s u v) #:break (break? G s u v))
+        (mark-discovered! v)
+        (begin0 (discover G s u v inner-acc)
+                (enqueue! Q v)))))
+  (finish G s new-acc)]
 Utilizes a queue that implements @racket[gen:queue]. A vertex is 
 @deftech{discovered} when it gets added to the queue. If no 
 @racket[custom-visit?-fn] is provided, then the default behavior is to not 
@@ -360,7 +362,14 @@ enqueue/visit vertices that have already been discovered (ie seen). The function
 checks the @racket[#:break] condition when a vertex is discovered (ie being 
 considered for enqueueing). When a vertex is dequeued,
 then @racket[visit] is called. The result of @racket[bfs/generalized] is the result 
-of @racket[finish].}
+of @racket[finish].
+
+An accumulator is threaded through all the functions and returned at the end.
+The initial accumulator value is the result of applying @racket[init]. By 
+default the accumulator is threaded through @racket[discover], @racket[visit], 
+and is returned via @racket[finish].
+
+Accumulator history: @history[#:added "0.2"]}
 
 @defform/subs[(do-bfs graph source maybe-init-queue maybe-break maybe-init maybe-visit? maybe-discover maybe-visit maybe-return)
               ([graph graph?]
@@ -380,22 +389,24 @@ of @racket[finish].}
                [visit?-exp expr]
                [enq?-exp expr]
                [maybe-discover (code:line)
-                               (code:line #:discover (from to) discover-exp ...)
+                               (code:line #:discover (from to acc) discover-exp ...)
                                (code:line #:discover discover-exp ...)
-                               (code:line #:on-enqueue (from to) enq-exp ...)
+                               (code:line #:on-enqueue (from to acc) enq-exp ...)
                                (code:line #:on-enqueue enq-exp ...)]
                [discover-exp expr]
                [enq-exp expr]
                [maybe-visit (code:line) 
-                            (code:line #:visit (v) visit-exp ...)
+                            (code:line #:visit (v acc) visit-exp ...)
                             (code:line #:visit visit-exp ...)
-                            (code:line #:on-dequeue (v) deq-exp ...)
+                            (code:line #:on-dequeue (v acc) deq-exp ...)
                             (code:line #:on-dequeue deq-exp ...)]
                [visit-exp expr]
                [deq-exp expr]
-               [maybe-return (code:line) (code:line #:return return-exp ...)]
+               [maybe-return (code:line) 
+                             (code:line #:return (acc) return-exp ...)
+                             (code:line #:return return-exp ...)]
                [return-exp expr]
-               [from identifier?] [to identifier?] [v identifier?])]{
+               [from identifier?] [to identifier?] [v identifier?] [acc identifier?])]{
 Cleaner syntax for @racket[bfs/generalized]. Essentially, this form eliminates 
 the need to define separate functions and then pass them into 
 @racket[bfs/generalized]'s keyword arguments. Instead, the bodies of those 
@@ -454,7 +465,8 @@ algorithm makes use of the special identifiers @racket[$v] and @racket[$from].
     #:return (values (d->hash) (π->hash))))
     )
 
-@racket[bfs], @racket[fewest-vertices-path], @racket[mst-prim], and @racket[dijkstra] all use the @racket[do-bfs] form.}
+@racket[bfs], @racket[fewest-vertices-path], @racket[cc/bfs], @racket[mst-prim], 
+and @racket[dijkstra] all use the @racket[do-bfs] form.}
                
 @defproc[(fewest-vertices-path [G graph?] [source any/c] [target any/c]) (or/c list? #f)]{
 Consumes a graph and two vertices, and returns the shortest path (in terms of number of vertices) between the two vertices. The result is a list of vertices, or @racket[#f] if there is no path.}
@@ -645,6 +657,10 @@ Indicates whether a graph is directed and acyclic.}
 @defproc[(tsort [g graph?]) list?]{Returns the vertices in the given graph, topologically sorted. Note that the returned order may not be the only valid ordering.}
 
 @defproc[(cc [g graph?]) (listof list?)]{Calculates the connected components of graph @racket[g]. @racket[g] should be an undirected graph. Returns a list of lists of vertices, where each sublist is a connected component.
+
+@history[#:added "0.2"]}
+
+@defproc[(cc/bfs [g graph?]) (listof list?)]{Calculates the connected components of graph @racket[g] using @racket[do-bfs]. @racket[g] should be an undirected graph. Returns a list of lists of vertices, where each sublist is a connected component.
 
 @history[#:added "0.2"]}
 
