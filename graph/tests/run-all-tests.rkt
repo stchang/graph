@@ -8,3 +8,5 @@
          "graph-fns-maxflow-tests.rkt"
          "boost-examples.rkt"
          "graphviz.rkt")
+
+;(require "timing-tests.rkt") ; run this separately on the cmd line

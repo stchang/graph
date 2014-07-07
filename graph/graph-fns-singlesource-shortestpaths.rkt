@@ -3,8 +3,10 @@
 (require "graph-property.rkt"
          "gen-graph.rkt"
          "graph-fns-basic.rkt" 
+         "graph-weighted.rkt"
          "utils.rkt"
-         (only-in "../queue/priority.rkt" mk-empty-priority))
+         (only-in "../queue/priority.rkt" mk-empty-priority)
+         (only-in "../queue/fifo.rkt" mk-empty-fifo))
 
 (provide (all-defined-out))
 
@@ -13,32 +15,33 @@
 ;; s = source
 ;; no neg weight cycles
 (define (bellman-ford G s)
-  (define (w u v) (edge-weight G u v))
+  (define w (if (weighted-graph? G) (λ (u v) (edge-weight G u v)) (λ _ 1)))
 
   ;; init
   (define-vertex-property G d #:init +inf.0)
   (define-vertex-property G π #:init #f)
   (d-set! s 0)
+  (define es (get-edges G))
   
   ;; compute result
-  (for* ([_ (in-vertices G)]
-         [e (in-edges G)])
+  (for* ([_ (in-vertices G)] [e es])
     (match-define (list u v) e)
     ;; relax
     (when (> (d v) (+ (d u) (w u v)))
       (d-set! v (+ (d u) (w u v)))
       (π-set! v u)))
   
-  ;; check for invalid graph (ie neg weight cycle)
-  (for ([e (in-edges G)])
-    (match-define (list u v) e)
-    (when (> (d v) (+ (d u) (w u v)))
-      (error 'bellman-ford "negative weight cycle")))
+  (when (weighted-graph? G)
+    ;; check for invalid graph (ie neg weight cycle)
+    (for ([e es])
+      (match-define (list u v) e)
+      (when (> (d v) (+ (d u) (w u v)))
+        (error 'bellman-ford "negative weight cycle"))))
   
   (values (d->hash) (π->hash)))
 
 (define (dag-shortest-paths G s)
-  (define (w u v) (edge-weight G u v))
+  (define w (if (weighted-graph? G) (λ (u v) (edge-weight G u v)) (λ _ 1)))
   (define tsorted (tsort G))
   
   ;; init
@@ -69,8 +72,12 @@
   ;; (d v) represents current known shortest path from s to v
   (define-vertex-property G d #:init +inf.0)
   (define-vertex-property G π #:init #f)
-  (define (w u v) (edge-weight G u v))
+  (define w (if (weighted-graph? G) (λ (u v) (edge-weight G u v)) (λ _ 1)))
 
+  (define Q (if (weighted-graph? G)
+                (mk-empty-priority (λ (u v) (< (d u) (d v))))
+                (mk-empty-fifo)))
+  
   (do-bfs G s #:init-queue (mk-empty-priority (λ (u v) (< (d u) (d v))))
     #:init (d-set! s 0)
     #:enqueue? (> (d $v) (+ (d $from) (w $from $v)))

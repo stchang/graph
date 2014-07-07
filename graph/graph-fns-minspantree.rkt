@@ -4,7 +4,9 @@
          "gen-graph.rkt"
          "graph-fns-basic.rkt"
          "utils.rkt"
-         (only-in "../queue/priority.rkt" mk-empty-priority))
+         "graph-weighted.rkt"
+         (only-in "../queue/priority.rkt" mk-empty-priority)
+         (only-in "../queue/fifo.rkt" mk-empty-fifo))
 (require data/union-find)
 
 (provide (all-defined-out))
@@ -15,8 +17,9 @@
 ;; uses data/union-find
 
 (define (mst-kruskal G)
-  (define (wgt e) (apply edge-weight G e))
-  (define sorted-edges (sort (get-edges G) < #:key wgt))
+  (define wgt (if (weighted-graph? G) (λ (e) (apply edge-weight G e)) (λ _ 1)))
+  (define sorted-edges 
+    (if (weighted-graph? G) (sort (get-edges G) < #:key wgt) (get-edges G)))
   
   ;; map vertex to it's representative set
   ;;  (different vertices may map to the same rep set)
@@ -59,12 +62,15 @@
 ;; - thus re-enqueueing a vertex that's already in the heap effectively
 ;;   "re-heapifies" the heap with the new cost information
 (define (mst-prim G root-v)
-  (define (wgt u v) (edge-weight G u v))
+  (define wgt (if (weighted-graph? G) (λ (u v) (edge-weight G u v)) (λ _ 1)))
   ; (cur-min-wgt v) is current known min wgt edge connecting v to the mst
   (define-vertex-property G cur-min-wgt #:init +inf.0) 
   (define-vertex-property G π #:init #f)
 
-  (define hp (mk-empty-priority (λ (u v) (< (cur-min-wgt u) (cur-min-wgt v)))))
+  (define hp 
+    (if (weighted-graph? G)
+        (mk-empty-priority (λ (u v) (< (cur-min-wgt u) (cur-min-wgt v))))
+        (mk-empty-fifo)))
   
   (do-bfs G root-v #:init-queue hp
     #:init (cur-min-wgt-set! root-v 0)
