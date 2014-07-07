@@ -243,15 +243,14 @@
                            #:process-unvisited [process-unvisited (λ (G u v acc) acc)]
                            #:combine [combine (λ (x acc) x)]
                            #:return [finish (λ (G acc) acc)])
-  (define visited (set))
-  (define (mark-visited! v) (set! visited (set-add visited v)))
-  (define visit? (or custom-visit?-fn (λ (G u v) (not (set-member? visited v)))))
-  
+  (define-vertex-property G visited?)
+  (define (mark-visited! v) (visited?-set! v #t))
+  (define visit? (or custom-visit?-fn (λ (G u v) (not (visited?-defined? v)))))
   (broke? #f) ; parameter: indicates if #:break condition was triggered
-  
+
   ;; inner loop: keep following (unvisited) links
   (define (do-visit parent u acc)
-    (mark-visited! u)
+    (unless custom-visit?-fn (mark-visited! u))
     (define new-acc
       (for/fold ([acc (prologue G parent u acc)])
                 ([v (in-neighbors G u)] 
@@ -379,7 +378,8 @@
   
 ;; tarjan algorithm for strongly connected components
 ;; G must be directed
-(define (scc G)
+(define (scc G [=fn #f])
+  (define eq (or =fn (λ (u v) (vertex=? G u v))))
   (define i 0)
   (define-vertex-properties G index lowlink)
 
@@ -389,7 +389,7 @@
   (define SCC null)
   (define (build-SCC? v) (= (lowlink v) (index v)))
   (define (build-SCC v)
-    (define-values (new-scc S-rst) (splitf-at S (λ (w) (not (vertex=? G w v)))))
+    (define-values (new-scc S-rst) (splitf-at S (λ (w) (not (eq w v)))))
     (set! SCC (cons (cons v new-scc) SCC))
     (set! S (cdr S-rst)))
 
