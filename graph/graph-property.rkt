@@ -1,6 +1,6 @@
-#lang racket
+#lang racket/base
 
-(require (for-syntax racket/syntax syntax/parse 
+(require (for-syntax racket/base racket/syntax syntax/parse 
                      syntax/parse/experimental/template)
          "gen-graph.rkt" "utils.rkt"
          racket/stxparam)
