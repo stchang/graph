@@ -92,9 +92,10 @@
 ;; use dont use generator for edges: ~9s
 
 ;; expected: 371762 sccs
-(define SCC-TIME-LIMIT 20000) ; see timing notes above
+(define SCC-TIME-LIMIT 10000) ; see timing notes above
 (let-values ([(res cpu real gc) (time-apply scc (list g/scc unsafe-fx=))])
   (check-equal? 371762 (length (car res)))
-;  (displayln real)
+  (when (> real SCC-TIME-LIMIT) 
+    (printf "scc time: ~a sec (LIMIT = ~a)\n" real SCC-TIME-LIMIT))
   (check-true (< real SCC-TIME-LIMIT)))
 
