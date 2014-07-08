@@ -1,4 +1,4 @@
-#lang racket
+#lang racket/base
 
 (require "graph-fns-basic-tests.rkt"
          "graph-fns-minspantree-tests.rkt"
@@ -9,4 +9,6 @@
          "boost-examples.rkt"
          "graphviz.rkt")
 
-;(require "timing-tests.rkt") ; run this separately on the cmd line
+; run these separately on the cmd line
+;(require "timing-tests.rkt") 
+;(require "timing-test-scc.rkt")

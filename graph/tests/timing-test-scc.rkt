@@ -1,14 +1,16 @@
 #lang racket
 
+(require rackunit racket/unsafe/ops file/gunzip)
+
 (require "../graph-weighted.rkt"
          "../graph-fns-basic.rkt"
          "../gen-graph.rkt"
-         "../graph-property.rkt"
          "test-utils.rkt")
 
-(require rackunit)
+;; times determined from running cmd line racket, on 2.40Ghz quad-core cpu
 
-;; limits determined running cmd line racket, on 2.40Ghz quad-core
+;; unzip file
+(when (not (file-exists? "SCC.txt")) (gunzip "SCC.txt.gz"))
 
 ;; scc timing test ------------------------------------------------------------
 ;; large (875714 vertices) directed graph (unweighted) to check timing
@@ -21,132 +23,30 @@
 ;; about ~40sec to create the graph
 ;; no difference when using with-input-from-file and open-input-file
 ;; using in-port: ~28sec
+;; unsafe-struct-ref: ~28sec
 (with-input-from-file "SCC.txt"
-  (λ () (for ([u (in-port)])  (add-directed-edge! g/scc u (read)))))
+  (λ ()
+    (for ([u (in-port)]) (add-directed-edge! g/scc u (read)))))
 ;    (for ([e (in-lines)])
 ;      (apply add-directed-edge! g/scc (map string->number (string-split e))))))
 
-(displayln "graph created")
+;(displayln "graph created")
 
 (check-equal? (length (get-vertices g/scc)) 875714)
 
-;(time (length (get-edges g/scc))) ; ~35sec
-;(check-equal? (length (get-edges g/scc)) 5105043)
+;; old get-edges (using generator): ~35sec
+;; dont use generator: ~3sec
+;(time (length (get-edges g/scc)))
+(check-equal? (length (get-edges g/scc)) 5105043)
 
-(require profile)
 
-;; profiling just dfs takes ~111sec (~2min)
-;(time (profile-thunk (λ () (begin (dfs g/scc) 1))))
-
-;; profiling just the for loop and passthrough fns: ~54sec (~1min)
-;; remove break? and process-unvisited? checks: ~47sec
-;; dont profile: ~6sec
-;; add broke? parameter back: ~8sec
-;; remove combine and inner-init: ~8sec
-;; remove acc: ~8sec
-;; hash table instead of set for visited?: ~5sec
-;; remove pro/epilogue: ~5sec
-;; add scc pro/epilogue: ~7sec
-;; add S: ~7sec
-;; add build-scc?: ~7sec
-;; add build-scc: ~8sec
-;; add process-unvisited in inner: ~12sec
-;; get-vertices in outer loop: ~12sec
-;; move fast-scc to fn: ~10sec
-;; (was getting wrong answer: #components = #verts ~800k)
-;; reimplement directly from wikipedia article: stuck
-;; reimplement from python code: stuck
-;;   http://www.logarithmic.net/pfh-files/blog/01208083168/tarjan.py
-#;(define (fast-scc G)
-  (define init void)
-
-  (define i 0)
-  (define S null)   
-  (define SCC null)
-  (define (S-push x) (set! S (cons x S)))
-  (define-vertex-properties G visited? index lowlink)
-  (define (build-SCC? v) (= (lowlink v) (index v)))
-  (define (build-SCC v)
-    (define-values (new-scc S-rst) (splitf-at S (λ (w) (not (vertex=? G w v)))))
-    (set! SCC (cons (cons v new-scc) SCC))
-    (set! S (cdr S-rst)))
-  
-  (define-syntax-rule (add1! x) (set! x (add1 x)))
-  (define prologue (λ (G u v) (S-push v) (index-set! v i) (lowlink-set! v i) (add1! i) ))
-  (define epilogue (λ (G from v) 
-                     (when (build-SCC? v) (build-SCC v))
-                     (when from (lowlink-set! from (min (lowlink from) (lowlink v))))))
-  (define finish (λ _ SCC))
-  
-  (define (mark-visited! v) (visited?-set! v #t))
-  (define (visit? G u v) (not (visited?-defined? v)))
-  ;(define visited (set))
-  ;(define (mark-visited! v) (set! visited (set-add visited v)))
-  ;(define (visit? G u v) (not (set-member? visited v)))
-  
-  
-  (define broke? (make-parameter #f))
-  (broke? #f)
-  (init G)
-  ;; inner loop: keep following (unvisited) links
-  (define (do-visit parent u)
-    (mark-visited! u)
-    (prologue G parent u)
-    (for ([v (in-neighbors G u)] #:break (broke?))
-      (cond [(visit? G u v) (do-visit u v)]
-            [(member u S)
-             (when parent (lowlink-set! parent (min (lowlink parent) (lowlink u))))]
-            ))
-    (epilogue G parent u))
-  
-  ;; outer loop: picks a new start node when previous search reaches dead end
-  (for ([u (in-vertices G)] #:break (broke?))
-    (cond [(visit? G #f u) (do-visit #f u)]
-          #;[(member u S)
-             (lowlink-set! #f (min (lowlink #f) (index u)))]
-          ))
-  
-  (finish G))
-
-#;(define (fast-scc G)
-  (define i 0)
-  (define-vertex-properties G visited? index lowlink)
-  (define S null)
-;  (define (S-push x) (set! S (cons x S)))
-  (define SCC null)
-;  (define (build-SCC? v) (= (lowlink v) (index v)))
-;  (define (build-SCC v)
-;    (define-values (new-scc S-rst) (splitf-at S (λ (w) (not (vertex=? G w v)))))
-;    (set! SCC (cons (cons v new-scc) SCC))
-;    (set! S (cdr S-rst)))
-  (define (strong-connect v)
-    (index-set! v i)
-    (lowlink-set! v i)
-    (set! i (add1 i))
-    (set! S (cons v S)) ; S.push
-    
-    (for ([w (in-neighbors G v)])
-      (cond [(not (index-defined? w))
-             (strong-connect w)
-             (lowlink-set! v (min (lowlink v) (lowlink w)))]
-            [(member w S)
-             (lowlink-set! v (min (lowlink v) (lowlink w)))]))
-    
-    (when (= (lowlink v) (index v)) ; build SCC
-      (define-values (new-scc S-rst) (splitf-at S (λ (w) (not (vertex=? G w v)))))
-      (set! SCC (cons (cons v new-scc) SCC))
-      (set! S (cdr S-rst))))
-      
-  (for ([v (in-vertices G)]) (when (not (index-defined? v)) (strong-connect v)))
-  SCC)
-
-(require racket/unsafe/ops)
+;; TIMING NOTES (wikipedia scc fn --- dont use do-dfs)
 ;; use in-S? instead of member: from stuck to ~10s
 ;; use = instead of vertex=?: ~10s
 ;; unsafe list ops: ~<10s
 ;; use < instead of min: ~<10s (less than previous)
 ;; unsafe fx ops: ~9s
-(define (fast-scc G) ; python
+#;(define (fast-scc G)
   (define i 0)
   (define S null)
   (define SCC null)
@@ -175,6 +75,26 @@
   (for ([v (in-vertices G)]) (when (not (lowlink-defined? v)) (strong-connect v)))
   SCC)
 
-;; 371762
-(check-equal? 371762 (length (time (fast-scc g/scc))))
+;; TIMING NOTES (scc fn -- using do-dfs):
+;; regular scc: stuck
+;; regular scc with in-S? instead of member: ~12sec
+;; = instead of vertex=?: ~12sec
+;; syntax-rules: ~12sec
+;; unsafe list ops: ~12sec
+;; unsafe arith ops: ~12sec
+;; < instead of min (saves a hash-set): ~11.5sec
+;; unsafe <: ~11.3sec
+;; use acc: ~11.3sec
+;; cache llv in epilogue (saves a lookup: ~11.2sec
+;; dont use broke? parameter: ~10.2sec
+;; duplicate broken? flag: ~10.3sec
+;; unsafe-struct-ref: ~10.3sec
+;; use dont use generator for edges: ~9s
+
+;; expected: 371762 sccs
+(define SCC-TIME-LIMIT 20000) ; see timing notes above
+(let-values ([(res cpu real gc) (time-apply scc (list g/scc unsafe-fx=))])
+  (check-equal? 371762 (length (car res)))
+;  (displayln real)
+  (check-true (< real SCC-TIME-LIMIT)))
 
