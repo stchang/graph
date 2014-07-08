@@ -15,10 +15,11 @@
 ;; large (200 vertices) graph (unweighted) to check timing
 ;; from Coursera Stanford Algorithms course
 (define g/cours
-  (mk-unweighted-graph/adj
-   (for/list ([vs (string-split (with-input-from-file "kargerMinCut.txt" port->string) "\r\n")])
-     (map string->number (string-split vs "\t")))))
-
+  (with-input-from-file "kargerMinCut.txt"
+    (lambda ()
+      (mk-unweighted-graph/adj
+        (for/list ([vs (in-lines)])
+          (map string->number (string-split vs "\t")))))))
 
 ;; speed up these tests by not testing every v
 
