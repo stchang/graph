@@ -237,6 +237,7 @@ imaginary vertices.
              ]}
     @item{@racket[prop-name]@racketidfont{->hash}: A no-argument function that returns a @tech[#:doc '(lib "scribblings/reference/reference.scrbl")]{hash table} representation of the vertex-value mappings.}
     @item{@racket[prop-name]@racketidfont{-set!}: When given a vertex and a value, associates the value with the given vertex.}
+    @item{@racket[prop-name]@racketidfont{-defined?}: Indicates whether the given vertex has an associated value.}
   ]
   
   If an @racket[#:init] argument is supplied, each vertex in the graph is 
