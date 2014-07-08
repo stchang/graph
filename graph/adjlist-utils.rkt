@@ -1,4 +1,5 @@
-#lang racket
+#lang racket/base
+(require racket/set)
 (provide (all-defined-out))
 
 ;; An AdjacencyList is a [MutableHashOf Vertex -> [Setof Vertex]]

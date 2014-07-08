@@ -1,4 +1,6 @@
-#lang racket
+#lang racket/base
+
+(require data/union-find racket/unsafe/ops)
 
 (require "graph-property.rkt"
          "gen-graph.rkt"
@@ -7,9 +9,11 @@
          "graph-weighted.rkt"
          (only-in "../queue/priority.rkt" mk-empty-priority)
          (only-in "../queue/fifo.rkt" mk-empty-fifo))
-(require data/union-find)
 
-(provide (all-defined-out))
+(provide mst-kruskal mst-prim)
+
+(define-syntax-rule (first x) (unsafe-car x))
+(define-syntax-rule (second x) (unsafe-car (unsafe-cdr x)))
 
 ;; minimum spanning tree fns
 

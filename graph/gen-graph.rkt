@@ -1,4 +1,4 @@
-#lang racket
+#lang racket/base
 (require racket/generic)
 (provide (all-defined-out)) ; not enough to only provide gen:graph
 ;; generic graph interface

@@ -1,14 +1,18 @@
-#lang racket
+#lang racket/base
+
+(require racket/port racket/format racket/set racket/unsafe/ops)
+(require "gen-graph.rkt" "graph-weighted.rkt")
 
 (provide graphviz)
 
-(require "gen-graph.rkt" "graph-weighted.rkt")
+(define-syntax-rule (first x) (unsafe-car x))
+(define-syntax-rule (second x) (unsafe-car (unsafe-cdr x)))
 
 ;; Return a graphviz definition for a graph
 ;; Pass a hash of vertex -> exact-nonnegative-integer? as coloring to color the nodes
 (define (graphviz g #:colors [colors #f])
   (with-output-to-string
-   (thunk
+   (λ ()
     (define weighted? (weighted-graph? g))
     (printf "digraph G {\n")
     ; Add vertices, color them using evenly spaced HSV colors if given colors

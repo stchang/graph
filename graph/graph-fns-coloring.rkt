@@ -1,4 +1,6 @@
-#lang racket
+#lang racket/base
+
+(require racket/set racket/function racket/unsafe/ops)
 
 (require "graph-property.rkt"
          "utils.rkt"
@@ -24,11 +26,11 @@
             [(set-member? ; calc used colors
               (for/set ([v (in-neighbors G u)]) (color v #:default num-colors))  
               try-col)
-             (color-select-loop (add1 try-col))]
+             (color-select-loop (unsafe-add1 try-col))]
             [else
              (color-set! u try-col) ; try this color and try to color other vs
              (or (loop (cdr vs))    ; if it works, great
-                 (color-select-loop (add1 try-col)))])))]))) ; else, backtrack
+                 (color-select-loop (unsafe-add1 try-col)))])))]))) ; else, backtrack
 
 
 ;; Assigns to vertex v the smallest color not used by neighbors,
@@ -55,7 +57,7 @@
                  #:final (not (set-member? used-colors smallest-color)))
         smallest-color))
     (color-set! u smallest-color)
-    (when (= smallest-color num-colors) (add1! num-colors)))
+    (when (= smallest-color num-colors) (unsafe-add1! num-colors)))
   (values num-colors (color->hash)))
 
 ;; Color a graph greedily, using the Brelaz vertex ordering heuristic
@@ -80,7 +82,7 @@
   ; Each time, color the node with the highest current brélaz-number (see above)
   (for ([i (in-range graph-size)])
     (define next-node 
-      (first
+      (unsafe-car
        (sort
         (filter (negate colored?) (get-vertices g))
         (λ (n1 n2) 
@@ -98,7 +100,7 @@
 
 (define (valid-coloring? G coloring)
   (define (color v) (hash-ref coloring v))
-  (not (for/or ([e (in-edges G)]) (= (color (first e)) (color (second e))))))
+  (not (for/or ([e (in-edges G)]) (= (color (unsafe-car e)) (color (unsafe-car (unsafe-cdr e)))))))
 
 (require (prefix-in r: data/heap))
 ;; returns the vertices of the graph in "smallest-last" order

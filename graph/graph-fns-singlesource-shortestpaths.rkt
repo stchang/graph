@@ -1,4 +1,6 @@
-#lang racket
+#lang racket/base
+
+(require racket/match)
 
 (require "graph-property.rkt"
          "gen-graph.rkt"

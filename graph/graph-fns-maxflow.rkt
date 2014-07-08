@@ -1,12 +1,17 @@
-#lang racket
+#lang racket/base
+
+(require racket/unsafe/ops racket/bool (except-in racket/list first second))
 
 (require "gen-graph.rkt"
          "utils.rkt"
          "graph-property.rkt"
          "graph-fns-basic.rkt")
 
-(provide (all-defined-out))
+(provide maxflow bipartite? maximum-bipartite-matching)
          
+(define-syntax-rule (first x) (unsafe-car x))
+(define-syntax-rule (second x) (unsafe-car (unsafe-cdr x)))
+
 ;; only works for directed graphs, otherwise edges get counted twice
 ;; s is source, t is sink
 ;; this is the edmonds-karp algorithm O(VE^2)
