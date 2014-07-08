@@ -1,4 +1,4 @@
-#lang racket
+#lang racket/base
 (require "gen-queue.rkt")
 (require (prefix-in r: data/heap))
 (provide (all-defined-out))
@@ -22,7 +22,7 @@
    (define (empty? pq) (zero? (r:heap-count (priority-elements pq))))
    (define (in-queue pq) ; consumes the pq
      (make-do-sequence
-      (thunk
+      (λ ()
        (values
         dequeue! ; pos->element
         values   ; next-pos (dequeue! already removed element, so this is just id)

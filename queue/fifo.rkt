@@ -1,4 +1,4 @@
-#lang racket
+#lang racket/base
 (require "gen-queue.rkt")
 (require (prefix-in r: data/queue))
 (provide (all-defined-out))
