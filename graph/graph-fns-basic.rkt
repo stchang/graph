@@ -1,4 +1,4 @@
-#lang racket
+#lang racket/base
 
 (require "graph-property.rkt"
          "utils.rkt"
@@ -7,7 +7,7 @@
          (only-in "../queue/fifo.rkt" mk-empty-fifo))
 
 (require (for-syntax syntax/parse syntax/parse/experimental/template)
-         racket/stxparam)
+         (only-in racket/list splitf-at) racket/stxparam  racket/unsafe/ops)
 
 (provide (all-defined-out))
 
@@ -24,7 +24,7 @@
 
   (do-bfs G s 
     #:init (d-set! s 0) (π-set! s #f)
-    #:discover (d-set! $v (add1 (d $from))) (π-set! $v $from)
+    #:discover (d-set! $v (unsafe-add1 (d $from))) (π-set! $v $from)
     #:return (values (d->hash) (π->hash))))
 
 ;; default Q is from data/queue
@@ -49,14 +49,14 @@
                              #:visit [visit (λ (G s u acc) acc)]
                              #:return [finish (λ (G s acc) acc)])
   (enqueue! Q s) ; source vertex s is always visited
-  (broke? #f)
-
+  (define broken? #f)
+  
   (define new-acc 
-    (for/fold ([acc (init G s)]) ([u (in-queue Q)] #:break (broke?))
+    (for/fold ([acc (init G s)]) ([u (in-queue Q)] #:break broken?)
       (for/fold ([inner-acc (visit G s u acc)])
         ([v (in-neighbors G u)] 
          #:when (enqueue? G s u v) 
-         #:break (and (break? G s u v) (broke? #t)))
+         #:break (or broken? (and (break? G s u v) (set! broken? #t))))
         (begin0 (on-enqueue G s u v inner-acc)
                 (enqueue! Q v)))))
   
@@ -98,26 +98,29 @@
            (~or (~optional (~seq #:return (retacc:id) ret:expr retrst:expr ...))
                 (~optional (~seq #:return return:expr ...)))) ...)
      (template
-      (let ()
-        (define-vertex-property G discovered? #:init #f)
+      (let ([broken? #f])
+        (define-vertex-properties G discovered? visited?)
         (define (mark-discovered! u) (discovered?-set! u #t))
-        (mark-discovered! s)
-        (define-vertex-property G visited? #:init #f)
         (define (mark-visited! u) (visited?-set! u #t))
+        (mark-discovered! s)
         (syntax-parameterize 
-         ([$discovered? (syntax-rules () [(_ u) (discovered? u)])]
-          [$seen? (syntax-rules () [(_ u) (discovered? u)])]
-          [$visited? (syntax-rules () [(_ u) (visited? u)])])
+         ([$discovered? (syntax-rules () [(_ u) (discovered?-defined? u)])]
+          [$seen? (syntax-rules () [(_ u) (discovered?-defined? u)])]
+          [$visited? (syntax-rules () [(_ u) (visited?-defined? u)])])
         (bfs/generalized G s 
           (?? (?@ #:init-queue Q))
-          (?? (?@ #:break (λ (G s b?-from b?-to) b? b?rst ...)))
+          (?? (?@ #:break (λ (G s b?-from b?-to) 
+                            (or broken? 
+                                (let ([res (let () b? b?rst ...)])
+                                  (and res (set! broken? #t)))))))
           (?? (?@ #:break
                   (λ (G s from to)
                     (syntax-parameterize ([$from (syntax-id-rules () [_ from])]
                                           [$to (syntax-id-rules () [_ to])]
                                           [$v (syntax-id-rules () [_ to])])
-                      (let ([res (let () b?exp ...)]) ; check proc? for backwards compat
-                        (if (procedure? res) (res G s from to) res))))))
+                      (or broken?
+                          (let ([res (let () b?exp ...)])
+                            (and res (set! broken? #t))))))))
           (?? (?@ #:init (λ _ init ...)))
           ;; #:visit? possible clauses
           (??
@@ -141,7 +144,7 @@
                                           [$v (syntax-id-rules () [_ to])])
                                          e?exp ...)))
               ;; else
-              (?@ #:visit? (λ (G s from to) (not (discovered? to))))))))
+              (?@ #:visit? (λ (G s from to) (not (discovered?-defined? to))))))))
           ;; #:discover possible clauses
           ;; #:discover
           (?? (?@ #:discover (λ (G s disc-from disc-to disc-acc) 
@@ -188,7 +191,7 @@
           (?? (?@ #:return (λ (G s retacc) ret retrst ...)))
           (?? (?@ #:return 
                    (λ _
-                     (syntax-parameterize ([$broke? (syntax-id-rules () [_ (broke?)])]
+                     (syntax-parameterize ([$broke? (syntax-id-rules () [_ broken?])]
                                            [$acc (syntax-id-rules () [_ acc])])
                                           return ...))))))))]))
              
@@ -211,8 +214,8 @@
       (and $broke?
            (let loop ([path null] [v targ]) ; reverse the found path
              (if (vertex=? G v src) 
-                 (cons src path) 
-                 (loop (cons v path) (π v))))))]))
+                 (unsafe-cons-list src path) 
+                 (loop (unsafe-cons-list v path) (π v))))))]))
 
            
 ;; dfs ------------------------------------------------------------------------
@@ -225,10 +228,10 @@
    #:init 0 ; time
    #:prologue (from v time) 
     (d-set! v time) (π-set! v from) 
-    (add1 time)
+    (unsafe-add1 time)
    #:epilogue (from v time)
     (f-set! v time)
-    (add1 time)
+    (unsafe-add1 time)
    #:return (values (d->hash) (π->hash) (f->hash))))
 
 ;; TODO: don't export this?
@@ -246,15 +249,15 @@
   (define-vertex-property G visited?)
   (define (mark-visited! v) (visited?-set! v #t))
   (define visit? (or custom-visit?-fn (λ (G u v) (not (visited?-defined? v)))))
-  (broke? #f) ; parameter: indicates if #:break condition was triggered
-
+  (define broken? #f) ; redundant with do-dfs but no speed penalty
+  
   ;; inner loop: keep following (unvisited) links
   (define (do-visit parent u acc)
     (unless custom-visit?-fn (mark-visited! u))
     (define new-acc
       (for/fold ([acc (prologue G parent u acc)])
                 ([v (in-neighbors G u)] 
-                 #:break (or (broke?) (and (break? G u v) (broke? #t))))
+                 #:break (or broken? (and (break? G u v) (set! broken? #t))))
         (cond [(visit? G u v) (do-visit u v acc)]
               [(process-unvisited? G u v) (process-unvisited G u v acc)]
               [else acc])))
@@ -264,7 +267,7 @@
   (define new-acc 
     (for/fold ([acc (init G)]) 
               ([u (order (get-vertices G))] 
-               #:break (or (broke?) (and (break? G #f u) (broke? #t))))
+               #:break (or broken? (and (break? G #f u) (set! broken? #t))))
       (cond [(visit? G #f u) (combine (do-visit #f u (inner-init acc)) acc)]
             [(process-unvisited? G #f u) (process-unvisited G #f u acc)]
             [else acc])))
@@ -306,15 +309,21 @@
        (~or (~optional (~seq #:return (ret-acc:id) ret:expr retrst:expr ...))
             (~optional (~seq #:return retexp:expr ...)))) ...)
      (template
+      (let ([broken? #f])
       (dfs/generalized G 
        (?? (?@ #:order order))
-       (?? (?@ #:break (λ (G b?-from b?-to) b? b?rst ...)))
+       (?? (?@ #:break (λ (G b?-from b?-to) 
+                         (or broken?
+                             (let ([res (let () b? b?rst ...)])
+                               (and res (set! broken? #t)))))))
        (?? (?@ #:break 
                (λ (G from to)
                  (syntax-parameterize ([$from (syntax-id-rules () [_ from])]
                                        [$to (syntax-id-rules () [_ to])]
                                        [$v (syntax-id-rules () [_ to])])
-                                      b?exp ...))))
+                                      (or broken?
+                                          (let ([res (let () b?exp ...)])
+                                            (and res (set! broken? #t))))))))
        (?? (?@ #:init (λ _ init ...)))
        (?? (?@ #:inner-init (λ _ iinit ...)))
        (?? (?@ #:visit? (λ (G v?-from v?-to) visit? v?rst ...)))
@@ -359,9 +368,9 @@
         (?? (?@ #:return (λ (G ret-acc) ret retrst ...)))
         (?? (?@ #:return 
                 (λ (G acc) 
-                  (syntax-parameterize ([$broke? (syntax-id-rules () [_ (broke?)])]
+                  (syntax-parameterize ([$broke? (syntax-id-rules () [_ broken?])]
                                         [$acc (syntax-id-rules () [_ acc])])
-                                       retexp ...))))))]))
+                                       retexp ...)))))))]))
 
 ;; dfs-based fns --------------------------------------------------------------
 
@@ -374,33 +383,41 @@
    #:epilogue (color-set! $v BLACK)
    #:return (not $broke?))) ; didnt break means no loop = acyclic
 
-(define (tsort G) (do-dfs G #:init null #:epilogue (cons $v $acc)))
+(define (tsort G) (do-dfs G #:init null #:epilogue (unsafe-cons-list $v $acc)))
   
 ;; tarjan algorithm for strongly connected components
 ;; G must be directed
 (define (scc G [=fn #f])
   (define eq (or =fn (λ (u v) (vertex=? G u v))))
   (define i 0)
-  (define-vertex-properties G index lowlink)
+  (define-vertex-properties G index lowlink in-S?)
 
-  (define S null)   
-  (define (S-push x) (set! S (cons x S)))
+  (define S null) ; intermediate stack
+  (define-syntax-rule (S-push x) 
+    (begin (in-S?-set! x #t) (set! S (unsafe-cons-list x S))))
   
   (define SCC null)
-  (define (build-SCC? v) (= (lowlink v) (index v)))
-  (define (build-SCC v)
-    (define-values (new-scc S-rst) (splitf-at S (λ (w) (not (eq w v)))))
-    (set! SCC (cons (cons v new-scc) SCC))
-    (set! S (cdr S-rst)))
+  (define-syntax-rule (build-SCC? v) (unsafe-fx= (lowlink v) (index v)))
+  (define-syntax-rule (build-SCC v)
+    (let-values ([(new-scc S-rst)
+                  (splitf-at S (λ (w) (in-S?-set! w #f) (not (eq w v))))])
+      (set! S (unsafe-cdr S-rst)) ; scc always has >=1 element (ie v)
+      (set! SCC (unsafe-cons-list (unsafe-cons-list v new-scc) SCC))))
 
   (do-dfs G 
-   #:prologue (S-push $v) (index-set! $v i) (lowlink-set! $v i) (add1! i) 
+   #:visit? (not (lowlink-defined? $v))
+   #:prologue (S-push $v) (index-set! $v i) (lowlink-set! $v i) (unsafe-add1! i)
    #:epilogue 
-    (when (build-SCC? $v) (build-SCC $v))
-    (when $from (lowlink-set! $from (min (lowlink $from) (lowlink $v))))
-   #:process-unvisited? (member $v S)
-   #:process-unvisited (lowlink-set! $from (min (lowlink $from) (index $v)))
-   #:return SCC))
+    (define llv (lowlink $v))
+    (when (unsafe-fx= llv (index $v)) (build-SCC $v))
+    (when $from 
+      (define llfrom (lowlink $from))
+      (when (unsafe-fx< llv llfrom) (lowlink-set! $from llv)))
+   #:process-unvisited? (and $from (in-S? $v))
+   #:process-unvisited  
+    (let ([llfrom (lowlink $from)] [iv (index $v)])
+      (when (unsafe-fx< iv llfrom) (lowlink-set! $from iv)))
+    #:return SCC))
 
 ;; connected components
 ;; G is undirected
@@ -408,11 +425,12 @@
 (define (cc G)
   (do-dfs G #:init null ; final result is list of lists
             #:inner-init null ; each cc is list of vertices
-            #:prologue (cons $v $acc)
-            #:combine cons))
+            #:prologue (unsafe-cons-list $v $acc)
+            #:combine unsafe-cons-list))
 
 ;; compute cc using bfs
+;; TODO: speed up by not using member
 (define (cc/bfs G)
   (define (v-in-ccs? ccs v) (for/or ([cc ccs]) (member v cc)))
   (for/fold ([ccs null]) ([v (in-vertices G)] #:unless (v-in-ccs? ccs v))
-    (cons (do-bfs G v #:init null #:visit (cons $v $acc)) ccs)))
+    (cons (do-bfs G v #:init null #:visit (unsafe-cons-list $v $acc)) ccs)))
