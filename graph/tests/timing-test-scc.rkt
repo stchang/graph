@@ -15,6 +15,7 @@
 ;; scc timing test ------------------------------------------------------------
 ;; large (875714 vertices) directed graph (unweighted) to check timing
 ;; from Coursera Stanford Algorithms course
+;; see also https://class.coursera.org/algo-005/forum/thread?thread_id=623
 
 (define g/scc (mk-directed-graph null))
 
