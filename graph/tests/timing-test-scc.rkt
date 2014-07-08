@@ -140,34 +140,41 @@
   (for ([v (in-vertices G)]) (when (not (index-defined? v)) (strong-connect v)))
   SCC)
 
+(require racket/unsafe/ops)
+;; use in-S? instead of member: from stuck to ~10s
+;; use = instead of vertex=?: ~10s
+;; unsafe list ops: ~<10s
+;; use < instead of min: ~<10s (less than previous)
+;; unsafe fx ops: ~9s
 (define (fast-scc G) ; python
   (define i 0)
   (define S null)
-  (define SCC 0)
-  (define-vertex-properties G visited? lowlink index)
+  (define SCC null)
+  (define-vertex-properties G visited? lowlink index in-S?)
 
   (define (strong-connect v)
     (index-set! v i)
     (lowlink-set! v i)
-    (set! i (add1 i))
-    (set! S (cons v S))
-    
+    (set! i (unsafe-fx+ i 1))
+    (set! S (unsafe-cons-list v S))
+    (in-S?-set! v #t)
+
     (for ([w (in-neighbors G v)])
-      (displayln (lowlink-defined? w))
       (cond [(not (lowlink-defined? w))
              (strong-connect w)
-             (lowlink-set! v (min (lowlink v) (lowlink w)))]
-            [(member w S)
-             (lowlink-set! v (min (lowlink v) (index w)))]))
+             (let ([llv (lowlink v)][llw (lowlink w)]) (when (unsafe-fx< llw llv) (lowlink-set! v llw)))]
+            [(in-S? w #:default #f) ;(member w S)
+             (let ([llv (lowlink v)] [iw (index w)]) (when (unsafe-fx< iw llv) (lowlink-set! v iw)))
+             #;(lowlink-set! v (min (lowlink v) (index w)))]))
     
     (when (= (lowlink v) (index v)) ; build SCC
-      (define-values (new-scc S-rst) (splitf-at S (λ (w) (not (vertex=? G w v)))))
-;      (set! SCC (cons (cons v new-scc) SCC))
-      (set! SCC (add1 SCC))
-      (set! S (cdr S-rst))))
+      (define-values (new-scc S-rst) (splitf-at S (λ (w) (in-S?-set! w #f) (not (unsafe-fx= w v)))))
+      (set! SCC (unsafe-cons-list (unsafe-cons-list v new-scc) SCC))
+      (set! S (unsafe-cdr S-rst))))
   
   (for ([v (in-vertices G)]) (when (not (lowlink-defined? v)) (strong-connect v)))
   SCC)
 
-(length (time (fast-scc g/scc)))
+;; 371762
+(check-equal? 371762 (length (time (fast-scc g/scc))))
 

@@ -17,6 +17,7 @@
      #:with prop-set! (format-id #'prop "~a-set!" #'prop)
      #:with prop->hash (format-id #'prop "~a->hash" #'prop)
      #:with prop-defined? (format-id #'prop "~a-defined?" #'prop)
+     #:with prop-count (format-id #'prop "~a-count" #'prop)
      (template
       (begin
         (define hash-name (make-hash))
@@ -26,6 +27,7 @@
         (define (prop->hash) hash-name)
         (define (prop-set! key val) (hash-set! hash-name key val))
         (define (prop-defined? key) (hash-has-key? hash-name key))
+        (define (prop-count) (hash-count hash-name))
         (?? (for ([v (?? vs (in-vertices g))])
               (prop-set! v 
                 (syntax-parameterize ([$v (syntax-id-rules () [_ v])])
