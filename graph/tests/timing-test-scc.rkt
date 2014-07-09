@@ -7,7 +7,8 @@
          "../gen-graph.rkt"
          "test-utils.rkt")
 
-;; times determined from running cmd line racket, on 2.40Ghz quad-core cpu
+;; times determined from running cmd line racket, on 2.40Ghz quad-core cpu (Q6600)
+;; otherwise when indicated, times recorded using i7-2600k
 
 ;; unzip file
 (when (not (file-exists? "SCC.txt")) (gunzip "SCC.txt.gz"))
@@ -25,9 +26,24 @@
 ;; no difference when using with-input-from-file and open-input-file
 ;; using in-port: ~28sec
 ;; unsafe-struct-ref: ~28sec
+;; on work machine: ~22s
+;; custom read-num (work machine): ~12.5s
+;; read-num with unsafe fx ops: ~12.5s
 (with-input-from-file "SCC.txt"
   (λ ()
-    (for ([u (in-port)]) (add-directed-edge! g/scc u (read)))))
+    ;; SCC.txt file has format: num <space> num <space> \n
+    ;; (last line has no \n)
+    (define (read-num [in (current-input-port)])
+      (let loop ([num 0])
+        (define b (read-byte in))
+        (if (eof-object? b) eof
+            (case b
+              [(10) (loop 0)] ; #\newline
+              [(32) num] ; #\space
+              [else (loop (+ (* 10 num) (- b 48)))]))))
+    (for ([u (in-port read-num)] [v (in-port read-num)]) 
+      (add-directed-edge! g/scc u v))))
+    ;(for ([u (in-port)]) (add-directed-edge! g/scc u (read)))))
 ;    (for ([e (in-lines)])
 ;      (apply add-directed-edge! g/scc (map string->number (string-split e))))))
 
