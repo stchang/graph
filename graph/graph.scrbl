@@ -433,6 +433,8 @@ current vertex and @racket[$from] is its parent (when appropriate). A
 makes more sense in the context of the program. 
 The special @racket[$acc] identifier represents the accumulator value.
 
+Colon-suffixed keyword history: @history[#:added "0.3"]}
+
 The keywords that don't bind any names (@racket[#:init-queue] and @racket[#:init])
 have both colon and non-colon versions, to have a consistent naming scheme.
 
@@ -636,6 +638,8 @@ current vertex and @racket[$from] is its parent (when appropriate). A
 @racket[$to] identifier has the same value as @racket[$v], in case that name 
 makes more sense in the context of the program. 
 The special @racket[$acc] identifier represents the accumulator value.
+
+Colon-suffixed keyword history: @history[#:added "0.3"]}
 
 The keywords that don't bind any names (@racket[#:order], @racket[#:init], 
 @racket[#:iinit], and @racket[#:combine])
