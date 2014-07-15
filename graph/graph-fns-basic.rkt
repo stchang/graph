@@ -23,9 +23,10 @@
   (define-vertex-property G π #:init #f)
 
   (do-bfs G s 
-    #:init (d-set! s 0) (π-set! s #f)
-    #:discover (d-set! $v (unsafe-add1 (d $from))) (π-set! $v $from)
-    #:return (values (d->hash) (π->hash))))
+    #:init: (d-set! s 0) (π-set! s #f)
+    #:discover: (d-set! $v (unsafe-add1 (d $from))) 
+                (π-set! $v $from)
+    #:return: (values (d->hash) (π->hash))))
 
 ;; default Q is from data/queue
 ;; see also bfs clients prim and dijkstra
@@ -62,41 +63,32 @@
   
   (finish G s new-acc))
 
-;; TODO: there is potential ambiguity here in the clauses that bind
-;; If the programmer omits the bindings, but the first expr happens to have the
-;; form (id1 id2), then there will be a syntax error for $to and $from bc
-;; they won't be bound.
-;;
 ;; cleaner syntax for bfs/generalized
 (define-syntax (do-bfs stx)
   (syntax-parse stx 
     [(_ G s 
-      (~or (~optional (~seq #:init-queue Q:expr))
-           (~or (~optional (~seq #:break (b?-from:id b?-to:id) b?:expr b?rst:expr ...))
-                (~optional (~seq #:break b?exp:expr ...)))
-           (~optional (~seq #:init init:expr ...))
-           (~or (~optional 
-                 (~seq #:visit? (v?-from:id v?-to:id) visit?:expr v?rst:expr ...))
-                (~optional (~seq #:visit? v?exp:expr ...))
-                (~optional 
-                 (~seq #:enqueue? (e?-from:id e?-to:id) enq?:expr e?rst:expr ...))
-                (~optional (~seq #:enqueue? e?exp:expr ...)))
-           (~or (~optional 
-                 (~seq #:discover (disc-from:id disc-to:id disc-acc:id)
-                       disc:expr discrst:expr ...))
-                (~optional (~seq #:discover discexp:expr ...))
-                (~optional 
-                 (~seq #:on-enqueue (onenq-from:id onenq-to:id onenq-acc:id)
-                       onenq:expr onenqrst:expr ...))
-                (~optional (~seq #:on-enqueue onenqexp:expr ...)))
-           (~or (~optional (~seq #:visit (v:id vacc:id)
-                                 visit:expr visitrst:expr ...))
-                (~optional (~seq #:visit visexp:expr ...))
-                (~optional (~seq #:on-dequeue (ondeqv:id ondeqacc:id)
-                                 ondeq:expr ondeqrst:expr ...))
-                (~optional (~seq #:on-dequeue ondeqexp:expr ...)))
-           (~or (~optional (~seq #:return (retacc:id) ret:expr retrst:expr ...))
-                (~optional (~seq #:return return:expr ...)))) ...)
+      (~or (~optional (~seq #:init-queue: Q:expr))
+           (~or (~optional (~seq #:break (b?-from:id b?-to:id) b?:expr ...))
+                (~optional (~seq #:break: b?exp:expr ...)))
+           (~optional (~seq #:init: init:expr ...))
+           (~or (~optional (~seq #:visit? (v?-from:id v?-to:id) visit?:expr ...))
+                (~optional (~seq #:visit?: v?exp:expr ...))
+                (~optional (~seq #:enqueue? (e?-from:id e?-to:id) enq?:expr ...))
+                (~optional (~seq #:enqueue?: e?exp:expr ...)))
+           (~or (~optional (~seq #:discover (d-from/na:id d-to/na:id) disc/na:expr ...))
+                (~optional (~seq #:discover (disc-from:id disc-to:id disc-acc:id) disc:expr ...))
+                (~optional (~seq #:discover: discexp:expr ...))
+                (~optional (~seq #:on-enqueue (enq/na-from:id enq/na-to:id) onenq/na:expr ...))
+                (~optional (~seq #:on-enqueue (onenq-from:id onenq-to:id onenq-acc:id) onenq:expr ...))
+                (~optional (~seq #:on-enqueue: onenqexp:expr ...)))
+           (~or (~optional (~seq #:visit (v/na:id) visit/na:expr ...))
+                (~optional (~seq #:visit (v:id vacc:id) visit:expr ...))
+                (~optional (~seq #:visit: visexp:expr ...))
+                (~optional (~seq #:on-dequeue (ondeqv/na:id) ondeq/na:expr ...))
+                (~optional (~seq #:on-dequeue (ondeqv:id ondeqacc:id) ondeq:expr ...))
+                (~optional (~seq #:on-dequeue: ondeqexp:expr ...)))
+           (~or (~optional (~seq #:return (retacc:id) ret:expr ...))
+                (~optional (~seq #:return: return:expr ...)))) ...)
      (template
       (let ([broken? #f])
         (define-vertex-properties G discovered? visited?)
@@ -111,8 +103,9 @@
           (?? (?@ #:init-queue Q))
           (?? (?@ #:break (λ (G s b?-from b?-to) 
                             (or broken? 
-                                (let ([res (let () b? b?rst ...)])
+                                (let ([res (let () b? ...)])
                                   (and res (set! broken? #t)))))))
+          ;; #:break:
           (?? (?@ #:break
                   (λ (G s from to)
                     (syntax-parameterize ([$from (syntax-id-rules () [_ from])]
@@ -123,77 +116,92 @@
                             (and res (set! broken? #t))))))))
           (?? (?@ #:init (λ _ init ...)))
           ;; #:visit? possible clauses
-          (??
-           ;; #:visit?
-           (?@ #:visit? (λ (G s v?-from v?-to) visit? v?rst ...))
-           (??
-            (?@ #:visit? 
-                (λ (G s from to)
-                  (syntax-parameterize ([$from (syntax-id-rules () [_ from])]
-                                        [$to (syntax-id-rules () [_ to])]
-                                        [$v (syntax-id-rules () [_ to])])
-                                       v?exp ...)))
-            (??
-             ;; #:enqueue?
-             (?@ #:visit? (λ (G s e?-from e?-to) enq? e?rst ...))
-             (??
-              (?@ #:visit? 
-                  (λ (G s from to)
-                    (syntax-parameterize ([$from (syntax-id-rules () [_ from])]
-                                          [$to (syntax-id-rules () [_ to])]
-                                          [$v (syntax-id-rules () [_ to])])
-                                         e?exp ...)))
-              ;; else
-              (?@ #:visit? (λ (G s from to) (not (discovered?-defined? to))))))))
+          ;; #:visit?
+          (?? (?@ #:visit? (λ (G s v?-from v?-to) visit? ...))
+           ;; #:visit?:
+           (?? (?@ #:visit? 
+                   (λ (G s from to)
+                     (syntax-parameterize ([$from (syntax-id-rules () [_ from])]
+                                           [$to (syntax-id-rules () [_ to])]
+                                           [$v (syntax-id-rules () [_ to])])
+                                          v?exp ...)))
+            ;; #:enqueue?
+            (?? (?@ #:visit? (λ (G s e?-from e?-to) enq? ...))
+             ;; #:enqueue?:
+             (?? (?@ #:visit? 
+                     (λ (G s from to)
+                       (syntax-parameterize ([$from (syntax-id-rules () [_ from])]
+                                             [$to (syntax-id-rules () [_ to])]
+                                             [$v (syntax-id-rules () [_ to])])
+                                            e?exp ...)))
+                 ;; else
+                 (?@ #:visit? (λ (G s from to) (not (discovered?-defined? to))))))))
           ;; #:discover possible clauses
-          ;; #:discover
-          (?? (?@ #:discover (λ (G s disc-from disc-to disc-acc) 
-                               (mark-discovered! disc-to) disc discrst ...))
-              (?? (?@ #:discover 
-                      (λ (G s from to acc) 
-                        (mark-discovered! to)
-                        (syntax-parameterize ([$from (syntax-id-rules () [_ from])]
-                                              [$to (syntax-id-rules () [_ to])]
-                                              [$v (syntax-id-rules () [_ to])]
-                                              [$acc (syntax-id-rules () [_ acc])])
-                                             discexp ...)))
-                  ;; #:on-enqueue
-                  (?? (?@ #:discover (λ (G s onenq-from onenq-to onenq-acc) 
-                                       (mark-discovered! onenq-to) onenq onenqrst ...))
-                      (?? (?@ #:discover 
-                              (λ (G s from to acc) 
-                                (mark-discovered! to)
-                                (syntax-parameterize ([$from (syntax-id-rules () [_ from])]
-                                                      [$to (syntax-id-rules () [_ to])]
-                                                      [$v (syntax-id-rules () [_ to])]
-                                                      [$acc (syntax-id-rules () [_ acc])])
-                                                     onenqexp ...)))
-                          ;; else
-                          (?@ #:discover (λ (G s from to acc) (mark-discovered! to) acc))))))
+          ;; #:discover/no acc: passes acc through
+          (?? (?@ #:discover (λ (G s d-from/na d-to/na acc) 
+                               (mark-discovered! d-to/na) disc/na ... acc))
+           ;; #:discover with acc
+           (?? (?@ #:discover (λ (G s disc-from disc-to disc-acc) 
+                                (mark-discovered! disc-to) disc ...))
+            ;; #:discover:
+            (?? (?@ #:discover 
+                    (λ (G s from to acc) 
+                      (mark-discovered! to)
+                      (syntax-parameterize ([$from (syntax-id-rules () [_ from])]
+                                            [$to (syntax-id-rules () [_ to])]
+                                            [$v (syntax-id-rules () [_ to])]
+                                            [$acc (syntax-id-rules () [_ acc])])
+                                           discexp ...)))
+             ;; #:on-enqueue/no acc: pass acc through
+             (?? (?@ #:discover (λ (G s enq/na-from enq/na-to acc) 
+                                  (mark-discovered! enq/na-to) onenq/na ... acc))
+              ;; #:on-enqueue with acc
+              (?? (?@ #:discover (λ (G s onenq-from onenq-to onenq-acc) 
+                                   (mark-discovered! onenq-to) onenq ...))
+               ;; #:on-enqueue:
+               (?? (?@ #:discover 
+                       (λ (G s from to acc) 
+                         (mark-discovered! to)
+                         (syntax-parameterize ([$from (syntax-id-rules () [_ from])]
+                                               [$to (syntax-id-rules () [_ to])]
+                                               [$v (syntax-id-rules () [_ to])]
+                                               [$acc (syntax-id-rules () [_ acc])])
+                                              onenqexp ...)))
+                   ;; else
+                   (?@ #:discover (λ (G s from to acc) (mark-discovered! to) acc))))))))
           ;; #:visit possible clauses
-          ;; #:visit
-          (?? (?@ #:visit (λ (G s v vacc) (mark-visited! v) visit visitrst ...))
-              (?? (?@ #:visit (λ (G s u acc) 
-                                (mark-visited! u)
-                                (syntax-parameterize ([$v (syntax-id-rules () [_ u])]
-                                                      [$acc (syntax-id-rules () [_ acc])])
-                                                     visexp ...)))
-                  ;; #:on-dequeue
-                  (?? (?@ #:visit (λ (G s ondeqv ondeqacc) 
-                                    (mark-visited! ondeqv) ondeq ondeqrst ...))
-                      (?? (?@ #:visit (λ (G s u acc) 
-                                        (mark-visited! u)
-                                        (syntax-parameterize ([$v (syntax-id-rules () [_ u])]
-                                                              [$acc (syntax-id-rules () [_ acc])])
-                                                             ondeqexp ...)))
-                          ;; else
-                          (?@ #:visit (λ (G s u acc) (mark-visited! u) acc))))))
-          (?? (?@ #:return (λ (G s retacc) ret retrst ...)))
+          ;; #:visit/no acc: pass acc through
+          (?? (?@ #:visit (λ (G s v/na acc) (mark-visited! v/na) visit/na ... acc))
+           ;; #:visit with acc
+           (?? (?@ #:visit (λ (G s v vacc) (mark-visited! v) visit ...))
+            ;; #:visit:
+            (?? (?@ #:visit (λ (G s u acc) 
+                              (mark-visited! u)
+                              (syntax-parameterize ([$v (syntax-id-rules () [_ u])]
+                                                    [$acc (syntax-id-rules () [_ acc])])
+                                                   visexp ...)))
+             ;; #:on-dequeue/no acc
+             (?? (?@ #:visit (λ (G s ondeqv/na acc) 
+                                    (mark-visited! ondeqv/na) ondeq/na ...))
+              ;; #:on-dequeue with acc
+              (?? (?@ #:visit (λ (G s ondeqv ondeqacc) 
+                                    (mark-visited! ondeqv) ondeq ...))
+               ;; #:on-dequeue:
+               (?? (?@ #:visit (λ (G s u acc) 
+                                 (mark-visited! u)
+                                 (syntax-parameterize ([$v (syntax-id-rules () [_ u])]
+                                                       [$acc (syntax-id-rules () [_ acc])])
+                                                      ondeqexp ...)))
+                   ;; else
+                   (?@ #:visit (λ (G s u acc) (mark-visited! u) acc))))))))
+          ;; #:return
+          (?? (?@ #:return (λ (G s retacc) ret ...)))
+          ;; #:return:
           (?? (?@ #:return 
-                   (λ _
-                     (syntax-parameterize ([$broke? (syntax-id-rules () [_ broken?])]
-                                           [$acc (syntax-id-rules () [_ acc])])
-                                          return ...))))))))]))
+                  (λ _
+                    (syntax-parameterize ([$broke? (syntax-id-rules () [_ broken?])]
+                                          [$acc (syntax-id-rules () [_ acc])])
+                                         return ...))))))))]))
              
 
 ;; bfs-based fns --------------------------------------------------------------
@@ -208,9 +216,9 @@
     [else
      (define-vertex-property G π #:init #f)
      (do-bfs G src 
-      #:break (and (vertex=? G $v targ) (π-set! $v $from))
-      #:discover (π-set! $v $from)
-      #:return
+      #:break: (and (vertex=? G $v targ) (π-set! $v $from))
+      #:discover: (π-set! $v $from)
+      #:return:
       (and $broke?
            (let loop ([path null] [v targ]) ; reverse the found path
              (if (vertex=? G v src) 
@@ -433,4 +441,4 @@
 (define (cc/bfs G)
   (define (v-in-ccs? ccs v) (for/or ([cc ccs]) (member v cc)))
   (for/fold ([ccs null]) ([v (in-vertices G)] #:unless (v-in-ccs? ccs v))
-    (cons (do-bfs G v #:init null #:visit (unsafe-cons-list $v $acc)) ccs)))
+    (cons (do-bfs G v #:init: null #:visit: (unsafe-cons-list $v $acc)) ccs)))

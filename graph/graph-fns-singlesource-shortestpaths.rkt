@@ -80,10 +80,10 @@
                 (mk-empty-priority (λ (u v) (< (d u) (d v))))
                 (mk-empty-fifo)))
   
-  (do-bfs G s #:init-queue (mk-empty-priority (λ (u v) (< (d u) (d v))))
-    #:init (d-set! s 0)
-    #:enqueue? (> (d $v) (+ (d $from) (w $from $v)))
-    #:on-enqueue 
+  (do-bfs G s #:init-queue: (mk-empty-priority (λ (u v) (< (d u) (d v))))
+    #:init: (d-set! s 0)
+    #:enqueue?: (> (d $v) (+ (d $from) (w $from $v)))
+    #:on-enqueue: 
       (d-set! $v (+ (d $from) (w $from $v)))
       (π-set! $v $from)
-    #:return (values (d->hash) (π->hash))))
+    #:return: (values (d->hash) (π->hash))))
