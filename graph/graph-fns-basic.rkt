@@ -78,17 +78,17 @@
                 (~optional (~seq #:enqueue? (e?-from:id e?-to:id) enq?:expr ...))
                 (~optional (~seq #:enqueue?: e?exp:expr ...)))
            (~or (~optional (~seq #:discover (d-from/na:id d-to/na:id) disc/na:expr ...))
-                (~optional (~seq #:discover (disc-from:id disc-to:id disc-acc:id) disc:expr ...))
+                (~optional (~seq #:discover (d-from:id d-to:id d-acc:id) disc:expr ...))
                 (~optional (~seq #:discover: discexp:expr ...))
-                (~optional (~seq #:on-enqueue (enq/na-from:id enq/na-to:id) onenq/na:expr ...))
-                (~optional (~seq #:on-enqueue (onenq-from:id onenq-to:id onenq-acc:id) onenq:expr ...))
-                (~optional (~seq #:on-enqueue: onenqexp:expr ...)))
+                (~optional (~seq #:on-enqueue (enq/na-from:id enq/na-to:id) enq/na:expr ...))
+                (~optional (~seq #:on-enqueue (enq-from:id enq-to:id enq-acc:id) enq:expr ...))
+                (~optional (~seq #:on-enqueue: enqexp:expr ...)))
            (~or (~optional (~seq #:visit (v/na:id) visit/na:expr ...))
                 (~optional (~seq #:visit (v:id vacc:id) visit:expr ...))
                 (~optional (~seq #:visit: visexp:expr ...))
-                (~optional (~seq #:on-dequeue (ondeqv/na:id) ondeq/na:expr ...))
-                (~optional (~seq #:on-dequeue (ondeqv:id ondeqacc:id) ondeq:expr ...))
-                (~optional (~seq #:on-dequeue: ondeqexp:expr ...)))
+                (~optional (~seq #:on-dequeue (deqv/na:id) deq/na:expr ...))
+                (~optional (~seq #:on-dequeue (deqv:id deqacc:id) deq:expr ...))
+                (~optional (~seq #:on-dequeue: deqexp:expr ...)))
            (~or (~optional (~seq #:return (retacc:id) ret:expr ...))
                 (~optional (~seq #:return: return:expr ...)))) ...)
      (template
@@ -143,10 +143,10 @@
           ;; #:discover possible clauses
           ;; #:discover/no acc: passes acc through
           (?? (?@ #:discover (λ (G s d-from/na d-to/na acc) 
-                               (mark-discovered! d-to/na) disc/na ... acc))
+                               (mark-discovered! d-to/na) disc/na ...))
            ;; #:discover with acc
-           (?? (?@ #:discover (λ (G s disc-from disc-to disc-acc) 
-                                (mark-discovered! disc-to) disc ...))
+           (?? (?@ #:discover (λ (G s d-from d-to d-acc) 
+                                (mark-discovered! d-to) disc ...))
             ;; #:discover:
             (?? (?@ #:discover 
                     (λ (G s from to acc) 
@@ -158,10 +158,10 @@
                                            discexp ...)))
              ;; #:on-enqueue/no acc: pass acc through
              (?? (?@ #:discover (λ (G s enq/na-from enq/na-to acc) 
-                                  (mark-discovered! enq/na-to) onenq/na ... acc))
+                                  (mark-discovered! enq/na-to) enq/na ...))
               ;; #:on-enqueue with acc
-              (?? (?@ #:discover (λ (G s onenq-from onenq-to onenq-acc) 
-                                   (mark-discovered! onenq-to) onenq ...))
+              (?? (?@ #:discover (λ (G s enq-from enq-to enq-acc) 
+                                   (mark-discovered! enq-to) enq ...))
                ;; #:on-enqueue:
                (?? (?@ #:discover 
                        (λ (G s from to acc) 
@@ -170,12 +170,12 @@
                                                [$to (syntax-id-rules () [_ to])]
                                                [$v (syntax-id-rules () [_ to])]
                                                [$acc (syntax-id-rules () [_ acc])])
-                                              onenqexp ...)))
+                                              enqexp ...)))
                    ;; else
                    (?@ #:discover (λ (G s from to acc) (mark-discovered! to) acc))))))))
           ;; #:visit possible clauses
           ;; #:visit/no acc: pass acc through
-          (?? (?@ #:visit (λ (G s v/na acc) (mark-visited! v/na) visit/na ... acc))
+          (?? (?@ #:visit (λ (G s v/na acc) (mark-visited! v/na) visit/na ...))
            ;; #:visit with acc
            (?? (?@ #:visit (λ (G s v vacc) (mark-visited! v) visit ...))
             ;; #:visit:
@@ -185,17 +185,17 @@
                                                     [$acc (syntax-id-rules () [_ acc])])
                                                    visexp ...)))
              ;; #:on-dequeue/no acc
-             (?? (?@ #:visit (λ (G s ondeqv/na acc) 
-                                    (mark-visited! ondeqv/na) ondeq/na ...))
+             (?? (?@ #:visit (λ (G s deqv/na acc) 
+                               (mark-visited! deqv/na) deq/na ...))
               ;; #:on-dequeue with acc
-              (?? (?@ #:visit (λ (G s ondeqv ondeqacc) 
-                                    (mark-visited! ondeqv) ondeq ...))
+              (?? (?@ #:visit (λ (G s deqv deqacc) 
+                                (mark-visited! deqv) deq ...))
                ;; #:on-dequeue:
                (?? (?@ #:visit (λ (G s u acc) 
                                  (mark-visited! u)
                                  (syntax-parameterize ([$v (syntax-id-rules () [_ u])]
                                                        [$acc (syntax-id-rules () [_ acc])])
-                                                      ondeqexp ...)))
+                                                      deqexp ...)))
                    ;; else
                    (?@ #:visit (λ (G s u acc) (mark-visited! u) acc))))))))
           ;; #:return
