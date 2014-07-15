@@ -124,8 +124,8 @@
  (with-output-to-string
   (λ ()
     (do-dfs g/parens
-     #:prologue (printf "(~a" $v)
-     #:epilogue (printf "~a)" $v))))
+     #:prologue: (printf "(~a" $v)
+     #:epilogue: (printf "~a)" $v))))
  "(0(2(1(3(44)3)1)2)0)")
 
 ;; graph copying

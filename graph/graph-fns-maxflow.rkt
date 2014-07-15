@@ -58,13 +58,13 @@
   (define-vertex-property G color) ; key = vertices, values = #t/#f
   (do-dfs G 
    #:init (list null null) ; return two lists L and R
-   #:break (and $from ; break if both are colored and colored the same
-                (with-handlers ([exn:fail? (λ _ #f)]) ; catch if not colored
-                  (xor (not (color $from)) (color $v))))
-   #:prologue 
+   #:break: (and $from ; break if both are colored and colored the same
+                 (with-handlers ([exn:fail? (λ _ #f)]) ; catch if not colored
+                   (xor (not (color $from)) (color $v))))
+   #:prologue: 
      (color-set! $v (and $from (not (color $from)))) ; set color to opposite of parent
      (if (color $v) (add-to-L $v $acc) (add-to-R $v $acc))
-   #:return (and (not $broke?) $acc)))
+   #:return: (and (not $broke?) $acc)))
    
 (define (maximum-bipartite-matching G)
   (define L-R (bipartite? G))

@@ -23,7 +23,7 @@
   (define-vertex-property G π #:init #f)
 
   (do-bfs G s 
-    #:init: (d-set! s 0) (π-set! s #f)
+    #:init (d-set! s 0) (π-set! s #f)
     #:discover: (d-set! $v (unsafe-add1 (d $from))) 
                 (π-set! $v $from)
     #:return: (values (d->hash) (π->hash))))
@@ -67,30 +67,31 @@
 (define-syntax (do-bfs stx)
   (syntax-parse stx 
     [(_ G s 
-      (~or (~or (~optional (~seq #:init-queue Q:expr))
-                (~optional (~seq #:init-queue: Qexp:expr)))
-           (~or (~optional (~seq #:break (b?-from:id b?-to:id) b?:expr ...))
-                (~optional (~seq #:break: b?exp:expr ...)))
-           (~or (~optional (~seq #:init init:expr ...))
-                (~optional (~seq #:init: initexp:expr ...)))
-           (~or (~optional (~seq #:visit? (v?-from:id v?-to:id) visit?:expr ...))
-                (~optional (~seq #:visit?: v?exp:expr ...))
-                (~optional (~seq #:enqueue? (e?-from:id e?-to:id) enq?:expr ...))
-                (~optional (~seq #:enqueue?: e?exp:expr ...)))
-           (~or (~optional (~seq #:discover (d-from/na:id d-to/na:id) disc/na:expr ...))
-                (~optional (~seq #:discover (d-from:id d-to:id d-acc:id) disc:expr ...))
-                (~optional (~seq #:discover: discexp:expr ...))
-                (~optional (~seq #:on-enqueue (enq/na-from:id enq/na-to:id) enq/na:expr ...))
-                (~optional (~seq #:on-enqueue (enq-from:id enq-to:id enq-acc:id) enq:expr ...))
-                (~optional (~seq #:on-enqueue: enqexp:expr ...)))
-           (~or (~optional (~seq #:visit (v/na:id) visit/na:expr ...))
-                (~optional (~seq #:visit (v:id vacc:id) visit:expr ...))
-                (~optional (~seq #:visit: visexp:expr ...))
-                (~optional (~seq #:on-dequeue (deqv/na:id) deq/na:expr ...))
-                (~optional (~seq #:on-dequeue (deqv:id deqacc:id) deq:expr ...))
-                (~optional (~seq #:on-dequeue: deqexp:expr ...)))
-           (~or (~optional (~seq #:return (retacc:id) ret:expr ...))
-                (~optional (~seq #:return: return:expr ...)))) ...)
+      (~or 
+       (~or (~optional (~seq #:init-queue Q:expr))
+            (~optional (~seq #:init-queue: Qexp:expr)))
+       (~or (~optional (~seq #:break (b?-from:id b?-to:id) b?:expr ...))
+            (~optional (~seq #:break: b?exp:expr ...)))
+       (~or (~optional (~seq #:init init:expr ...))
+            (~optional (~seq #:init: initexp:expr ...)))
+       (~or (~optional (~seq #:visit? (v?-from:id v?-to:id) visit?:expr ...))
+            (~optional (~seq #:visit?: v?exp:expr ...))
+            (~optional (~seq #:enqueue? (e?-from:id e?-to:id) enq?:expr ...))
+            (~optional (~seq #:enqueue?: e?exp:expr ...)))
+       (~or (~optional (~seq #:discover (d-from/na:id d-to/na:id) disc/na:expr ...))
+            (~optional (~seq #:discover (d-from:id d-to:id d-acc:id) disc:expr ...))
+            (~optional (~seq #:discover: discexp:expr ...))
+            (~optional (~seq #:on-enqueue (enq/na-from:id enq/na-to:id) enq/na:expr ...))
+            (~optional (~seq #:on-enqueue (enq-from:id enq-to:id enq-acc:id) enq:expr ...))
+            (~optional (~seq #:on-enqueue: enqexp:expr ...)))
+       (~or (~optional (~seq #:visit (v/na:id) visit/na:expr ...))
+            (~optional (~seq #:visit (v:id vacc:id) visit:expr ...))
+            (~optional (~seq #:visit: visexp:expr ...))
+            (~optional (~seq #:on-dequeue (deqv/na:id) deq/na:expr ...))
+            (~optional (~seq #:on-dequeue (deqv:id deqacc:id) deq:expr ...))
+            (~optional (~seq #:on-dequeue: deqexp:expr ...)))
+       (~or (~optional (~seq #:return (retacc:id) ret:expr ...))
+            (~optional (~seq #:return: return:expr ...)))) ...)
      (template
       (let ([broken? #f])
         (define-vertex-properties G discovered? visited?)
@@ -244,7 +245,7 @@
    #:epilogue (from v time)
     (f-set! v time)
     (unsafe-add1 time)
-   #:return (values (d->hash) (π->hash) (f->hash))))
+   #:return: (values (d->hash) (π->hash) (f->hash))))
 
 ;; TODO: don't export this?
 (define (dfs/generalized G #:order [order (λ (x) x)]
@@ -296,37 +297,39 @@
   (syntax-parse stx 
     [(_ G 
       (~or 
-       (~optional (~seq #:order order:expr))
-       (~or (~optional (~seq #:break (b?-from:id b-?to:id) 
-                             b?:expr b?rst:expr ...))
-            (~optional (~seq #:break b?exp:expr ...)))
-       (~optional (~seq #:init init:expr ...))
-       (~optional (~seq #:inner-init iinit:expr ...))
-       (~or (~optional (~seq #:visit? (v?-from:id v?-to:id)
-                             visit?:expr v?rst:expr ...))
-            (~optional (~seq #:visit? v?exp:expr ...)))
-       (~or (~optional (~seq #:prologue (pro-from:id pro-to:id pro-acc:id)
-                             pro:expr prorst:expr ...))
-            (~optional (~seq #:prologue proexp:expr ...)))
-       (~or (~optional (~seq #:epilogue (epi-from:id epi-to:id epi-acc:id)
-                             epi:expr epirst:expr ...))
-            (~optional (~seq #:epilogue epiexp:expr ...)))
-       (~or (~optional (~seq #:process-unvisited? (pu?-from:id pu?-to:id)
-                             pu?:expr pu?rst:expr ...))
-            (~optional (~seq #:process-unvisited? pu?exp:expr ...)))
-       (~or (~optional (~seq #:process-unvisited (pu-from:id pu-to:id pu-acc:id)
-                             pu:expr purst:expr ...))
-            (~optional (~seq #:process-unvisited puexp:expr ...)))
-       (~optional (~seq #:combine combine))
-       (~or (~optional (~seq #:return (ret-acc:id) ret:expr retrst:expr ...))
-            (~optional (~seq #:return retexp:expr ...)))) ...)
+       (~or (~optional (~seq #:order order:expr))
+            (~optional (~seq #:order: orderexp:expr)))
+       (~or (~optional (~seq #:break (b?-from:id b-?to:id) b?:expr ...))
+            (~optional (~seq #:break: b?exp:expr ...)))
+       (~or (~optional (~seq #:init init:expr ...))
+            (~optional (~seq #:init: initexp:expr ...)))
+       (~or (~optional (~seq #:inner-init iinit:expr ...))
+            (~optional (~seq #:inner-init: iinitexp:expr ...)))
+       (~or (~optional (~seq #:visit? (v?-from:id v?-to:id) visit?:expr ...))
+            (~optional (~seq #:visit?: v?exp:expr ...)))
+       (~or (~optional (~seq #:prologue (pro-from/na:id pro-to/na:id) pro/na:expr ...))
+            (~optional (~seq #:prologue (pro-from:id pro-to:id pro-acc:id) pro:expr ...))
+            (~optional (~seq #:prologue: proexp:expr ...)))
+       (~or (~optional (~seq #:epilogue (epi-from/na:id epi-to/na:id) epi/na:expr ...))
+            (~optional (~seq #:epilogue (epi-from:id epi-to:id epi-acc:id) epi:expr ...))
+            (~optional (~seq #:epilogue: epiexp:expr ...)))
+       (~or (~optional (~seq #:process-unvisited? (pu?-from:id pu?-to:id) pu?:expr ...))
+            (~optional (~seq #:process-unvisited?: pu?exp:expr ...)))
+       (~or (~optional (~seq #:process-unvisited (pu-from/na:id pu-to/na:id) pu/na:expr ...))
+            (~optional (~seq #:process-unvisited (pu-from:id pu-to:id pu-acc:id) pu:expr ...))
+            (~optional (~seq #:process-unvisited: puexp:expr ...)))
+       (~or (~optional (~seq #:combine combine))
+            (~optional (~seq #:combine: combineexp)))
+       (~or (~optional (~seq #:return (ret-acc:id) ret:expr ...))
+            (~optional (~seq #:return: retexp:expr ...)))) ...)
      (template
       (let ([broken? #f])
       (dfs/generalized G 
        (?? (?@ #:order order))
+       (?? (?@ #:order orderexp))
        (?? (?@ #:break (λ (G b?-from b?-to) 
                          (or broken?
-                             (let ([res (let () b? b?rst ...)])
+                             (let ([res (let () b? ...)])
                                (and res (set! broken? #t)))))))
        (?? (?@ #:break 
                (λ (G from to)
@@ -337,15 +340,18 @@
                                           (let ([res (let () b?exp ...)])
                                             (and res (set! broken? #t))))))))
        (?? (?@ #:init (λ _ init ...)))
+       (?? (?@ #:init (λ _ initexp ...)))
        (?? (?@ #:inner-init (λ _ iinit ...)))
-       (?? (?@ #:visit? (λ (G v?-from v?-to) visit? v?rst ...)))
+       (?? (?@ #:inner-init (λ _ iinitexp ...)))
+       (?? (?@ #:visit? (λ (G v?-from v?-to) visit? ...)))
        (?? (?@ #:visit? 
                (λ (G from to) 
                  (syntax-parameterize ([$from (syntax-id-rules () [_ from])]
                                        [$to (syntax-id-rules () [_ to])]
                                        [$v (syntax-id-rules () [_ to])])
                                       v?exp ...))))
-       (?? (?@ #:prologue (λ (G pro-from pro-to pro-acc) pro prorst ...)))
+       (?? (?@ #:prologue (λ (G pro-from/na pro-to/na acc) pro/na ...)))
+       (?? (?@ #:prologue (λ (G pro-from pro-to pro-acc) pro ...)))
        (?? (?@ #:prologue 
                (λ (G from to acc) 
                  (syntax-parameterize ([$from (syntax-id-rules () [_ from])]
@@ -353,7 +359,8 @@
                                        [$v (syntax-id-rules () [_ to])]
                                        [$acc (syntax-id-rules () [_ acc])])
                                       proexp ...))))
-       (?? (?@ #:epilogue (λ (G epi-from epi-to epi-acc) epi epirst ...)))
+       (?? (?@ #:epilogue (λ (G epi-from/na epi-to/na acc) epi/na ...)))
+       (?? (?@ #:epilogue (λ (G epi-from epi-to epi-acc) epi ...)))
        (?? (?@ #:epilogue 
                (λ (G from to acc) 
                  (syntax-parameterize ([$from (syntax-id-rules () [_ from])]
@@ -361,41 +368,43 @@
                                        [$v (syntax-id-rules () [_ to])]
                                        [$acc (syntax-id-rules () [_ acc])])
                                       epiexp ...))))
-       (?? (?@ #:process-unvisited? (λ (G pu?-from pu?-to) pu? pu?rst ...)))
+       (?? (?@ #:process-unvisited? (λ (G pu?-from pu?-to) pu? ...)))
        (?? (?@ #:process-unvisited? 
                (λ (G from to) 
                  (syntax-parameterize ([$from (syntax-id-rules () [_ from])]
                                        [$to (syntax-id-rules () [_ to])]
                                        [$v (syntax-id-rules () [_ to])])
                                       pu?exp ...))))
-        (?? (?@ #:process-unvisited (λ (G pu-from pu-to pu-acc) pu purst ...)))
-        (?? (?@ #:process-unvisited 
-                (λ (G from to acc) 
-                  (syntax-parameterize ([$from (syntax-id-rules () [_ from])]
-                                        [$to (syntax-id-rules () [_ to])]
-                                        [$v (syntax-id-rules () [_ to])]
-                                        [$acc (syntax-id-rules () [_ acc])])
-                                       puexp ...))))
-        (?? (?@ #:combine combine))
-        (?? (?@ #:return (λ (G ret-acc) ret retrst ...)))
-        (?? (?@ #:return 
-                (λ (G acc) 
-                  (syntax-parameterize ([$broke? (syntax-id-rules () [_ broken?])]
-                                        [$acc (syntax-id-rules () [_ acc])])
-                                       retexp ...)))))))]))
+       (?? (?@ #:process-unvisited (λ (G pu-from/na pu-to/na acc) pu/na ...)))
+       (?? (?@ #:process-unvisited (λ (G pu-from pu-to pu-acc) pu ...)))
+       (?? (?@ #:process-unvisited 
+               (λ (G from to acc) 
+                 (syntax-parameterize ([$from (syntax-id-rules () [_ from])]
+                                       [$to (syntax-id-rules () [_ to])]
+                                       [$v (syntax-id-rules () [_ to])]
+                                       [$acc (syntax-id-rules () [_ acc])])
+                                      puexp ...))))
+       (?? (?@ #:combine combine))
+       (?? (?@ #:combine combineexp))
+       (?? (?@ #:return (λ (G ret-acc) ret ...)))
+       (?? (?@ #:return 
+               (λ (G acc) 
+                 (syntax-parameterize ([$broke? (syntax-id-rules () [_ broken?])]
+                                       [$acc (syntax-id-rules () [_ acc])])
+                                      retexp ...)))))))]))
 
 ;; dfs-based fns --------------------------------------------------------------
 
 (define (dag? G)
   (define-vertex-property G color #:init WHITE)
   (do-dfs G 
-   #:break (gray? (color $v)) ; seeing a gray vertex means a loop
-   #:visit? (white? (color $v))
-   #:prologue (color-set! $v GRAY)
-   #:epilogue (color-set! $v BLACK)
-   #:return (not $broke?))) ; didnt break means no loop = acyclic
+   #:break: (gray? (color $v)) ; seeing a gray vertex means a loop
+   #:visit?: (white? (color $v))
+   #:prologue: (color-set! $v GRAY)
+   #:epilogue: (color-set! $v BLACK)
+   #:return: (not $broke?))) ; didnt break means no loop = acyclic
 
-(define (tsort G) (do-dfs G #:init null #:epilogue (unsafe-cons-list $v $acc)))
+(define (tsort G) (do-dfs G #:init null #:epilogue: (unsafe-cons-list $v $acc)))
   
 ;; tarjan algorithm for strongly connected components
 ;; G must be directed
@@ -417,19 +426,19 @@
       (set! SCC (unsafe-cons-list (unsafe-cons-list v new-scc) SCC))))
 
   (do-dfs G 
-   #:visit? (not (lowlink-defined? $v))
-   #:prologue (S-push $v) (index-set! $v i) (lowlink-set! $v i) (unsafe-add1! i)
-   #:epilogue 
+   #:visit?: (not (lowlink-defined? $v))
+   #:prologue: (S-push $v) (index-set! $v i) (lowlink-set! $v i) (unsafe-add1! i)
+   #:epilogue: 
     (define llv (lowlink $v))
     (when (unsafe-fx= llv (index $v)) (build-SCC $v))
     (when $from 
       (define llfrom (lowlink $from))
       (when (unsafe-fx< llv llfrom) (lowlink-set! $from llv)))
-   #:process-unvisited? (and $from (in-S? $v))
-   #:process-unvisited  
+   #:process-unvisited?: (and $from (in-S? $v))
+   #:process-unvisited:  
     (let ([llfrom (lowlink $from)] [iv (index $v)])
       (when (unsafe-fx< iv llfrom) (lowlink-set! $from iv)))
-    #:return SCC))
+   #:return: SCC))
 
 ;; connected components
 ;; G is undirected
@@ -437,7 +446,7 @@
 (define (cc G)
   (do-dfs G #:init null ; final result is list of lists
             #:inner-init null ; each cc is list of vertices
-            #:prologue (unsafe-cons-list $v $acc)
+            #:prologue: (unsafe-cons-list $v $acc)
             #:combine unsafe-cons-list))
 
 ;; compute cc using bfs
@@ -445,4 +454,4 @@
 (define (cc/bfs G)
   (define (v-in-ccs? ccs v) (for/or ([cc ccs]) (member v cc)))
   (for/fold ([ccs null]) ([v (in-vertices G)] #:unless (v-in-ccs? ccs v))
-    (cons (do-bfs G v #:init: null #:visit: (unsafe-cons-list $v $acc)) ccs)))
+    (cons (do-bfs G v #:init null #:visit: (unsafe-cons-list $v $acc)) ccs)))
