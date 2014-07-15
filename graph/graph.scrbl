@@ -374,38 +374,46 @@ Accumulator history: @history[#:added "0.2"]}
 
 @defform/subs[(do-bfs graph source maybe-init-queue maybe-break maybe-init maybe-visit? maybe-discover maybe-visit maybe-return)
               ([graph graph?]
-               [maybe-init-queue (code:line) (code:line #:init-queue queue)]
+               [maybe-init-queue (code:line) 
+                                 (code:line #:init-queue queue)
+                                 (code:line #:init-queue: queue)]
                [queue queue?]
                [maybe-break (code:line) 
                             (code:line #:break (from to) break-exp ...)
-                            (code:line #:break break-exp ...)]
+                            (code:line #:break: break-exp ...)]
                [break-exp expr]
-               [maybe-init (code:line) (code:line #:init init-exp ...)]
+               [maybe-init (code:line) 
+                           (code:line #:init init-exp ...)
+                           (code:line #:init: init-exp ...)]
                [init-exp expr]
                [maybe-visit? (code:line) 
                              (code:line #:visit? (from to) visit?-exp ...)
-                             (code:line #:visit? visit?-exp ...)
+                             (code:line #:visit?: visit?-exp ...)
                              (code:line #:enqueue? (from to) enq?-exp ...)
-                             (code:line #:enqueue? enq?-exp ...)]
+                             (code:line #:enqueue?: enq?-exp ...)]
                [visit?-exp expr]
                [enq?-exp expr]
                [maybe-discover (code:line)
+                               (code:line #:discover (from to) discover-exp ...)
                                (code:line #:discover (from to acc) discover-exp ...)
-                               (code:line #:discover discover-exp ...)
+                               (code:line #:discover: discover-exp ...)
+                               (code:line #:on-enqueue (from to) enq-exp ...)
                                (code:line #:on-enqueue (from to acc) enq-exp ...)
-                               (code:line #:on-enqueue enq-exp ...)]
+                               (code:line #:on-enqueue: enq-exp ...)]
                [discover-exp expr]
                [enq-exp expr]
                [maybe-visit (code:line) 
+                            (code:line #:visit (v) visit-exp ...)
                             (code:line #:visit (v acc) visit-exp ...)
-                            (code:line #:visit visit-exp ...)
+                            (code:line #:visit: visit-exp ...)
+                            (code:line #:on-dequeue (v) deq-exp ...)
                             (code:line #:on-dequeue (v acc) deq-exp ...)
-                            (code:line #:on-dequeue deq-exp ...)]
+                            (code:line #:on-dequeue: deq-exp ...)]
                [visit-exp expr]
                [deq-exp expr]
                [maybe-return (code:line) 
                              (code:line #:return (acc) return-exp ...)
-                             (code:line #:return return-exp ...)]
+                             (code:line #:return: return-exp ...)]
                [return-exp expr]
                [from identifier?] [to identifier?] [v identifier?] [acc identifier?])]{
 Cleaner syntax for @racket[bfs/generalized]. Essentially, this form eliminates 
@@ -413,15 +421,20 @@ the need to define separate functions and then pass them into
 @racket[bfs/generalized]'s keyword arguments. Instead, the bodies of those 
 functions are inserted right after the corresponding keywords.
 
-The keywords @racket[#:break], @racket[#:visit?], @racket[#:discover], and @racket[#:visit]
-can bind user-supplied identifiers that represent the vertices under
-consideration. Providing these identifiers is optional. If these keyword
-arguments are invoked without identifiers, then special identifiers are
-available in the keyword argument expressions that refer to the vertices
-under consideration. Specifically, @racket[$v] is bound the current vertex and
-@racket[$from] is its parent (when appropriate). A @racket[$to] identifier is 
-bound to the same vertex as @racket[$v], and is provided in case that name makes more
-sense in the context of the program.
+Each possible keyword has a colon-suffixed and non-colon-suffixed version. The
+non-colon-suffixed versions bind user-supplied identifiers. For example, the
+keywords @racket[#:break], @racket[#:visit?], @racket[#:discover], and 
+@racket[#:visit] bind identifiers that represent the vertices under
+consideration. For some keywords, the accumulator may also be named. In the
+body of colon-suffixed keywords, special identifiers are available that refer 
+to the vertices under consideration. Specifically, @racket[$v] is bound the 
+current vertex and @racket[$from] is its parent (when appropriate). A 
+@racket[$to] identifier has the same value as @racket[$v], in case that name 
+makes more sense in the context of the program. 
+The special @racket[$acc] identifier represents the accumulator value.
+
+The keywords that don't bind any names (@racket[#:init-queue] and @racket[#:init])
+have both colon and non-colon versions, to have a consistent naming scheme.
 
 The keywords @racket[#:visit?], @racket[#:discover], and @racket[#:visit] also
 have alternate names, @racket[#:enqueue?], @racket[#:on-enqueue], and 
@@ -439,10 +452,6 @@ In the @racket[#:return] expressions, the @racket[$broke?] special identifier
 indicates whether the search was terminated early according to the 
 @racket[#:break] condition.
 
-Note: For backwards compatibility, if @racket[break-exp] is a function, then
-it's passed as a function to @racket[bfs/generalized], rather than as the body
-of another function.
-
 For example, below is Dijkstra's algorithm, implemented with @racket[do-bfs]. 
 The code defines two @tech{vertex property}s: @racket[d] maps a vertex to the 
 currently known shortest distance from the source and @racket[π] maps a vertex 
@@ -459,11 +468,11 @@ algorithm makes use of the special identifiers @racket[$v] and @racket[$from].
 
   (do-bfs G src #:init-queue (mk-empty-priority (λ (u v) (< (d u) (d v))))
     #:init (d-set! src 0)
-    #:enqueue? (> (d $v) (+ (d $from) (wgt $from $v)))
-    #:on-enqueue 
+    #:enqueue?: (> (d $v) (+ (d $from) (wgt $from $v)))
+    #:on-enqueue: 
       (d-set! $v (+ (d $from) (wgt $from $v)))
       (π-set! $v $from)
-    #:return (values (d->hash) (π->hash))))
+    #:return: (values (d->hash) (π->hash))))
     )
 
 @racket[bfs], @racket[fewest-vertices-path], @racket[cc/bfs], @racket[mst-prim], 
@@ -561,42 +570,53 @@ The functions that require both a "from" and a "to" vertex argument are given
 
 @defform/subs[(do-dfs graph maybe-order maybe-break maybe-init maybe-inner-init maybe-visit? maybe-prologue maybe-epilogue maybe-process-unvisited? maybe-process-unvisited maybe-combine maybe-return)
               ([graph graph?]
-               [maybe-order (code:line) (code:line #:order order)]
+               [maybe-order (code:line) 
+                            (code:line #:order order)
+                            (code:line #:order: order)]
                [order (-> list? list?)]
                [maybe-break (code:line) 
                             (code:line #:break (from to) break-exp ...)
-                            (code:line #:break break-exp ...)]
+                            (code:line #:break: break-exp ...)]
                [break-exp expr]
-               [maybe-init (code:line) (code:line #:init init-exp ...)]
+               [maybe-init (code:line) 
+                           (code:line #:init init-exp ...)
+                           (code:line #:init: init-exp ...)]
                [init-exp expr]
-               [maybe-inner-init (code:line) (code:line #:inner-init iinit-exp ...)]
+               [maybe-inner-init (code:line) 
+                                 (code:line #:inner-init iinit-exp ...)
+                                 (code:line #:inner-init: iinit-exp ...)]
                [iinit-exp expr]
                [maybe-visit? (code:line)
                              (code:line #:visit? (from to) visit?-exp ...)
-                             (code:line #:visit? visit?-exp ...)]
+                             (code:line #:visit?: visit?-exp ...)]
                [visit?-exp expr]
                [maybe-prologue (code:line) 
+                               (code:line #:prologue (from to) prologue-exp ...)
                                (code:line #:prologue (from to acc) prologue-exp ...)
-                               (code:line #:prologue prologue-exp ...)]
+                               (code:line #:prologue: prologue-exp ...)]
                [prologue-exp expr]
                [maybe-epilogue (code:line) 
+                               (code:line #:epilogue (from to) epilogue-exp ...)
                                (code:line #:epilogue (from to acc) epilogue-exp ...)
-                               (code:line #:epilogue epilogue-exp ...)]
+                               (code:line #:epilogue: epilogue-exp ...)]
                [epilogue-exp expr]
                [maybe-process-unvisited? 
                 (code:line) 
                 (code:line #:process-unvisited? (from to) process-unvisited?-exp ...)
-                (code:line #:process-unvisited? process-unvisited?-exp ...)]
+                (code:line #:process-unvisited?: process-unvisited?-exp ...)]
                [process-unvisited?-exp expr]
                [maybe-process-unvisited
                 (code:line) 
+                (code:line #:process-unvisited (from to) process-unvisited-exp ...)
                 (code:line #:process-unvisited (from to acc) process-unvisited-exp ...)
-                (code:line #:process-unvisited process-unvisited-exp ...)]
+                (code:line #:process-unvisited: process-unvisited-exp ...)]
                [process-unvisited-exp expr]
-               [maybe-combine (code:line) (code:line #:combine combine-fn)]
+               [maybe-combine (code:line) 
+                              (code:line #:combine combine-fn)
+                              (code:line #:combine: combine-fn)]
                [maybe-return (code:line) 
                              (code:line #:return (acc) return-exp ...)
-                             (code:line #:return return-exp ...)]
+                             (code:line #:return: return-exp ...)]
                [return-exp expr]
                [from identifier?] [to identifier?] [v identifier?] [acc identifier?])]{
 Analogous to @racket[do-bfs]. Nicer syntax for @racket[dfs/generalized]. 
@@ -604,17 +624,22 @@ Essentially, this form eliminates the need to define separate functions and
 then pass them into @racket[dfs/generalized]'s keyword arguments. Instead, the 
 bodies of those functions are inserted right after the corresponding keywords.
 
-The keywords @racket[#:break], @racket[#:visit?], @racket[#:prologue],
+Each possible keyword has a colon-suffixed and non-colon-suffixed version. The
+non-colon-suffixed versions bind user-supplied identifiers. For example, the
+keywords @racket[#:break], @racket[#:visit?], @racket[#:prologue],
 @racket[#:epilogue], @racket[#:process-unvisited?], and @racket[#:process-unvisited]
-can bind user-supplied identifiers that represent the vertices under
-consideration. Providing these identifiers is optional. If these keyword
-arguments are invoked without identifiers, then special identifiers are
-available in the keyword argument expressions that refer to the identifiers
-under consideration. Specifically, @racket[$v] is bound the current vertex and
-@racket[$from] is its parent (when appropriate). A @racket[$to] identifier is 
-bound to the same vertex as @racket[$v], and can be used if that name makes more
-sense in the context of the program. The special @racket[$acc] identifier represents
-the accumulator value.
+bind identifiers that represent the vertices under consideration. For some keywords, 
+the accumulator may also be named. In the body of colon-suffixedThe special @racket[$acc] identifier represents the accumulator value. keywords, 
+special identifiers are available that refer 
+to the vertices under consideration. Specifically, @racket[$v] is bound the 
+current vertex and @racket[$from] is its parent (when appropriate). A 
+@racket[$to] identifier has the same value as @racket[$v], in case that name 
+makes more sense in the context of the program. 
+The special @racket[$acc] identifier represents the accumulator value.
+
+The keywords that don't bind any names (@racket[#:order], @racket[#:init], 
+@racket[#:iinit], and @racket[#:combine])
+have both colon and non-colon versions, to have a consistent naming scheme.
 
 In the @racket[#:return] expressions, the @racket[$broke?] special identifier
 indicates whether the search was terminated early according to the 
@@ -632,11 +657,11 @@ uses the special @racket[$v] and @racket[$broke?] identifiers.
 (define (dag? G)
   (define-vertex-property G color #:init WHITE)
   (do-dfs G 
-   #:break (gray? (color $v)) ; seeing a gray vertex means a loop
-   #:visit? (white? (color $v))
-   #:prologue (color-set! $v GRAY)
-   #:epilogue (color-set! $v BLACK)
-   #:return (not $broke?))) ; didnt break means no loop = acyclic
+   #:break: (gray? (color $v)) ; seeing a gray vertex means a loop
+   #:visit?: (white? (color $v))
+   #:prologue: (color-set! $v GRAY)
+   #:epilogue: (color-set! $v BLACK)
+   #:return: (not $broke?))) ; didnt break means no loop = acyclic
 )
 
 Here is a possible implementation of @racket[tsort], ie topological sort.
@@ -646,7 +671,7 @@ on the way back up the depth-first search.
 @#reader scribble/comment-reader (racketblock
 (define (tsort G)
   (do-dfs G #:init null
-            #:epilogue (cons $v $acc)))
+            #:epilogue: (cons $v $acc)))
 )
 
 @racket[dfs], @racket[tsort], @racket[dag?], @racket[cc], and @racket[scc] all 
