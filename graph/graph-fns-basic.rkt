@@ -67,10 +67,12 @@
 (define-syntax (do-bfs stx)
   (syntax-parse stx 
     [(_ G s 
-      (~or (~optional (~seq #:init-queue: Q:expr))
+      (~or (~or (~optional (~seq #:init-queue Q:expr))
+                (~optional (~seq #:init-queue: Qexp:expr)))
            (~or (~optional (~seq #:break (b?-from:id b?-to:id) b?:expr ...))
                 (~optional (~seq #:break: b?exp:expr ...)))
-           (~optional (~seq #:init: init:expr ...))
+           (~or (~optional (~seq #:init init:expr ...))
+                (~optional (~seq #:init: initexp:expr ...)))
            (~or (~optional (~seq #:visit? (v?-from:id v?-to:id) visit?:expr ...))
                 (~optional (~seq #:visit?: v?exp:expr ...))
                 (~optional (~seq #:enqueue? (e?-from:id e?-to:id) enq?:expr ...))
@@ -101,6 +103,7 @@
           [$visited? (syntax-rules () [(_ u) (visited?-defined? u)])])
         (bfs/generalized G s 
           (?? (?@ #:init-queue Q))
+          (?? (?@ #:init-queue Qexp))
           (?? (?@ #:break (λ (G s b?-from b?-to) 
                             (or broken? 
                                 (let ([res (let () b? ...)])
@@ -115,6 +118,7 @@
                           (let ([res (let () b?exp ...)])
                             (and res (set! broken? #t))))))))
           (?? (?@ #:init (λ _ init ...)))
+          (?? (?@ #:init (λ _ initexp ...)))
           ;; #:visit? possible clauses
           ;; #:visit?
           (?? (?@ #:visit? (λ (G s v?-from v?-to) visit? ...))
