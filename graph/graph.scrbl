@@ -418,7 +418,7 @@ Accumulator history: @history[#:added "0.2"]}
                [return-exp expr]
                [from identifier?] [to identifier?] [v identifier?] [acc identifier?])]{
 Cleaner syntax for @racket[bfs/generalized]. Essentially, this form eliminates 
-the need to define separate functions and then pass them into 
+the need to define separate functions and then pass them as
 @racket[bfs/generalized]'s keyword arguments. Instead, the bodies of those 
 functions are inserted right after the corresponding keywords.
 
@@ -427,6 +427,9 @@ non-colon-suffixed versions bind user-supplied identifiers. For example, the
 keywords @racket[#:break], @racket[#:visit?], @racket[#:discover], and 
 @racket[#:visit] bind identifiers that represent the vertices under
 consideration. For some keywords, the accumulator may also be named. 
+If the accumulator is unnamed, then it is implicitly passed through unchanged.
+If the accumulator is named, then the result of evaluating the body becomes
+the new accumulator value.
 
 In the body of colon-suffixed keywords, implicit special identifiers refer 
 to the vertices under consideration. Specifically, @racket[$v] is bound to the 
@@ -638,6 +641,9 @@ keywords @racket[#:break], @racket[#:visit?], @racket[#:prologue],
 @racket[#:epilogue], @racket[#:process-unvisited?], and @racket[#:process-unvisited]
 bind identifiers that represent the vertices under consideration. For some keywords, 
 the accumulator may also be named. 
+If the accumulator is unnamed, then it is implicitly passed through unchanged.
+If the accumulator is named, then the result of evaluating the body becomes
+the new accumulator value.
 
 In the body of colon-suffixed keywords, implicit special identifiers refer
 to the vertices under consideration. Specifically, @racket[$v] is bound to the 
