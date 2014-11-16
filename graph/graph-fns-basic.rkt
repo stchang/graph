@@ -287,11 +287,6 @@
   
   (finish G new-acc))
 
-;; TODO: there is potential ambiguity here in the binding clauses
-;; If the programmer omits the bindings, but the first expr happens to have the
-;; form (id1 id2 id3), then there will be a syntax error for $to and $from bc
-;; they won't be bound.
-;;
 ;; cleaner syntax for dfs/generalized
 (define-syntax (do-dfs stx)
   (syntax-parse stx 
@@ -299,7 +294,7 @@
       (~or 
        (~or (~optional (~seq #:order order:expr))
             (~optional (~seq #:order: orderexp:expr)))
-       (~or (~optional (~seq #:break (b?-from:id b-?to:id) b?:expr ...))
+       (~or (~optional (~seq #:break (b?-from:id b?-to:id) b?:expr ...))
             (~optional (~seq #:break: b?exp:expr ...)))
        (~or (~optional (~seq #:init init:expr ...))
             (~optional (~seq #:init: initexp:expr ...)))
