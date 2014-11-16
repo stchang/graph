@@ -270,7 +270,7 @@
     (define new-acc
       (for/fold ([acc (prologue G parent u acc)])
                 ([v (in-neighbors G u)] 
-                 #:break (or broken? (and (break? G u v) (set! broken? #t))))
+                 #:break (or broken? (and (break? G u v acc) (set! broken? #t))))
         (cond [(visit? G u v) (do-visit u v acc)]
               [(process-unvisited? G u v) (process-unvisited G u v acc)]
               [else acc])))
@@ -280,7 +280,7 @@
   (define new-acc 
     (for/fold ([acc (init G)]) 
               ([u (order (get-vertices G))] 
-               #:break (or broken? (and (break? G #f u) (set! broken? #t))))
+               #:break (or broken? (and (break? G #f u acc) (set! broken? #t))))
       (cond [(visit? G #f u) (combine (do-visit #f u (inner-init acc)) acc)]
             [(process-unvisited? G #f u) (process-unvisited G #f u acc)]
             [else acc])))
@@ -295,6 +295,7 @@
        (~or (~optional (~seq #:order order:expr))
             (~optional (~seq #:order: orderexp:expr)))
        (~or (~optional (~seq #:break (b?-from:id b?-to:id) b?:expr ...))
+            (~optional (~seq #:break (b?-from/acc:id b?-to/acc:id b?/acc:id) b?exp/acc:expr ...))
             (~optional (~seq #:break: b?exp:expr ...)))
        (~or (~optional (~seq #:init init:expr ...))
             (~optional (~seq #:init: initexp:expr ...)))
@@ -315,22 +316,28 @@
             (~optional (~seq #:process-unvisited: puexp:expr ...)))
        (~or (~optional (~seq #:combine combine))
             (~optional (~seq #:combine: combineexp)))
-       (~or (~optional (~seq #:return (ret-acc:id) ret:expr ...))
+       (~or (~optional (~seq #:return () ret/na:expr ...))
+            (~optional (~seq #:return (ret-acc:id) ret:expr ...))
             (~optional (~seq #:return: retexp:expr ...)))) ...)
      (template
       (let ([broken? #f])
       (dfs/generalized G 
        (?? (?@ #:order order))
        (?? (?@ #:order orderexp))
-       (?? (?@ #:break (λ (G b?-from b?-to) 
+       (?? (?@ #:break (λ (G b?-from b?-to acc) 
                          (or broken?
                              (let ([res (let () b? ...)])
                                (and res (set! broken? #t)))))))
+       (?? (?@ #:break (λ (G b?-from/acc b?-to/acc b?/acc) 
+                         (or broken?
+                             (let ([res (let () b?exp/acc ...)])
+                               (and res (set! broken? #t)))))))
        (?? (?@ #:break 
-               (λ (G from to)
+               (λ (G from to acc)
                  (syntax-parameterize ([$from (syntax-id-rules () [_ from])]
                                        [$to (syntax-id-rules () [_ to])]
-                                       [$v (syntax-id-rules () [_ to])])
+                                       [$v (syntax-id-rules () [_ to])]
+                                       [$acc (syntax-id-rules () [_ acc])])
                                       (or broken?
                                           (let ([res (let () b?exp ...)])
                                             (and res (set! broken? #t))))))))
@@ -345,7 +352,7 @@
                                        [$to (syntax-id-rules () [_ to])]
                                        [$v (syntax-id-rules () [_ to])])
                                       v?exp ...))))
-       (?? (?@ #:prologue (λ (G pro-from/na pro-to/na acc) pro/na ...)))
+       (?? (?@ #:prologue (λ (G pro-from/na pro-to/na acc) pro/na ... acc)))
        (?? (?@ #:prologue (λ (G pro-from pro-to pro-acc) pro ...)))
        (?? (?@ #:prologue 
                (λ (G from to acc) 
@@ -354,7 +361,7 @@
                                        [$v (syntax-id-rules () [_ to])]
                                        [$acc (syntax-id-rules () [_ acc])])
                                       proexp ...))))
-       (?? (?@ #:epilogue (λ (G epi-from/na epi-to/na acc) epi/na ...)))
+       (?? (?@ #:epilogue (λ (G epi-from/na epi-to/na acc) epi/na ... acc)))
        (?? (?@ #:epilogue (λ (G epi-from epi-to epi-acc) epi ...)))
        (?? (?@ #:epilogue 
                (λ (G from to acc) 
@@ -370,7 +377,7 @@
                                        [$to (syntax-id-rules () [_ to])]
                                        [$v (syntax-id-rules () [_ to])])
                                       pu?exp ...))))
-       (?? (?@ #:process-unvisited (λ (G pu-from/na pu-to/na acc) pu/na ...)))
+       (?? (?@ #:process-unvisited (λ (G pu-from/na pu-to/na acc) pu/na ... acc)))
        (?? (?@ #:process-unvisited (λ (G pu-from pu-to pu-acc) pu ...)))
        (?? (?@ #:process-unvisited 
                (λ (G from to acc) 
@@ -381,6 +388,7 @@
                                       puexp ...))))
        (?? (?@ #:combine combine))
        (?? (?@ #:combine combineexp))
+       (?? (?@ #:return (λ (G acc) ret/na ... acc)))
        (?? (?@ #:return (λ (G ret-acc) ret ...)))
        (?? (?@ #:return 
                (λ (G acc) 
