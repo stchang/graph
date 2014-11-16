@@ -4,6 +4,7 @@
          "../gen-graph.rkt" 
          "../graph-fns-basic.rkt"
          "../graph-fns-singlesource-shortestpaths.rkt"
+         "../graph-property.rkt"
          "../utils.rkt"
          "test-utils.rkt")
 (require rackunit)
@@ -337,3 +338,51 @@
 ;; check #f fewest-vertices-path
 (define g/no-path (mk-directed-graph '((a b) (c d))))
 (check-false (fewest-vertices-path g/no-path 'a 'd))
+
+;; ----------------------------------------------------------------------------
+;; test different do-bfs and do-dfs options
+;; Thanks to Jason Hemann for discovering some of the problems
+
+;; re-define dag?, but explicitly name the vertices in each clause
+(define (dag?-explicit-binds G)
+  (define-vertex-property G color #:init WHITE)
+  (define not-dag? #f)
+  (do-dfs G 
+   #:break (from to) not-dag?
+   #:visit? (from to) (white? (color to))
+   #:prologue (from to) (color-set! to GRAY)
+   #:epilogue (from to) (color-set! to BLACK)
+   #:process-unvisited? (from to) (gray? (color to))
+   #:process-unvisited (from to) (set! not-dag? #t)
+   #:return (acc) (not not-dag?)))
+(check-true (dag?-explicit-binds g-adj1))
+(check-false (or (dag?-explicit-binds g22.3) 
+                 (dag?-explicit-binds g22.4)
+                 (dag?-explicit-binds g22.5)))
+(check-false (or (dag?-explicit-binds g22.3b)
+                 (dag?-explicit-binds g22.4b)
+                 (dag?-explicit-binds g22.5b)))
+(check-false (dag?-explicit-binds g22.6))
+(check-false (dag?-explicit-binds g22.6b))
+
+;; re-define dag?, but use an accum instead of a global flag
+(define (dag?/acc G)
+  (define-vertex-property G color #:init WHITE)
+  (do-dfs G 
+   #:init #f ; accum represents not-dag?
+   #:break (from to not-dag?) not-dag?
+   #:visit? (from to) (white? (color to))
+   #:prologue (from to) (color-set! to GRAY)
+   #:epilogue (from to) (color-set! to BLACK)
+   #:process-unvisited? (from to) (gray? (color to))
+   #:process-unvisited (from to not-dag?) #t ; found a cycle, so set accum
+   #:return (not-dag?) (not not-dag?)))
+(check-true (dag?/acc g-adj1))
+(check-false (or (dag?/acc g22.3) 
+                 (dag?/acc g22.4)
+                 (dag?/acc g22.5)))
+(check-false (or (dag?/acc g22.3b)
+                 (dag?/acc g22.4b)
+                 (dag?/acc g22.5b)))
+(check-false (dag?/acc g22.6))
+(check-false (dag?/acc g22.6b))
