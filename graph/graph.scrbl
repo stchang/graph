@@ -372,7 +372,8 @@ and is returned via @racket[finish].
 
 Accumulator history: @history[#:added "0.2"]}
 
-@defform/subs[(do-bfs graph source maybe-init-queue maybe-break maybe-init maybe-visit? maybe-discover maybe-visit maybe-return)
+@defform/subs[(do-bfs graph source maybe-init-queue maybe-break
+                      maybe-init maybe-visit? maybe-discover maybe-visit maybe-return)
               ([graph graph?]
                [maybe-init-queue (code:line) 
                                  (code:line #:init-queue queue)
@@ -570,7 +571,9 @@ The functions that require both a "from" and a "to" vertex argument are given
 @racket[#f] for the "from" (ie the parent) when there is none.
 }
 
-@defform/subs[(do-dfs graph maybe-order maybe-break maybe-init maybe-inner-init maybe-visit? maybe-prologue maybe-epilogue maybe-process-unvisited? maybe-process-unvisited maybe-combine maybe-return)
+@defform/subs[(do-dfs graph maybe-order maybe-break maybe-init maybe-inner-init 
+                      maybe-visit? maybe-prologue maybe-epilogue 
+                      maybe-process-unvisited? maybe-process-unvisited maybe-combine maybe-return)
               ([graph graph?]
                [maybe-order (code:line) 
                             (code:line #:order order)
