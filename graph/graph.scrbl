@@ -426,9 +426,10 @@ Each possible keyword has a colon-suffixed and non-colon-suffixed version. The
 non-colon-suffixed versions bind user-supplied identifiers. For example, the
 keywords @racket[#:break], @racket[#:visit?], @racket[#:discover], and 
 @racket[#:visit] bind identifiers that represent the vertices under
-consideration. For some keywords, the accumulator may also be named. In the
-body of colon-suffixed keywords, special identifiers are available that refer 
-to the vertices under consideration. Specifically, @racket[$v] is bound the 
+consideration. For some keywords, the accumulator may also be named. 
+
+In the body of colon-suffixed keywords, implicit special identifiers refer 
+to the vertices under consideration. Specifically, @racket[$v] is bound to the 
 current vertex and @racket[$from] is its parent (when appropriate). A 
 @racket[$to] identifier has the same value as @racket[$v], in case that name 
 makes more sense in the context of the program. 
@@ -581,6 +582,7 @@ The functions that require both a "from" and a "to" vertex argument are given
                [order (-> list? list?)]
                [maybe-break (code:line) 
                             (code:line #:break (from to) break-exp ...)
+                            (code:line #:break (from to acc) break-exp ...)
                             (code:line #:break: break-exp ...)]
                [break-exp expr]
                [maybe-init (code:line) 
@@ -620,13 +622,14 @@ The functions that require both a "from" and a "to" vertex argument are given
                               (code:line #:combine combine-fn)
                               (code:line #:combine: combine-fn)]
                [maybe-return (code:line) 
+                             (code:line #:return () return-exp ...)
                              (code:line #:return (acc) return-exp ...)
                              (code:line #:return: return-exp ...)]
                [return-exp expr]
                [from identifier?] [to identifier?] [v identifier?] [acc identifier?])]{
 Analogous to @racket[do-bfs]. Nicer syntax for @racket[dfs/generalized]. 
 Essentially, this form eliminates the need to define separate functions and 
-then pass them into @racket[dfs/generalized]'s keyword arguments. Instead, the 
+then pass them as @racket[dfs/generalized]'s keyword arguments. Instead, the 
 bodies of those functions are inserted right after the corresponding keywords.
 
 Each possible keyword has a colon-suffixed and non-colon-suffixed version. The
@@ -634,9 +637,10 @@ non-colon-suffixed versions bind user-supplied identifiers. For example, the
 keywords @racket[#:break], @racket[#:visit?], @racket[#:prologue],
 @racket[#:epilogue], @racket[#:process-unvisited?], and @racket[#:process-unvisited]
 bind identifiers that represent the vertices under consideration. For some keywords, 
-the accumulator may also be named. In the body of colon-suffixedThe special @racket[$acc] identifier represents the accumulator value. keywords, 
-special identifiers are available that refer 
-to the vertices under consideration. Specifically, @racket[$v] is bound the 
+the accumulator may also be named. 
+
+In the body of colon-suffixed keywords, implicit special identifiers refer
+to the vertices under consideration. Specifically, @racket[$v] is bound to the 
 current vertex and @racket[$from] is its parent (when appropriate). A 
 @racket[$to] identifier has the same value as @racket[$v], in case that name 
 makes more sense in the context of the program. 
