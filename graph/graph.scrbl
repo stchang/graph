@@ -714,7 +714,7 @@ Indicates whether a graph is directed and acyclic.}
 
 @defproc[(mst-kruskal [g graph?]) (listof (list/c any/c any/c))]{Computes the minimum spanning tree using Kruskal's algorithm and the @racket[data/union-find] data structure. Returns a list of edges.}
 
-@defproc[(mst-prim [g graph?]) (listof (list/c any/c any/c))]{Computes the minimum spanning tree of a graph using Prim's algorithm, which is based on breadth-first search. Returns a list of edges.}
+@defproc[(mst-prim [g graph?] [source any/c]) (listof (list/c any/c any/c))]{Computes the minimum spanning tree of a graph using Prim's algorithm, which is based on breadth-first search. Returns a list of edges.}
 
 @; single source shortest paths -----------------------------------------------
 @section{Single-source Shortest Paths}
