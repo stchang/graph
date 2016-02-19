@@ -29,43 +29,39 @@
   (mk-unweighted-graph/undirected
    '((r v) (r s) (s w) (w t) (w x) (x t) (t u) (x u) (x y) (y u))))
 
-(check-seqs-as-equal-sets? '(v r s w t x u y) (in-vertices g22.3))
+(define (check-22.3 G)
+  (check-seqs-as-equal-sets? '(v r s w t x u y) (in-vertices G))
 
-(define-values (d22.3 π22.3) (bfs g22.3 's))
+  (define-values (d22.3 π22.3) (bfs G 's))
 
-(check-equal? 
- d22.3
- (make-hash '((t . 2) (y . 3) (u . 3) (s . 0) (v . 2) (x . 2) (w . 1) (r . 1))))
-(check-equal?
- π22.3
- (make-hash '((t . w) (y . x) (u . x) (s . #f) (v . r) (x . w) (w . s) (r . s))))
+  (check-equal? 
+    d22.3
+    (make-hash 
+     '((t . 2) (y . 3) (u . 3) (s . 0) (v . 2) (x . 2) (w . 1) (r . 1))))
+  
+  (let ([partial-expected '((s . #f) (w . s) (r . s) (v . r) (t . w) (x . w))])
+    (check-true
+     (or 
+      (equal? π22.3 (make-hash (append partial-expected '((y . x) (u . x)))))
+      (equal? π22.3 (make-hash (append partial-expected '((y . x) (u . t)))))
+      (equal? π22.3 (make-hash (append partial-expected '((y . x) (u . x)))))
+      (equal? π22.3 (make-hash (append partial-expected '((y . u) (u . t))))))))
+  
+  (check-equal? '(s r v) (fewest-vertices-path G 's 'v))
+  (check-equal? '(s w t) (fewest-vertices-path G 's 't))
+  (check-equal? '(s w x) (fewest-vertices-path G 's 'x))
+  (let ([path-s-u (fewest-vertices-path G 's 'u)])
+    (check-true (or (equal? '(s w x u) path-s-u)
+                    (equal? '(s w t u) path-s-u))))
+  (check-equal? '(s w x y) (fewest-vertices-path G 's 'y)))
 
-(check-equal? '(s r v) (fewest-vertices-path g22.3 's 'v))
-(check-equal? '(s w t) (fewest-vertices-path g22.3 's 't))
-(check-equal? '(s w x) (fewest-vertices-path g22.3 's 'x))
-(check-equal? '(s w x u) (fewest-vertices-path g22.3 's 'u))
-(check-equal? '(s w x y) (fewest-vertices-path g22.3 's 'y))
+(check-22.3 g22.3)
 
 ;; same as above, but use mk-undirected-graph constructor
 (define g22.3b (mk-undirected-graph 
                 '((r v) (r s) (s w) (w t) (w x) (x t) (t u) (x u) (x y) (y u))))
 
-(check-seqs-as-equal-sets? '(v r s w t x u y) (in-vertices g22.3b))
-
-(define-values (d22.3b π22.3b) (bfs g22.3b 's))
-
-(check-equal? 
- d22.3b
- (make-hash '((t . 2) (y . 3) (u . 3) (s . 0) (v . 2) (x . 2) (w . 1) (r . 1))))
-(check-equal?
- π22.3b
- (make-hash '((t . w) (y . x) (u . x) (s . #f) (v . r) (x . w) (w . s) (r . s))))
-
-(check-equal? '(s r v) (fewest-vertices-path g22.3b 's 'v))
-(check-equal? '(s w t) (fewest-vertices-path g22.3b 's 't))
-(check-equal? '(s w x) (fewest-vertices-path g22.3b 's 'x))
-(check-equal? '(s w x u) (fewest-vertices-path g22.3b 's 'u))
-(check-equal? '(s w x y) (fewest-vertices-path g22.3b 's 'y))
+(check-22.3 g22.3b)
 
 ;; dfs utils ------------------------------------------------------------------
 

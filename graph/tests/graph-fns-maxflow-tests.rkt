@@ -89,8 +89,15 @@
                                                  (4 5))))
 (define L-Rwiki2 (bipartite? gwiki2))
 (check-not-false L-Rwiki2)
-(check-equal? (apply set (first L-Rwiki2)) (set 1 3 5))
-(check-equal? (apply set (second L-Rwiki2)) (set 0 2 4))
+(let ([computed-L (apply set (first L-Rwiki2))]
+      [computed-R (apply set (second L-Rwiki2))]
+      [L (set 1 3 5)]
+      [R (set 0 2 4)])
+  (check-true (or (and (equal? computed-L L)
+                       (equal? computed-R R))
+                  (and (equal? computed-L R)
+                       (equal? computed-R L)))
+    "bipartite graph 1,3,5 and 0,2,4"))
                                                  
 (define g26.8 
   (mk-unweighted-graph/undirected '((1 6) (2 6) (2 8) (3 7) (3 8) (3 9) (4 8) (5 8))))
