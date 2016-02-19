@@ -45,7 +45,9 @@
      (define adj (get-adjlist g))
      (add-edge@ adj u v)
      (add-edge@ adj v u)
-     (when weight (hash-set! (get-weights g) (list u v) weight)))
+     (when weight
+       (hash-set! (get-weights g) (list u v) weight)
+       (hash-set! (get-weights g) (list v u) weight)))
    (define (remove-directed-edge! g u v)
      (define adj (get-adjlist g))
      (remove-edge@ adj u v)

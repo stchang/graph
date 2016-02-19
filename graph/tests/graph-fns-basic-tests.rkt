@@ -386,3 +386,10 @@
                  (dag?/acc g22.5b)))
 (check-false (dag?/acc g22.6))
 (check-false (dag?/acc g22.6b))
+
+; tests for issue #18, weights of undirected graph
+(let ([g (mk-weighted-graph/undirected '())])
+  (add-edge! g 'a 'b 10)
+  (check-true (= 10 (edge-weight g 'a 'b) (edge-weight g 'b 'a))
+    "issue #18: add-edge! improperly sets weight of reverse undirected edge"))
+    
