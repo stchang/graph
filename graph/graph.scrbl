@@ -753,23 +753,35 @@ Note, the running time could be theoretically faster with a version of Dijkstra 
 
 Graph coloring functions are only valid for undirected graphs.
 
-@section{Graph Coloring}
+@section[#:tag "coloring"]{Graph Coloring}
 
 @defproc[(coloring [g graph?] [num-colors natural-number/c] [#:order order (-> list? list?) (λ (x) x)])
          (or/c (hash/c any/c number? #:immutable #f) #f)]{
-Returns a coloring for the given graph using at most the specified number of colors, or @racket[#f] if no coloring is possible. Uses backtracking algorithm so takes exponential time. Optional @racket[#:order] parameter determines the order in which verticies are colored.}
+Returns a coloring for the given graph using at most the specified number of
+colors, or @racket[#f] if no coloring is possible. Uses backtracking algorithm
+so takes exponential time. Optional @racket[#:order] parameter determines the
+order in which verticies are colored.
+
+The returned "colors" are integers in @tt{[0,num-colors)}.}
                                                                                         
 @defproc[(coloring/greedy 
           [g graph?] 
           [#:order order (or/c 'smallest-last (-> list? list?)) 'smallest-last])
          (values number? (hash/c any/c number? #:immutable #f))]{
-Returns a "greedy" coloring of the given graph, where the color for a vertex is the "smallest" color not used by one of its neighbors (or the number of colors is increased).
+Returns a "greedy" coloring of the given graph, where the color for a vertex is
+the "smallest" color not used by one of its neighbors (or the number of colors
+is increased).
 
-The function always returns a valid coloring but the optimality (ie number of colors used) depends on the ordering in which the vertices are considered. The default is to use "smallest-last" ordering (see @racket[order-smallest-last]) but if @racket[#:order] is a procedure, then it is applied to sort the list of vertices before the coloring begins.
+The function always returns a valid coloring but the optimality (ie number of
+colors used) depends on the ordering in which the vertices are considered. The
+default is to use "smallest-last" ordering (see @racket[order-smallest-last])
+but if @racket[#:order] is a procedure, then it is applied to sort the list of
+vertices before the coloring begins.
 
 Only works on undirected graphs.
 
-The returned "colors" are numbers starting from 0. The function also returns the total number of colors used.}
+The returned "colors" are non-negative integers starting from 0. The function
+also returns the total number of colors used.}
 
 @defproc[(coloring/brelaz [g graph?]) (hash/c any/c number? #:immutable #f)]{
 Returns a "greedy" coloring of the given graph, using the Brelaz vertex ordering heuristic. Note that this function is separate from @racket[coloring/greedy] because the ordering is determined in an online manner.}
@@ -808,8 +820,20 @@ Note: this is not the Hopcroft-Karp (ie fastest) bipartite matching algorithm.}
 
 @; util fns -------------------------------------------------------------------
 @section{Graphviz}
-@defproc[(graphviz [g graph?] [#:colors colors boolean? #f]) string?]{
-Returns the dotfile representation of the given graph (as a string).}
+@defproc[(graphviz
+          [g graph?]
+          [#:colors colors (or/c (hash/c any/c natural-number/c) #f) #f])
+         string?]{
+Returns the dotfile representation of the given graph (as a string).
+
+The optional color argument maps vertices to colors, where the color
+corresponds to the "H" component of an HSV color representation. The given
+colors are normalized to be between 0 and 1.0 before generating the graphviz
+output, with the maximum specified color value corresponding to 1.0 (the S and
+V components are currently unspecifiable and are always 1.0).
+
+Typically, the color argument is the output of a function from
+@secref{coloring}, e.g., @racket[(graphviz g #:colors (coloring/brelaz g))].}
 
 @; other
 @section{Other}
