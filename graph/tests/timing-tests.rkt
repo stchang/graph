@@ -24,7 +24,7 @@
 ;; speed up these tests by not testing every v
 
 ;; most are < 10 ms; v=173 is ~11ms; v=174 is ~85ms
-(define DIJ-TIME-LIMIT 100) ; ms
+(define DIJ-TIME-LIMIT 200) ; ms
 
 ;; dijkstra
 (for ([v (in-vertices g/cours)] #:when (even? v))
