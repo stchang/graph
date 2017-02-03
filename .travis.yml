@@ -31,8 +31,6 @@ matrix:
   # no "history" in scribble
     - env: RACKET_VERSION="5.92"
     - env: RACKET_VERSION="6.0"
-    - env: RACKET_VERSION="6.1"
-    - env: RACKET_VERSION="6.1.1"
   # other
     - env: RACKET_VERSION="HEAD"
     - env: RACKET_VERSION="RELEASE"
