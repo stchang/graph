@@ -94,15 +94,17 @@
   (define v0 (gensym))
   (define-edge-property G new-T 
     #:init (or (vertex=? G $from $to) (has-edge? G $from $to)))
-  (Ts-set! v0 (new-T->hash))
+  (define result-hash (new-T->hash))
+  (Ts-set! v0 result-hash)
   
   (define vs (get-vertices G))
-  (for/last ([k-1 (cons v0 vs)] [k vs])
+  (for ([k-1 (cons v0 vs)] [k vs])
     (define-edge-property G new-T
       #:init
       (or (hash-ref (Ts k-1) (list $from $to))
           (and (hash-ref (Ts k-1) (list $from k))
                (hash-ref (Ts k-1) (list k $to)))))
-    (define new-T-hash (new-T->hash))
-    (Ts-set! k new-T-hash)
-    new-T-hash))
+    (set! result-hash (new-T->hash))
+    (Ts-set! k result-hash))
+  result-hash)
+   

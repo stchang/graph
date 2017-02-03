@@ -140,6 +140,15 @@
   (define k-1 (list (sub1 (first k)) (sub1 (second k))))
   (check-equal? (hash-ref matrix25.5res k-1) v))
 
+;; from issue #21
+(check-equal? (transitive-closure (mk-weighted-graph/directed '()))
+              (make-hash))
+(check-equal? (transitive-closure (mk-weighted-graph/undirected '()))
+              (make-hash))
+(check-equal? (transitive-closure (mk-unweighted-graph/directed '()))
+              (make-hash))
+(check-equal? (transitive-closure (mk-unweighted-graph/undirected '()))
+              (make-hash))
 
 ;; johnson --------------------------------------------------------------------
 (define weights25.1johnson (johnson g25.1))
