@@ -32,7 +32,7 @@ before_install:
   - export PATH="${RACKET_DIR}/bin:${PATH}"
 
 install:
- - raco pkg install --auto -n graph
+ - raco pkg install --deps search-auto -n graph
 
 script:
  - raco test --package graph

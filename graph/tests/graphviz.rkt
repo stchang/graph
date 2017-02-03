@@ -1,6 +1,8 @@
-#lang racket
+#lang racket/base
 (require "../main.rkt" "../graph-unweighted.rkt")
 (require rackunit)
+
+(define (string-contains? input s) (regexp-match? s input))
 
 (define butterfly 
   (mk-unweighted-graph/undirected '((1 2) (2 3) (1 3) (3 4) (3 5) (4 5))))
