@@ -32,14 +32,14 @@
   (check-true (< real DIJ-TIME-LIMIT)))
 
 ;; most are < 350ms; v=67: ~362ms; v=75: ~378ms; v=135: ~417ms; v=59: ~380ms
-(define BELL-TIME-LIMIT 500) ; ms
+(define BELL-TIME-LIMIT 1000) ; ms
 
 ;; bellman-ford
 (for ([v (in-vertices g/cours)] #:when (zero? (modulo v 5)))
   (define-values (res cpu real gc) (time-apply bellman-ford (list g/cours v)))
   (check-true (< real BELL-TIME-LIMIT)))
 
-(define KRUSKAL-TIME-LIMIT 40) ; ms
+(define KRUSKAL-TIME-LIMIT 80) ; ms
 
 ;; mst-kruskal
 (let-values ([(res cpu real gc) (time-apply mst-kruskal (list g/cours))])
@@ -47,7 +47,7 @@
   (check-true (< real KRUSKAL-TIME-LIMIT)))
 
 ;; most are ~3ms; v=71: ~7ms
-(define PRIM-TIME-LIMIT 10) ; ms
+(define PRIM-TIME-LIMIT 20) ; ms
 
 ;; mst-prim
 (for ([v (in-vertices g/cours)] #:when (odd? v))
