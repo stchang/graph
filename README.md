@@ -1,9 +1,9 @@
-graph
+# graph [![Build Status](https://travis-ci.org/stchang/graph.svg?branch=master)](https://travis-ci.org/stchang/graph) [![Scribble Docs](https://img.shields.io/badge/Docs-Scribble%20-blue.svg)](http://docs.racket-lang.org/graph/index.html)
 =====
 
 Generic graph library and algorithms for Racket.
 
-[documentation](http://stchang.github.io/graph/graph.html)
+[documentation](http://docs.racket-lang.org/graph/index.html)
 
 Requires Racket v5.3.2 or later.
 
