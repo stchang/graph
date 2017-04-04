@@ -389,3 +389,13 @@
   (check-true (= 10 (edge-weight g 'a 'b) (edge-weight g 'b 'a))
     "issue #18: add-edge! improperly sets weight of reverse undirected edge"))
     
+
+;; do-dfs and do-bfs should work with non-id args (issue #22)
+;; Thanks to Brian Babiak for revealing the problem.
+(check-equal? (do-dfs (mk-directed-graph '())) (void))
+(check-equal? (do-bfs (mk-directed-graph '(0)) 0) (void))
+(check-equal?
+ (do-bfs (mk-directed-graph '((0 1) (1 2))) 0
+         #:init null
+         #:visit: (cons $v $acc))
+ '(2 1 0))

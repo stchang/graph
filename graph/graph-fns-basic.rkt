@@ -6,7 +6,8 @@
          "../queue/gen-queue.rkt"
          (only-in "../queue/fifo.rkt" mk-empty-fifo))
 
-(require (for-syntax syntax/parse syntax/parse/experimental/template)
+(require (for-syntax syntax/parse syntax/parse/experimental/template
+                     racket/base racket/syntax)
          (only-in racket/list splitf-at) racket/stxparam  racket/unsafe/ops)
 
 (provide (all-defined-out))
@@ -66,7 +67,7 @@
 ;; cleaner syntax for bfs/generalized
 (define-syntax (do-bfs stx)
   (syntax-parse stx 
-    [(_ G s 
+    [(_ Gr src
       (~or 
        (~or (~optional (~seq #:init-queue Q:expr))
             (~optional (~seq #:init-queue: Qexp:expr)))
@@ -92,17 +93,19 @@
             (~optional (~seq #:on-dequeue: deqexp:expr ...)))
        (~or (~optional (~seq #:return (retacc:id) ret:expr ...))
             (~optional (~seq #:return: return:expr ...)))) ...)
+     #:with G (generate-temporary #'Gr)
+     #:with s (generate-temporary #'src)
      (template
       (let ([broken? #f])
-        (define-vertex-properties G discovered? visited?)
+        (define-vertex-properties Gr discovered? visited?)
         (define (mark-discovered! u) (discovered?-set! u #t))
         (define (mark-visited! u) (visited?-set! u #t))
-        (mark-discovered! s)
+        (mark-discovered! src)
         (syntax-parameterize 
          ([$discovered? (syntax-rules () [(_ u) (discovered?-defined? u)])]
           [$seen? (syntax-rules () [(_ u) (discovered?-defined? u)])]
           [$visited? (syntax-rules () [(_ u) (visited?-defined? u)])])
-        (bfs/generalized G s 
+        (bfs/generalized Gr src
           (?? (?@ #:init-queue Q))
           (?? (?@ #:init-queue Qexp))
           (?? (?@ #:break (λ (G s b?-from b?-to) 
@@ -290,7 +293,7 @@
 ;; cleaner syntax for dfs/generalized
 (define-syntax (do-dfs stx)
   (syntax-parse stx 
-    [(_ G 
+    [(_ Gr
       (~or 
        (~or (~optional (~seq #:order order:expr))
             (~optional (~seq #:order: orderexp:expr)))
@@ -319,9 +322,10 @@
        (~or (~optional (~seq #:return () ret/na:expr ...))
             (~optional (~seq #:return (ret-acc:id) ret:expr ...))
             (~optional (~seq #:return: retexp:expr ...)))) ...)
+     #:with G (generate-temporary #'Gr)
      (template
       (let ([broken? #f])
-      (dfs/generalized G 
+      (dfs/generalized Gr
        (?? (?@ #:order order))
        (?? (?@ #:order orderexp))
        (?? (?@ #:break (λ (G b?-from b?-to acc) 
