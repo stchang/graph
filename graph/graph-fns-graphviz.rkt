@@ -1,6 +1,6 @@
 #lang racket/base
 
-(require racket/port racket/format racket/set racket/unsafe/ops)
+(require racket/port racket/format racket/set racket/unsafe/ops racket/pretty)
 (require "gen-graph.rkt" "graph-weighted.rkt")
 
 (provide graphviz)
@@ -16,7 +16,7 @@
     [(number? name) (sanatize-name (number->string name))]
     [else (sanatize-name
            (with-output-to-string
-               (λ () (display name))))]))
+               (λ () (pretty-print name))))]))
 
 ;; Return a graphviz definition for a graph
 ;; Pass a hash of vertex -> exact-nonnegative-integer? as coloring to color the nodes
