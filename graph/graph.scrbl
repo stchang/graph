@@ -52,6 +52,7 @@ A @tech{graph} has the following methods:
   @item{@defproc[(edge-weight [g graph?] [u any/c] [v any/c]) number?]{Returns the weight of the edge in the graph (if it has one). Returns +inf.0 for non-existent edges.}}
   @item{@defproc[(transpose [g graph?]) graph?]{Returns a new graph where the edges of the original graph are reversed.}}
   @item{@defproc[(graph-copy [g graph?]) graph?]{Returns a copy of the given graph.}}
+  @item{@defproc[(graph-union! [g graph?] [other graph?]) void?]{Copies the data from @racket[other] into @racket[g].}}
   ]
 
 

@@ -21,4 +21,5 @@
   (in-edges graph)
   (edge-weight graph u v)
   (transpose graph)
-  (graph-copy graph))
+  (graph-copy graph)
+  (graph-union! graph other))

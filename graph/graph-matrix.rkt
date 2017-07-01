@@ -71,6 +71,13 @@
    (define (graph-copy g)
      (struct-copy matrix-graph g
                   [matrix (mutable-array-copy (get-matrix g))]))
+   (define (graph-union! g other)
+     (for ([v (in-vertices other)])
+       (add-vertex! g v))
+     (for ([e (in-edges other)])
+       (define start (car e))
+       (define end (cadr e))
+       (add-directed-edge! g start end (edge-weight other start end))))
    (define (transpose G)
      (matrix-graph (matrix-transpose (get-matrix G))))])
 
