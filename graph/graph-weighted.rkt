@@ -82,7 +82,7 @@
      (struct-copy weighted-graph g 
                   [adjlist (hash-copy (get-adjlist g))]
                   [weights (hash-copy (get-weights g))]))
-   (define (grpah-union! g other)
+   (define (graph-union! g other)
      (for ([v (in-vertices other)])
        (add-vertex! g v))
      (for ([e (in-edges other)])
