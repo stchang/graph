@@ -141,7 +141,7 @@
 (define g/for-union2
   (undirected-graph '((c f) (d c) (d e) (d f) (e b) (e g) (f e) (f g))))
 (graph-union! g/for-union g/for-union2)
-(check-equal? g/for-union g/for-union)
+(check-equal? g/for-union g/for-copy)
 
 ; bipartite: http://www.boost.org/doc/libs/1_55_0/libs/graph/example/bipartite_example.cpp
 (define g/bi 
