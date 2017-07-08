@@ -82,6 +82,13 @@
      (struct-copy weighted-graph g 
                   [adjlist (hash-copy (get-adjlist g))]
                   [weights (hash-copy (get-weights g))]))
+   (define (graph-union! g other)
+     (for ([v (in-vertices other)])
+       (add-vertex! g v))
+     (for ([e (in-edges other)])
+       (define start (car e))
+       (define end (cadr e))
+       (add-directed-edge! g start end (edge-weight other start end))))
    (define (transpose G)
      (define G^T (mk-weighted-graph/undirected null))
      (for ([u (in-vertices G)])
