@@ -65,7 +65,7 @@
      (for ([v (in-vertices other)])
        (add-vertex! g v))
      (for ([e (in-edges other)])
-       (add-directed-edge! (car e) (cadr e))))
+       (add-directed-edge! g (car e) (cadr e))))
    (define (transpose G)
      (define adj^T (make-hash))
      (for ([u (in-vertices G)])
