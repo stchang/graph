@@ -135,6 +135,14 @@
 (check-false (eq? g/for-copy g/copy))
 (check-equal? g/for-copy g/copy)
 
+;; graph union
+(define g/for-union
+  (undirected-graph '((a c) (a d) (b a) (b d))))
+(define g/for-union2
+  (undirected-graph '((c f) (d c) (d e) (d f) (e b) (e g) (f e) (f g))))
+(graph-union! g/for-union g/for-union2)
+(check-equal? g/for-union g/for-union)
+
 ; bipartite: http://www.boost.org/doc/libs/1_55_0/libs/graph/example/bipartite_example.cpp
 (define g/bi 
   (undirected-graph 
