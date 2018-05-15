@@ -76,4 +76,4 @@
     (printf "}\n")))
   (if port
       (generate-graph)
-      (with-output-to-string (generate-graph))))
+      (with-output-to-string generate-graph)))
