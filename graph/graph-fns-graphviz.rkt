@@ -20,20 +20,22 @@
 
 ;; Return a graphviz definition for a graph
 ;; Pass a hash of vertex -> exact-nonnegative-integer? as coloring to color the nodes
-(define (graphviz g #:colors [colors #f])
-  (with-output-to-string
-   (λ ()
-    (define weighted? (weighted-graph? g))
-    (define node-count 0)
-    (define node-id-table (make-hash))
-    (define (node-id-table-ref! node)
-      (hash-ref! node-id-table node
-                 (λ ()
-                   (begin0 (format "node~a" node-count)
-                           (set! node-count (add1 node-count))))))
-    (printf "digraph G {\n")
-    ; Add vertices, color them using evenly spaced HSV colors if given colors
-    (define color-count (and colors (add1 (apply max (hash-values colors)))))
+(define (graphviz g
+                  #:colors [colors #f]
+                  #:output [port #f])
+   (define (generate-graph)
+     (parameterize ([current-output-port (or port (current-output-port))])
+       (define weighted? (weighted-graph? g))
+       (define node-count 0)
+       (define node-id-table (make-hash))
+       (define (node-id-table-ref! node)
+         (hash-ref! node-id-table node
+                    (λ ()
+                      (begin0 (format "node~a" node-count)
+                              (set! node-count (add1 node-count))))))
+       (printf "digraph G {\n")
+       ; Add vertices, color them using evenly spaced HSV colors if given colors
+       (define color-count (and colors (add1 (apply max (hash-values colors)))))
     (for ([v (in-vertices g)])
       (cond
         [(and color-count (hash-ref colors v #f))
@@ -71,5 +73,7 @@
         (node-id-table-ref! (second e))
         (if weighted? (format " [label=\"~a\"]" (edge-weight g (first e) (second e))) "")))
     (printf "\t}\n")
-    
-    (printf "}\n"))))
+    (printf "}\n")))
+  (if port
+      (generate-graph)
+      (with-output-to-string generate-graph)))

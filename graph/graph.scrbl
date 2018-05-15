@@ -823,6 +823,7 @@ Note: this is not the Hopcroft-Karp (ie fastest) bipartite matching algorithm.}
 @section{Graphviz}
 @defproc[(graphviz
           [g graph?]
+          [#:output output (or/c output-port? #f) #f]
           [#:colors colors (or/c (hash/c any/c natural-number/c) #f) #f])
          string?]{
 Returns the dotfile representation of the given graph (as a string).
@@ -834,7 +835,11 @@ output, with the maximum specified color value corresponding to 1.0 (the S and
 V components are currently unspecifiable and are always 1.0).
 
 Typically, the color argument is the output of a function from
-@secref{coloring}, e.g., @racket[(graphviz g #:colors (coloring/brelaz g))].}
+@secref{coloring}, e.g., @racket[(graphviz g #:colors (coloring/brelaz g))].
+
+The optional output argument redirects the output from a
+string to the given output port. A string is returned when
+the argument is @racket[#f].}
 
 @; other
 @section{Other}
