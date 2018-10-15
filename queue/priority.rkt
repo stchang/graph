@@ -1,12 +1,12 @@
 #lang racket/base
 (require "gen-queue.rkt")
-(require (prefix-in r: data/heap))
+(require (prefix-in r: data/heap) racket/serialize)
 (provide (all-defined-out))
 
 ;; priority queue such that on dequeue of element x,
 ;; pop all copies of x from the queue
 
-(struct priority (elements)
+(serializable-struct priority (elements)
   #:methods gen:queue
   [(define (enqueue! pq x) (r:heap-add! (priority-elements pq) x))
    (define (peek pq) (r:heap-min (priority-elements pq)))

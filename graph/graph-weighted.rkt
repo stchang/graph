@@ -4,7 +4,7 @@
 (require "adjlist-utils.rkt")
 (require "graph-unweighted.rkt")
 
-(require racket/sequence racket/set racket/unsafe/ops)
+(require racket/sequence racket/set racket/unsafe/ops racket/serialize)
 
 ; weighted, adjacency-list graph
 
@@ -17,7 +17,7 @@
 (define-syntax-rule (get-weights g) (unsafe-struct*-ref g 1))
 
 ;; A WeightedGraph is a (weighted-graph AdjacencyList Weights)
-(struct weighted-graph (adjlist weights) 
+(serializable-struct weighted-graph (adjlist weights) 
   #:methods gen:equal+hash
   [(define (equal-proc g1 g2 equal?-recur) 
      (and (equal?-recur (get-adjlist g1) (get-adjlist g2))
