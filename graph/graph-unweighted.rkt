@@ -3,7 +3,7 @@
 (require "gen-graph.rkt"
          "adjlist-utils.rkt")
 
-(require racket/sequence racket/set racket/unsafe/ops)
+(require racket/sequence racket/set racket/unsafe/ops racket/serialize)
 
 ; unweighted, adjacency-list graph
 
@@ -15,7 +15,7 @@
 (define-syntax-rule (get-adjlist g) (unsafe-struct*-ref g 0))
 
 ;; A Graph is a (graph AdjacencyList)
-(struct unweighted-graph (adjlist) 
+(serializable-struct unweighted-graph (adjlist) 
    #:methods gen:equal+hash
   [(define (equal-proc g1 g2 equal?-recur) 
      (equal?-recur (get-adjlist g1) (get-adjlist g2)))

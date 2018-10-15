@@ -1,9 +1,9 @@
 #lang racket/base
 (require "gen-queue.rkt")
-(require (prefix-in r: data/queue))
+(require (prefix-in r: data/queue) racket/serialize)
 (provide (all-defined-out))
 
-(struct fifo (elements)
+(serializable-struct fifo (elements)
   #:methods gen:queue
   [(define (enqueue! ff x) (r:enqueue! (fifo-elements ff) x))
    (define (peek ff) 
