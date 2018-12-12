@@ -23,8 +23,6 @@ env:
     - RACKET_VERSION="6.10"
     - RACKET_VERSION="6.11"
     - RACKET_VERSION="6.12"
-    - RACKET_VERSION="7.0"
-    - RACKET_VERSION="7.1"
     - RACKET_VERSION="HEAD"
     - RACKET_VERSION="RELEASE"
 matrix:
@@ -37,6 +35,9 @@ matrix:
   # no "history" in scribble
     - env: RACKET_VERSION="5.92"
     - env: RACKET_VERSION="6.0"
+  # not yet compatible
+    - RACKET_VERSION="7.0"
+    - RACKET_VERSION="7.1"
   # other
     - env: RACKET_VERSION="HEAD"
     - env: RACKET_VERSION="RELEASE"
