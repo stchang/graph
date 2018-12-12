@@ -1,6 +1,8 @@
 #lang setup/infotab
-(define scribblings '(("graph.scrbl" ())))
-(define compile-omit-paths '("tests"))
-(define test-timeouts
-  '(("tests/timing-test-in-neighbors.rkt" 180)
-    ("tests/timing-test-scc.rkt" 180)))
+
+(define version "0.3.1")
+
+(define collection 'multi)
+
+(define deps '("graph-lib" "graph-doc"))
+(define implies '("graph-lib" "graph-doc"))
