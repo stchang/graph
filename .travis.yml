@@ -23,8 +23,8 @@ before_install:
   - export PATH="${RACKET_DIR}/bin:${PATH}"
 
 install:
- - raco pkg install --deps search-auto -n graph
+ - raco pkg install --deps search-auto ./graph ./graph-lib ./graph-doc
 
 script:
- - raco test --package graph
+ - raco test --package graph-lib
  - raco setup
