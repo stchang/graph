@@ -5,7 +5,7 @@
          "graph-weighted.rkt"
          "graph-matrix.rkt"
          "graph-fns-basic.rkt"
-         "graph-fns-minspantree.rkt"
+         "graph-fns-spantree.rkt"
          "graph-fns-singlesource-shortestpaths.rkt"
          "graph-fns-allpairs-shortestpaths.rkt"
          "graph-fns-coloring.rkt"
@@ -25,7 +25,7 @@
                      [mk-matrix-graph matrix-graph])
          weighted-graph? unweighted-graph? matrix-graph?
          (all-from-out "graph-fns-basic.rkt"
-                       "graph-fns-minspantree.rkt"
+                       "graph-fns-spantree.rkt"
                        "graph-fns-singlesource-shortestpaths.rkt"
                        "graph-fns-coloring.rkt"
                        "graph-fns-maxflow.rkt"
