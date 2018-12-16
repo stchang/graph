@@ -1,7 +1,7 @@
 #lang racket/base
 
 (require "graph-fns-basic-tests.rkt"
-         "graph-fns-minspantree-tests.rkt"
+         "graph-fns-spantree-tests.rkt"
          "graph-fns-singlesource-shortestpaths-tests.rkt"
          "graph-fns-allpairs-shortestpaths-tests.rkt"
          "graph-fns-coloring-tests.rkt"

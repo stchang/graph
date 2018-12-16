@@ -3,7 +3,7 @@
 (require "../graph-weighted.rkt"
          "../graph-unweighted.rkt"
          "../graph-fns-singlesource-shortestpaths.rkt"
-         "../graph-fns-minspantree.rkt"
+         "../graph-fns-spantree.rkt"
          "../graph-fns-basic.rkt"
          "../gen-graph.rkt"
          "test-utils.rkt")
@@ -41,16 +41,16 @@
 
 (define KRUSKAL-TIME-LIMIT 80) ; ms
 
-;; mst-kruskal
-(let-values ([(res cpu real gc) (time-apply mst-kruskal (list g/cours))])
+;; min-st-kruskal
+(let-values ([(res cpu real gc) (time-apply min-st-kruskal (list g/cours))])
   (when (> real KRUSKAL-TIME-LIMIT) (displayln real))
   (check-true (< real KRUSKAL-TIME-LIMIT)))
 
 ;; most are ~3ms; v=71: ~7ms
 (define PRIM-TIME-LIMIT 20) ; ms
 
-;; mst-prim
+;; min-st-prim
 (for ([v (in-vertices g/cours)] #:when (odd? v))
-  (define-values (res cpu real gc) (time-apply mst-prim (list g/cours v)))
+  (define-values (res cpu real gc) (time-apply min-st-prim (list g/cours v)))
 ;  (when (> real PRIM-TIME-LIMIT) (displayln real) (displayln v))
   (check-true (< real PRIM-TIME-LIMIT)))
