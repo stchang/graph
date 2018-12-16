@@ -5,7 +5,7 @@
 (define deps '(("base" "6.0")))
 
 (define build-deps
-  '(("graph-lib" "0.5.1")
+  '(("graph-lib" "0.5.2")
     "racket-doc"
     "math-doc" "math-lib"
     "scribble-lib"))
@@ -16,4 +16,4 @@
 
 (define pkg-authors '(stchang))
 
-(define version "0.5.1")
+(define version "0.5.2")

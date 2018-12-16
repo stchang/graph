@@ -1,2 +1,3 @@
+0.5.2 2019-07-26: add max spanning tree fns
 0.5.1 2019-07-25: change generic graph interface: add #:default to edge-weight
 0.4.0 2019-07-24: split into -lib, -doc, -test pkgs

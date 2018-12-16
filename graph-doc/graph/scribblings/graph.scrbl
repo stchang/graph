@@ -483,7 +483,7 @@ algorithm makes use of the special identifiers @racket[$v] and @racket[$from].
     #:return: (values (d->hash) (π->hash))))
     )
 
-@racket[bfs], @racket[fewest-vertices-path], @racket[cc/bfs], @racket[mst-prim], 
+@racket[bfs], @racket[fewest-vertices-path], @racket[cc/bfs], @racket[min-st-prim], @racket[max-st-prim]
 and @racket[dijkstra] all use the @racket[do-bfs] form.}
                
 @defproc[(fewest-vertices-path [G graph?] [source any/c] [target any/c]) (or/c list? #f)]{
@@ -710,12 +710,28 @@ Indicates whether a graph is directed and acyclic.}
 
 @defproc[(scc [g graph?]) (listof list?)]{Calculates the strongly connected components of a graph using Tarjan's algorithm @cite{tarjan-scc}. @racket[g] should be a directed graph. Returns a list of lists of vertices, where each sublist is a strongly connected subgraph.}
                                        
-@; min span trees -------------------------------------------------------------
-@section{Minimum Spanning Tree}
+@; span trees -------------------------------------------------------------
+@section{Spanning Trees}
 
-@defproc[(mst-kruskal [g graph?]) (listof (list/c any/c any/c))]{Computes the minimum spanning tree using Kruskal's algorithm and the @racket[data/union-find] data structure. Returns a list of edges.}
+@defproc[(min-st-kruskal [g graph?]) (listof (list/c any/c any/c))]{Computes the minimum spanning tree using Kruskal's algorithm and the @racket[data/union-find] data structure. Returns a list of edges.
+  @history[#:added "0.5.2"]
+}
 
-@defproc[(mst-prim [g graph?] [source any/c]) (listof (list/c any/c any/c))]{Computes the minimum spanning tree of a graph using Prim's algorithm, which is based on breadth-first search. Returns a list of edges.}
+@defproc[(max-st-kruskal [g graph?]) (listof (list/c any/c any/c))]{Computes the maximum spanning tree using Kruskal's algorithm and the @racket[data/union-find] data structure. Returns a list of edges.
+  @history[#:added "0.5.2"]
+}
+
+@defproc[(min-st-prim [g graph?] [source any/c]) (listof (list/c any/c any/c))]{Computes the minimum spanning tree of a graph using Prim's algorithm, which is based on breadth-first search. Returns a list of edges.
+  @history[#:added "0.5.2"]
+}
+
+@defproc[(max-st-prim [g graph?] [source any/c]) (listof (list/c any/c any/c))]{Computes the maximum spanning tree of a graph using Prim's algorithm, which is based on breadth-first search. Returns a list of edges.
+  @history[#:added "0.5.2"]
+}
+
+@defproc[(mst-kruskal [g graph?]) (listof (list/c any/c any/c))]{Deprecated. Alias for @racket[min-st-kruskal].}
+
+@defproc[(mst-prim [g graph?] [source any/c]) (listof (list/c any/c any/c))]{Deprecated. Alias for @racket[min-st-prim].}
 
 @; single source shortest paths -----------------------------------------------
 @section{Single-source Shortest Paths}

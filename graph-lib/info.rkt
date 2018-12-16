@@ -6,4 +6,4 @@
 
 (define deps '(("base" "6.0") "gen-queue-lib" "data-lib" "math-lib"))
 
-(define version "0.5.1")
+(define version "0.5.2")
