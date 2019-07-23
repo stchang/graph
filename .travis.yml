@@ -4,33 +4,15 @@ env:
   global:
     - RACKET_DIR=~/racket
   matrix:
-    - RACKET_VERSION="5.3.2"
-    - RACKET_VERSION="5.3.3"
-    - RACKET_VERSION="5.3.4"
-    - RACKET_VERSION="5.3.5"
-    - RACKET_VERSION="5.92"
-    - RACKET_VERSION="6.0"
-    - RACKET_VERSION="6.1"
-    - RACKET_VERSION="6.1.1"
-    - RACKET_VERSION="6.2"
-    - RACKET_VERSION="6.3"
-    - RACKET_VERSION="6.4"
-    - RACKET_VERSION="6.5"
-    - RACKET_VERSION="6.6"
-    - RACKET_VERSION="6.7"
-    - RACKET_VERSION="6.8"
+    - RACKET_VERSION="6.12"
+    - RACKET_VERSION="7.0"
+    - RACKET_VERSION="7.1"
+    - RACKET_VERSION="7.2"
+    - RACKET_VERSION="7.3"
     - RACKET_VERSION="HEAD"
     - RACKET_VERSION="RELEASE"
 matrix:
   allow_failures:
-  # no "raco test --package"
-    - env: RACKET_VERSION="5.3.2"
-    - env: RACKET_VERSION="5.3.3"
-    - env: RACKET_VERSION="5.3.4"
-    - env: RACKET_VERSION="5.3.5"
-  # no "history" in scribble
-    - env: RACKET_VERSION="5.92"
-    - env: RACKET_VERSION="6.0"
   # other
     - env: RACKET_VERSION="HEAD"
     - env: RACKET_VERSION="RELEASE"
