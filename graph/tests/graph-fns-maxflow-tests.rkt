@@ -100,16 +100,18 @@
     "bipartite graph 1,3,5 and 0,2,4"))
                                                  
 (define g26.8 
-  (mk-unweighted-graph/undirected '((1 6) (2 6) (2 8) (3 7) (3 8) (3 9) (4 8) (5 8))))
+  (mk-unweighted-graph/undirected
+   '((1 6) (2 6) (2 8) (3 7) (3 8) (3 9) (4 8) (5 8))))
 (check-not-false (bipartite? g26.8))
 (check-equal? (length (maximum-bipartite-matching g26.8)) 3)
 
 (define bipartite-boost
-  (mk-unweighted-graph/undirected '((0 1) (0 4) (1 2) (2 6) (3 4) (3 8) (4 5) (4 7) (5 6) (6 7) (7 10) (8 9) (9 10))))
+  (mk-unweighted-graph/undirected
+   '((0 1) (0 4) (1 2) (2 6) (3 4) (3 8) (4 5) (4 7) (5 6) (6 7) (7 10) (8 9) (9 10))))
 (define L-R-boost (bipartite? bipartite-boost))
 (check-not-false L-R-boost)
-(check-equal? (apply set (first L-R-boost)) (set 1 6 4 8 10))
-(check-equal? (apply set (second L-R-boost)) (set 0 2 3 5 7 9))
+(check-equal? (list->set (map list->set L-R-boost))
+              (set (set 1 6 4 8 10) (set 0 2 3 5 7 9)))
 
 (define non-bipartite-boost 
   (mk-unweighted-graph/undirected 

@@ -116,19 +116,35 @@
                                (set 'b 'c 'd)
                                (set 'e))))
 
+;; ----------------------------------------------------------------------------
 ;; dfs parens: http://www.boost.org/doc/libs/1_55_0/libs/graph/example/dfs_parenthesis.cpp
 
 (define g/parens
   (undirected-graph '((0 2) (1 1) (1 3) (2 1) (2 3) (3 1) (3 4) (4 0) (4 1))))
-(check-equal?
- (with-output-to-string
-  (λ ()
-    (do-dfs g/parens
-     #:prologue: (printf "(~a" $v)
-     #:epilogue: (printf "~a)" $v))))
- "(0(2(1(3(44)3)1)2)0)")
+(define g/parens/dfs-str
+  (with-output-to-string
+    (λ ()
+      (do-dfs g/parens
+        #:prologue: (printf "(~a" $v)
+        #:epilogue: (printf "~a)" $v)
+        #:order (λ (vs) (sort vs <)))))) ; sort to start at 0 node
+(define (vs->parens-str vs)
+  (string-join
+   (append (map (λ (v) (format "(~a" v)) vs)
+           (map (λ (v) (format "~a)" v)) (reverse vs)))
+   ""))
+(define g/parens/expecteds
+  (map vs->parens-str '((0 2 1 3 4) (0 4 1 3 2)
+                        (0 2 1 4 3) (0 4 1 2 3)
+                        (0 2 3 1 4) (0 4 3 1 2)
+                        (0 2 3 4 1) (0 4 3 2 1))))
 
-;; graph copying
+(check-not-false
+ (member g/parens/dfs-str g/parens/expecteds string=?)
+ (format "expected result: ~a, to be one of: ~a"
+         g/parens/dfs-str g/parens/expecteds))
+
+;; graph copying --------------------------------------------------------------
 (define g/for-copy
   (undirected-graph '((a c) (a d) (b a) (b d) (c f) (d c) (d e) (d f) (e b) (e g) (f e) (f g))))
 (define g/copy (graph-copy g/for-copy))
