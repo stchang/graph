@@ -3,8 +3,8 @@
 (require "graph-property.rkt"
          "utils.rkt"
          "gen-graph.rkt"
-         "../queue/gen-queue.rkt"
-         (only-in "../queue/fifo.rkt" mk-empty-fifo))
+         data/gen-queue/gen-queue
+         (only-in data/gen-queue/fifo mk-empty-fifo))
 
 (require (for-syntax syntax/parse syntax/parse/experimental/template
                      racket/base racket/syntax)

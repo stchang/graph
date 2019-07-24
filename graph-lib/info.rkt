@@ -4,8 +4,6 @@
 
 (define collection 'multi)
 
-(define deps '(("base" "6.0") "data-lib" "math-lib"))
-
-(define build-deps '("rackunit-lib"))
+(define deps '(("base" "6.0") "gen-queue-lib" "data-lib" "math-lib"))
 
 (define version "0.4.0")

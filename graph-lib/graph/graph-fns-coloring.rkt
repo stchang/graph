@@ -1,6 +1,6 @@
 #lang racket/base
 
-(require racket/set racket/function racket/unsafe/ops)
+(require racket/set racket/function racket/unsafe/ops (prefix-in r: data/heap))
 
 (require "graph-property.rkt"
          "utils.rkt"
@@ -102,7 +102,6 @@
   (define (color v) (hash-ref coloring v))
   (not (for/or ([e (in-edges G)]) (= (color (unsafe-car e)) (color (unsafe-car (unsafe-cdr e)))))))
 
-(require (prefix-in r: data/heap))
 ;; returns the vertices of the graph in "smallest-last" order
 ;; This is the Welsh-Powell heuristic
 ;; ie v with smallest degree is last, remove v, then repeat for 2nd to last, etc

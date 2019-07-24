@@ -1,10 +1,10 @@
 #lang racket
 
-(require "../graph-weighted.rkt"
-         "../graph-unweighted.rkt"
-         "../graph-fns-maxflow.rkt"
-         "../gen-graph.rkt")
-(require rackunit)
+(require graph/graph-weighted
+         graph/graph-unweighted
+         graph/graph-fns-maxflow
+         graph/gen-graph
+         rackunit)
 
 (define g26.1
   (mk-weighted-graph/directed

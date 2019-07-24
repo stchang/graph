@@ -2,9 +2,9 @@
 
 (require rackunit racket/unsafe/ops file/gunzip)
 
-(require "../graph-weighted.rkt"
-         "../graph-fns-basic.rkt"
-         "../gen-graph.rkt"
+(require graph/graph-weighted
+         graph/graph-fns-basic
+         graph/gen-graph
          "test-utils.rkt")
 
 ;; times determined from running cmd line racket, on 2.40Ghz quad-core cpu (Q6600)

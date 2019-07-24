@@ -1,11 +1,9 @@
 #lang racket
-(require "../graph-weighted.rkt"
-         "../graph-fns-singlesource-shortestpaths.rkt"
-         "../graph-fns-basic.rkt"
-         "test-utils.rkt")
-
-(require rackunit)
-
+(require graph/graph-weighted
+         graph/graph-fns-singlesource-shortestpaths
+         graph/graph-fns-basic
+         "test-utils.rkt"
+         rackunit)
 
 ;; single-source shortest path tests ------------------------------------------
 
