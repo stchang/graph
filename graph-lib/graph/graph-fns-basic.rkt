@@ -3,7 +3,7 @@
 (require "graph-property.rkt"
          "utils.rkt"
          "gen-graph.rkt"
-         data/gen-queue/gen-queue
+         data/gen-queue
          (only-in data/gen-queue/fifo mk-empty-fifo))
 
 (require (for-syntax syntax/parse syntax/parse/experimental/template
