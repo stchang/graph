@@ -1,13 +1,13 @@
 #lang racket
-(require "../graph-unweighted.rkt" 
-         "../graph-weighted.rkt"
-         "../gen-graph.rkt" 
-         "../graph-fns-basic.rkt"
-         "../graph-fns-singlesource-shortestpaths.rkt"
-         "../graph-property.rkt"
-         "../utils.rkt"
-         "test-utils.rkt")
-(require rackunit)
+(require graph/graph-unweighted
+         graph/graph-weighted
+         graph/gen-graph
+         graph/graph-fns-basic
+         graph/graph-fns-singlesource-shortestpaths
+         graph/graph-property
+         graph/utils
+         "test-utils.rkt"
+         rackunit)
 
 ;; adjacency list tests -- Thanks to Scott Klarenbach
 (define g-adj1 (mk-unweighted-graph/adj '((a b c) (b c d))))

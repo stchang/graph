@@ -1,6 +1,6 @@
 #lang setup/infotab
 
-(define compile-omit-paths '("tests"))
+(define compile-omit-paths '("graph"))
 
 (define test-timeouts
   '(("graph/timing-test-in-neighbors.rkt" 180)

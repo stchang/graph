@@ -1,6 +1,5 @@
 #lang racket/base
-(require "../main.rkt" "../graph-unweighted.rkt")
-(require rackunit)
+(require graph graph/graph-unweighted rackunit)
 
 (define (string-contains? input s) (regexp-match? s input))
 

@@ -1,9 +1,8 @@
 #lang racket
-(require "../graph-weighted.rkt"
-         "../graph-fns-minspantree.rkt"
-         "test-utils.rkt")
-
-(require rackunit)
+(require graph/graph-weighted
+         graph/graph-fns-minspantree
+         "test-utils.rkt"
+         rackunit)
 
 ;; mst tests ------------------------------------------------------------------
 (define g23.1 

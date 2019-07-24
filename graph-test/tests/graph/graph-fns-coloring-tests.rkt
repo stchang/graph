@@ -1,10 +1,9 @@
 #lang racket
 
-(require "../graph-unweighted.rkt" 
-         "../gen-graph.rkt" 
-         "../graph-fns-coloring.rkt")
-
-(require rackunit)
+(require graph/graph-unweighted
+         graph/gen-graph
+         graph/graph-fns-coloring
+         rackunit)
 
 ; graph coloring tests --------------------------------------------------------
 (define g-2color (mk-unweighted-graph/undirected '((A B) (B C) (B D))))

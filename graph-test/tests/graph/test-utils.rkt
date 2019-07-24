@@ -1,7 +1,6 @@
 #lang racket
 
-(require "../main.rkt")
-(require rackunit)
+(require graph rackunit)
 
 (provide (all-defined-out))
 

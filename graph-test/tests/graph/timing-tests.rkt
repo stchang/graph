@@ -1,14 +1,13 @@
 #lang racket
 
-(require "../graph-weighted.rkt"
-         "../graph-unweighted.rkt"
-         "../graph-fns-singlesource-shortestpaths.rkt"
-         "../graph-fns-minspantree.rkt"
-         "../graph-fns-basic.rkt"
-         "../gen-graph.rkt"
-         "test-utils.rkt")
-
-(require rackunit)
+(require graph/graph-weighted
+         graph/graph-unweighted
+         graph/graph-fns-singlesource-shortestpaths
+         graph/graph-fns-minspantree
+         graph/graph-fns-basic
+         graph/gen-graph
+         "test-utils.rkt"
+         rackunit)
 
 ;; limits determined running cmd line racket, on 2.40Ghz quad-core
 

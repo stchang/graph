@@ -2,9 +2,9 @@
 
 (require rackunit racket/unsafe/ops file/gunzip)
 
-(require "../graph-weighted.rkt"
-         "../graph-fns-basic.rkt"
-         "../gen-graph.rkt"
+(require graph/graph-weighted
+         graph/graph-fns-basic
+         graph/gen-graph
          "test-utils.rkt")
 
 ; test for computing traversal speed of in-neighbors

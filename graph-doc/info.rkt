@@ -6,12 +6,8 @@
 
 (define build-deps
   '("graph-lib"
-    "math-lib"
-    "rackunit-lib"
     "racket-doc"
-    "scribble-lib"
-    "data-doc"
-    "math-doc"))
+    "scribble-lib"))
 
 (define update-implies '("graph-lib"))
 

@@ -1,11 +1,10 @@
 #lang racket
-(require "../graph-unweighted.rkt"
-         "../graph-weighted.rkt"
-         "../graph-matrix.rkt"
-         "../graph-fns-allpairs-shortestpaths.rkt"
-         "test-utils.rkt")
-
-(require rackunit)
+(require graph/graph-unweighted
+         graph/graph-weighted
+         graph/graph-matrix
+         graph/graph-fns-allpairs-shortestpaths
+         "test-utils.rkt"
+         rackunit)
 
 
 ;; all pairs shortest paths tests ------------------------------------------
