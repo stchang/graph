@@ -48,7 +48,8 @@ A @tech{graph} has the following methods:
   @item{@defproc[(in-neighbors [g graph?] [v any/c]) sequence?]{Returns a sequence of vertex @racket[v]'s neighbors in the graph.}}
   @item{@defproc[(get-edges [g graph?]) list?]{Returns a list of edges in the graph.}}
   @item{@defproc[(in-edges [g graph?]) sequence?]{Returns a sequence of edges in the graph.}}
-  @item{@defproc[(edge-weight [g graph?] [u any/c] [v any/c]) number?]{Returns the weight of the edge in the graph (if it has one). Returns +inf.0 for non-existent edges.}}
+  @item{@defproc[(edge-weight [g graph?] [u any/c] [v any/c] [#:default default any/c +inf.0]) number?]{Returns the weight of the edge in the graph, if it has one. For non-existent edges, returns the specified default.
+  @history[#:changed "0.5.1" "added default argument"]}}
   @item{@defproc[(transpose [g graph?]) graph?]{Returns a new graph where the edges of the original graph are reversed.}}
   @item{@defproc[(graph-copy [g graph?]) graph?]{Returns a copy of the given graph.}}
   @item{@defproc[(graph-union! [g graph?] [other graph?]) void?]{Copies the data from @racket[other] into @racket[g].}}

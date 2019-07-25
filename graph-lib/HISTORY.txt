@@ -1,0 +1,2 @@
+0.5.1 2019-07-25: change generic graph interface: add #:default to edge-weight
+0.4.0 2019-07-24: split into -lib, -doc, -test pkgs

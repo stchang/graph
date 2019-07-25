@@ -19,8 +19,7 @@
 (define (maxflow G s t)
   (define G-residual (graph-copy G))
   (define-edge-property G-residual f)
-  (define (cf u v) (- (if (has-edge? G u v) (edge-weight G u v) 0)
-                      (f u v #:default 0)))
+  (define (cf u v) (- (edge-weight G u v #:default 0) (f u v #:default 0)))
   (let apath-loop ([augmenting-path (fewest-vertices-path G-residual s t)])
     (when augmenting-path
       (define-values (apath-rescap critical-edges) ; ie, cf(p)

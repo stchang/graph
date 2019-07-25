@@ -32,10 +32,10 @@
    (define (get-neighbors g v) (sequence->list (in-weighted-graph-neighbors g v)))
    (define (in-neighbors g v) (in-weighted-graph-neighbors g v))
    (define (vertex=? g u v) (equal? u v))
-   (define (edge-weight g u v) ; ok to return infty for non-existent edge?
+   (define (edge-weight g u v #:default [default +inf.0])
 ;     (unless (and (has-vertex? g u) (has-vertex? g v))
 ;       (error 'edge-weight "non-existent edge ~a ~a" u v))
-     (hash-ref (get-weights g) (list u v) +inf.0))
+     (hash-ref (get-weights g) (list u v) default))
    (define (add-directed-edge! g u v [weight #f])
      (define adj (get-adjlist g))
      (add-edge@ adj u v)

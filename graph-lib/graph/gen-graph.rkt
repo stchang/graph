@@ -19,7 +19,7 @@
   (in-neighbors graph v)
   (get-edges graph)
   (in-edges graph)
-  (edge-weight graph u v)
+  (edge-weight graph u v #:default [default])
   (transpose graph)
   (graph-copy graph)
   (graph-union! graph other))
