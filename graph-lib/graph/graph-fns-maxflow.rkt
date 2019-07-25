@@ -19,7 +19,8 @@
 (define (maxflow G s t)
   (define G-residual (graph-copy G))
   (define-edge-property G-residual f)
-  (define (cf u v) (- (edge-weight G-residual u v) (f u v #:default 0)))
+  (define (cf u v) (- (if (has-edge? G u v) (edge-weight G u v) 0)
+                      (f u v #:default 0)))
   (let apath-loop ([augmenting-path (fewest-vertices-path G-residual s t)])
     (when augmenting-path
       (define-values (apath-rescap critical-edges) ; ie, cf(p)
@@ -49,6 +50,9 @@
         (remove-directed-edge! G-residual (first e) (second e)))
       (apath-loop (fewest-vertices-path G-residual s t))))
   ;; filter out negative flows
+  #;(for/hash ([e (in-edges G)]
+             #:when (positive? (f (first e) (second e) #:default 0)))
+    (values e (f (first e) (second e))))
   (for/hash ([(k v) (in-hash (f->hash))] #:when (positive? v)) (values k v)))
 
 ; linear time bipartite check (via 2-coloring)
@@ -65,7 +69,7 @@
      (color-set! $v (and $from (not (color $from)))) ; set color to opposite of parent
      (if (color $v) (add-to-L $v $acc) (add-to-R $v $acc))
    #:return: (and (not $broke?) $acc)))
-   
+
 (define (maximum-bipartite-matching G)
   (define L-R (bipartite? G))
   (unless L-R (error 'maximum-bipartite-matching "not given a bipartite graph"))
@@ -81,4 +85,3 @@
   (filter-not 
    (λ (e) (or (vertex=? G-prime (first e) s) (vertex=? G-prime (second e) t)))
    (hash-keys res)))
-  

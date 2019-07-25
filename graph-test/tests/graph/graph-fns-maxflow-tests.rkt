@@ -33,7 +33,6 @@
     (check-equal? (in v) (out v))))
 
 (validate-flow g26.1 flow26.1 's 't)
-
 (check-equal? (for/sum ([(e flow) (in-hash flow26.1)] 
                         #:when (equal? 's (first e))) flow)
               23)
@@ -102,8 +101,22 @@
 (define g26.8 
   (mk-unweighted-graph/undirected
    '((1 6) (2 6) (2 8) (3 7) (3 8) (3 9) (4 8) (5 8))))
-(check-not-false (bipartite? g26.8))
-(check-equal? (length (maximum-bipartite-matching g26.8)) 3)
+(define L-R26.8 (bipartite? g26.8))
+(check-not-false L-R26.8)
+(define matching26.8 (maximum-bipartite-matching g26.8))
+(check-equal? (length matching26.8) 3)
+(check-true
+ (set-empty?
+  (set-intersect (map first matching26.8) (map second matching26.8))))
+;; check no dups
+(check-equal? (set-count (map first matching26.8))
+              (set-count (list->set (map first matching26.8)))
+              "no dups 1")
+(check-equal? (set-count (map second matching26.8))
+              (set-count (list->set (map second matching26.8)))
+              "no dups 2")
+(check-true (subset? (map first matching26.8) (second L-R26.8)))
+(check-true (subset? (map second matching26.8) (first L-R26.8)))
 
 (define bipartite-boost
   (mk-unweighted-graph/undirected
@@ -124,6 +137,20 @@
                                     (c 2) (c 3)
                                     (d 3) (d 4) (d 5)
                                     (e 5))))
-
-(check-not-false (bipartite? bipartite-cmu))
-(check-equal? (length (maximum-bipartite-matching bipartite-cmu)) 5)
+(define L-R-cmu (bipartite? bipartite-cmu))
+(check-not-false L-R-cmu)
+(define matching-cmu (maximum-bipartite-matching bipartite-cmu))
+;; should be complete matching
+(check-equal? (length matching-cmu) 5)
+(check-true
+ (set-empty?
+  (set-intersect (map first matching-cmu) (map second matching-cmu))))
+;; check no dups
+(check-equal? (set-count (map first matching-cmu))
+              (set-count (list->set (map first matching-cmu))))
+(check-equal? (set-count (map second matching-cmu))
+              (set-count (list->set (map second matching-cmu))))
+(check-equal? (list->set (map first matching-cmu)) ; every node matched
+              (list->set (second L-R-cmu)))
+(check-equal? (list->set (map second matching-cmu))
+              (list->set (first L-R-cmu)))
