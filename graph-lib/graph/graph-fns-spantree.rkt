@@ -7,8 +7,8 @@
          "graph-fns-basic.rkt"
          "utils.rkt"
          "graph-weighted.rkt"
-         (only-in "../queue/priority.rkt" mk-empty-priority)
-         (only-in "../queue/fifo.rkt" mk-empty-fifo))
+         (only-in data/gen-queue/priority mk-empty-priority)
+         (only-in data/gen-queue/fifo mk-empty-fifo))
 
 (provide min-st-kruskal max-st-kruskal
          min-st-prim max-st-prim)
