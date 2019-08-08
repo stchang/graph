@@ -9,5 +9,4 @@
 
 (define pkg-authors '(stchang))
 
-(define version "0.4.0")
-
+(define version "0.5.2")
