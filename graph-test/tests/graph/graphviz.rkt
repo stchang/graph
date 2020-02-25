@@ -57,20 +57,20 @@
 ;; 	subgraph D {
 ;; 	}
 ;; }
-(check-true (string-contains? bf-viz-color "[color=\"0.0 1.0 1.0\"]"))
-(check-true (string-contains? bf-viz-color "[color=\"0.333 1.0 1.0\"]"))
-(check-true (string-contains? bf-viz-color "[color=\"0.666 1.0 1.0\"]"))
-(check-true (string-contains? bf-viz-color "[color=\"0.0 1.0 1.0\"]"))
-(check-true (string-contains? bf-viz-color "[color=\"0.333 1.0 1.0\"]"))
+(check-true (string-contains? bf-viz-color "color=\"0.0 1.0 1.0\""))
+(check-true (string-contains? bf-viz-color "color=\"0.333 1.0 1.0\""))
+(check-true (string-contains? bf-viz-color "color=\"0.666 1.0 1.0\""))
+(check-true (string-contains? bf-viz-color "color=\"0.0 1.0 1.0\""))
+(check-true (string-contains? bf-viz-color "color=\"0.333 1.0 1.0\""))
 (check-butterfly-viz-output bf-viz-color)
 
 (define bf-viz-color-brelaz 
   (graphviz butterfly #:colors (coloring/brelaz butterfly)))
-(check-true (string-contains? bf-viz-color-brelaz "[color=\"0.333 1.0 1.0\"]"))
-(check-true (string-contains? bf-viz-color-brelaz "[color=\"0.666 1.0 1.0\"]"))
-(check-true (string-contains? bf-viz-color-brelaz "[color=\"0.0 1.0 1.0\"]"))
-(check-true (string-contains? bf-viz-color-brelaz "[color=\"0.333 1.0 1.0\"]"))
-(check-true (string-contains? bf-viz-color-brelaz "[color=\"0.666 1.0 1.0\"]"))
+(check-true (string-contains? bf-viz-color-brelaz "color=\"0.333 1.0 1.0\""))
+(check-true (string-contains? bf-viz-color-brelaz "color=\"0.666 1.0 1.0\""))
+(check-true (string-contains? bf-viz-color-brelaz "color=\"0.0 1.0 1.0\""))
+(check-true (string-contains? bf-viz-color-brelaz "color=\"0.333 1.0 1.0\""))
+(check-true (string-contains? bf-viz-color-brelaz "color=\"0.666 1.0 1.0\""))
 (check-butterfly-viz-output bf-viz-color-brelaz)
 
 (define fruit-labeled
