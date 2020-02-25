@@ -56,8 +56,8 @@
                 ([e (in-edges g)]
                  #:when (and (not (set-member? added e))
                              (has-edge? g (second e) (first e))
-                             (= (edge-weight g (first e) (second e))
-                                (edge-weight g (second e) (first e)))))
+                             (equal? (edge-weight g (first e) (second e))
+                                     (edge-weight g (second e) (first e)))))
         (printf "\t\t~a -> ~a~a;\n" 
           (node-id-table-ref! (first e))
           (node-id-table-ref! (second e))
