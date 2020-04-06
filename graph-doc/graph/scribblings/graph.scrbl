@@ -495,7 +495,7 @@ Consumes a graph and two vertices, and returns the shortest path (in terms of nu
 @defproc[(dfs [g graph?])
          (values (hash/c any/c number? #:immutable #f) (hash/c any/c any/c #:immutable #f)
                  (hash/c any/c number? #:immutable #f))]{
-Standard textbook depth-first search algorith, ie like in @cite["CLRS"]. 
+Standard textbook depth-first search algorithm, ie like in @cite["CLRS"]. 
 Consumes a graph and returns three hashes: one that maps a vertex to its 
 "discovery time", another that maps a vertex to its predecessor in the search, 
 and a third that maps a vertex to its "finishing time".}
