@@ -136,10 +136,21 @@
   (weighted-graph adj weights))
 
 (define (mk-directed-graph es [ws #f])
+  (unless (list? es)
+    (raise-argument-error 'directed-graph "list?" 0 es))
   (cond [ws
+         (unless (list? ws)
+           (raise-argument-error 'directed-graph "list?" ws))
+         (unless (= (length ws) (length es))
+           (raise-arguments-error 'directed-graph
+                                  "number of edges and weights not equal"
+                                  "edges" es
+                                  "weights" ws))
          (define adj (make-hash))
          (define weights (make-hash))
          (for ([e es] [w ws]) 
+           (unless (and (list? e) (= (length e) 2))
+             (raise-argument-error 'directed-graph "edge, as length 2 list" e))
            (apply add-edge@ adj e)
            (add-vertex@ adj (unsafe-car (unsafe-cdr e)))
            (hash-set! weights e w))
@@ -147,10 +158,21 @@
         [else (mk-unweighted-graph/directed es)]))
 
 (define (mk-undirected-graph es [ws #f])
+  (unless (list? es)
+    (raise-argument-error 'undirected-graph "list?" 0 es))
   (cond [ws
+         (unless (list? ws)
+           (raise-argument-error 'undirected-graph "list?" ws))
+         (unless (= (length ws) (length es))
+           (raise-arguments-error 'undirected-graph
+                                  "number of edges and weights not equal"
+                                  "edges" es
+                                  "weights" ws))
          (define adj (make-hash))
          (define weights (make-hash))
          (for ([e es] [w ws])
+           (unless (and (list? e) (= (length e) 2))
+             (raise-argument-error 'undirected-graph "edge, as length 2 list" e))
            (apply add-edge@ adj e)
            (apply add-edge@ adj (reverse e))
            (hash-set! weights e w)

@@ -86,8 +86,11 @@
 (define (mk-unweighted-graph/undirected es)
   (define adj (make-hash))
   (for ([e es])
-    (cond [(list? e) (apply add-edge@ adj e)
-                     (apply add-edge@ adj (reverse e))]
+    (cond [(list? e)
+           (unless (= (length e) 2)
+             (raise-argument-error 'undirected-graph "edge, as length 2 list" e))
+           (apply add-edge@ adj e)
+           (apply add-edge@ adj (reverse e))]
           [else (add-vertex@ adj e)])) ; neighborless vertices
   (unweighted-graph adj))
 
@@ -95,8 +98,11 @@
 (define (mk-unweighted-graph/directed es)
   (define adj (make-hash))
   (for ([e es]) 
-    (cond [(list? e) (apply add-edge@ adj e)
-                     (add-vertex@ adj (unsafe-car (unsafe-cdr e)))]
+    (cond [(list? e)
+           (unless (= (length e) 2)
+             (raise-argument-error 'directed-graph "edge, as length 2 list" e))
+           (apply add-edge@ adj e)
+           (add-vertex@ adj (unsafe-car (unsafe-cdr e)))]
           [else (add-vertex@ adj e)]))
   (unweighted-graph adj))
 

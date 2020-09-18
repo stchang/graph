@@ -138,7 +138,7 @@ Creates a weighted graph that implements @racket[gen:graph] from a list of weigh
   (edge-weight g 'b 'd)
   ]}
 
-@defproc[(undirected-graph [edges (listof (list/c any/c any/c any/c))]
+@defproc[(undirected-graph [edges (listof (list/c any/c any/c))]
                            [wgts (listof any/c) #f])
          (and/c graph? (or/c unweighted-graph? weighted-graph?))]{
   Creates either a weighted or unweighted graph that implements @racket[gen:graph] from a list of undirected edges and possibly a list of weights. Each edge is represented by a list of two vertices. Vertices can be any Racket values comparable with @racket[equal?]. If a list of weights is provided, then the result is a weighted graph. Otherwise, the result is an unweighted graph. The number of weights must equal the number of edges. Weights can be any Racket values comparable with @racket[equal?]. Note that some algorithms will fail on non-numerical egde weights.
@@ -156,7 +156,7 @@ Creates a weighted graph that implements @racket[gen:graph] from a list of weigh
   ]
 }
                                           
-@defproc[(directed-graph [edges (listof (list/c any/c any/c any/c))]
+@defproc[(directed-graph [edges (listof (list/c any/c any/c))]
                          [wgts (listof any/c) #f])
          (and/c graph? (or/c unweighted-graph? weighted-graph?))]{
 Creates either a weighted or unweighted graph that implements @racket[gen:graph] from a list of directed edges and possibly a list of weights. Each edge is represented by a list of two vertices where the first vertex in the list is the source and the second vertex is the destination. Vertices can be any Racket values comparable with @racket[equal?]. If a list of weights is provided, then the result is a weighted graph. Otherwise, the result is an unweighted graph. The number of weights must equal the number of edges. Non-existent edges return an infinite weight, even for non-existent vertices. Weights can be any Racket values comparable with @racket[equal?]. Note that some algorithms will fail on non-numerical egde weights.

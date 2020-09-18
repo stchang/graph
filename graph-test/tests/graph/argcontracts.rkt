@@ -1,0 +1,15 @@
+#lang racket
+(require graph
+         rackunit)
+(check-exn exn:fail:contract? (λ () (undirected-graph #f (list 0 1))))
+(check-exn exn:fail:contract? (λ () (undirected-graph null 1)))
+(check-exn exn:fail:contract? (λ () (undirected-graph (list #f #t) (list 0 1))))
+(check-exn exn:fail:contract? (λ () (undirected-graph (list 1) null)))
+(check-exn exn:fail:contract? (λ () (undirected-graph #f)))
+(check-exn exn:fail:contract? (λ () (undirected-graph (list (list 1)))))
+(check-exn exn:fail:contract? (λ () (directed-graph #f (list 0 1))))
+(check-exn exn:fail:contract? (λ () (directed-graph null 1)))
+(check-exn exn:fail:contract? (λ () (directed-graph (list #f #t) (list 0 1))))
+(check-exn exn:fail:contract? (λ () (directed-graph (list 1) null)))
+(check-exn exn:fail:contract? (λ () (directed-graph #f)))
+(check-exn exn:fail:contract? (λ () (directed-graph (list (list 1)))))
