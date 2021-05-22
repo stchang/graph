@@ -15,7 +15,7 @@ Generic graph library for Racket.
 Requires Racket 6.0 or later.
 
 @(define the-eval (make-base-eval))
-@(the-eval '(require graph))
+@(the-eval '(require graph math/matrix))
 
 @author[@author+email["Stephen Chang" "stchang@racket-lang.org"]]
 
@@ -203,7 +203,28 @@ NOTE: @racket[matrix-graph] is implemented with @racket[matrix], so the same typ
   (floyd-warshall g)
   ]
 }
-                                          
+
+@defproc[(matrix->matrix-graph [mtx array?]) matrix-graph?]{
+  Creates a matrix graph from a matrix. Vertices are the (0-based)
+row/column numbers and the weights are the number at each row-column. Use
+@racket[#f] to indicate no edge.
+
+@examples[#:eval the-eval
+  (define g (matrix->matrix-graph
+             (matrix [[0 3 8 #f -4]
+                      [#f 0 #f 1 7]
+                      [#f 4 0 #f #f]
+                      [2 #f -5 0 #f]
+                      [#f #f #f 6 0]])))
+  (graph? g)
+  (matrix-graph? g)
+  (has-edge? g 0 1)
+  (has-edge? g 1 0)
+  (edge-weight g 0 1)
+  (edge-weight g 1 0)
+  (floyd-warshall g)
+  ]
+}
 
 @; graph properties -----------------------------------------------------------
 @section{Graph properties}

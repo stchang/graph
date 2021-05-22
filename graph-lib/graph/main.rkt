@@ -23,7 +23,7 @@
                      [mk-directed-graph directed-graph]
                      [mk-undirected-graph undirected-graph]
                      [mk-matrix-graph matrix-graph])
-         weighted-graph? unweighted-graph? matrix-graph?
+         weighted-graph? unweighted-graph? matrix-graph? matrix->matrix-graph
          (all-from-out "graph-fns-basic.rkt"
                        "graph-fns-spantree.rkt"
                        "graph-fns-singlesource-shortestpaths.rkt"
