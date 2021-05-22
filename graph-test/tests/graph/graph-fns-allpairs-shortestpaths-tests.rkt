@@ -3,6 +3,7 @@
          graph/graph-weighted
          graph/graph-matrix
          graph/graph-fns-allpairs-shortestpaths
+         math/matrix
          "test-utils.rkt"
          rackunit)
 
@@ -18,11 +19,12 @@
      (6 5 4))))
 
 (define matrix25.1
-  (mk-matrix-graph [[0 3 8 #f -4]
-                    [#f 0 #f 1 7]
-                    [#f 4 0 #f #f]
-                    [2 #f -5 0 #f]
-                    [#f #f #f 6 0]]))
+  (matrix->matrix-graph (matrix [[0 3 8 #f -4]
+                                 [#f 0 #f 1 7]
+                                 [#f 4 0 #f #f]
+                                 [2 #f -5 0 #f]
+                                 [#f #f #f 6 0]])))
+
 
 (define weights25.1slow (all-pairs-shortest-paths/slow g25.1))
 (define weights25.1faster (all-pairs-shortest-paths/faster g25.1))

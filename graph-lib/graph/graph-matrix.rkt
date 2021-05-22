@@ -9,7 +9,7 @@
 ;; The entry in the matrix at row i, col j represents the weight of edge i-j.
 ;; A non-existent edge is denoted with #f.
 
-(provide mk-matrix-graph matrix-graph?)
+(provide mk-matrix-graph matrix->matrix-graph matrix-graph?)
 
 (define-syntax-rule (get-matrix g) (unsafe-struct*-ref g 0))
 
@@ -85,3 +85,7 @@
   (let ([m (matrix rows)])
     (unless (square-matrix? m) (error 'mk-matrix-graph "graph must be a square matrix"))
     (matrix-graph (array->mutable-array m))))
+
+(define (matrix->matrix-graph mtx)
+  (unless (square-matrix? mtx) (error 'matrix->matrix-graph "graph must be a square matrix"))
+  (matrix-graph (array->mutable-array mtx)))
