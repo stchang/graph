@@ -350,9 +350,12 @@ Library. See Lee et al. OOPSLA 1999 @cite["GGCL"]. Here is the rough implementat
   (enqueue! Q s)
   (mark-discovered! s)
   (define new-acc
-    (for/fold ([acc (init G s)]) ([u (in-queue Q)])
-      (for ([inner-acc (visit G s u acc)])
-        ([v (in-neighbors G u)] #:when (visit? G s u v) #:break (break? G s u v))
+    (for/fold ([acc (init G s)])
+              ([u (in-queue Q)])
+      (for/fold ([inner-acc (visit G s u acc)])
+                ([v (in-neighbors G u)]
+                 #:when (visit? G s u v)
+                 #:break (break? G s u v))
         (mark-discovered! v)
         (begin0 (discover G s u v inner-acc)
                 (enqueue! Q v)))))
