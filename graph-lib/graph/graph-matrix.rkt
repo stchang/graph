@@ -81,11 +81,13 @@
    (define (transpose G)
      (matrix-graph (matrix-transpose (get-matrix G))))])
 
-(define-syntax-rule (mk-matrix-graph rows) 
-  (let ([m (matrix rows)])
-    (unless (square-matrix? m) (error 'mk-matrix-graph "graph must be a square matrix"))
-    (matrix-graph (array->mutable-array m))))
-
-(define (matrix->matrix-graph mtx)
-  (unless (square-matrix? mtx) (error 'matrix->matrix-graph "graph must be a square matrix"))
+(define (matrix->matrix-graph mtx [who 'matrix->matrix-graph])
+  (unless (square-matrix? mtx) (error who "graph must be a square matrix"))
   (matrix-graph (array->mutable-array mtx)))
+
+(require (for-syntax racket/base syntax/parse))
+(define-syntax mk-matrix-graph
+  (syntax-parser
+    [(mk-matrix-graph rows)
+     #'(let ([m (matrix rows)])
+         (matrix->matrix-graph m 'mk-matrix-graph))]))
