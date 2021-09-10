@@ -1,6 +1,7 @@
 #lang racket
 
-(require graph/graph-unweighted
+(require (for-syntax syntax/parse)
+         graph/graph-unweighted
          graph/gen-graph
          graph/graph-fns-coloring
          rackunit)
@@ -55,10 +56,16 @@
 
 (define-values (num-colors1best coloring1best) ; best order
   (coloring/greedy bipartite1 #:order (λ _ (build-list 8 add1))))
-(define (check-coloring g num-colors the-coloring)
-  (check-true (valid-coloring? g the-coloring))
-  (check-true
-   (= num-colors (add1 (apply max (sequence->list (in-hash-values the-coloring)))))))
+
+(define-syntax check-coloring
+  (syntax-parser
+    [(_ g num-colors coloring)
+     #`(let ([the-coloring coloring])
+         #,(syntax/loc this-syntax (check-true (valid-coloring? g the-coloring)))
+         #,(syntax/loc this-syntax
+             (check-equal? num-colors
+                           (add1 (apply max (sequence->list (in-hash-values the-coloring)))))))]))
+
 (check-coloring bipartite1 num-colors1best coloring1best)
 (check-equal? 
  coloring1best
@@ -124,4 +131,4 @@
 (define-values (france-num-colors france-coloring) (coloring/greedy france))
 (check-equal? france-num-colors 4)
 (check-coloring france france-num-colors france-coloring)
-(check-coloring france 4 (coloring/brelaz france))
+(check-true (valid-coloring? france (coloring/brelaz france)))
