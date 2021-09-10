@@ -65,35 +65,42 @@
 ;;  vertices is decided in an online manner)
 ;; Essentially color nodes using this algorithm:
 ;; - Color nodes with the most colored neighbors first
-;; - Break ties using the nodes with the most unoclored neighbors
+;; - Break ties using the nodes with the most uncolored neighbors
 (define (coloring/brelaz g)
-  (define-vertex-property G color)
+  (define-vertex-property g color)
   (define colored? (curry hash-has-key? (color->hash)))
+  (define uncolored? (negate colored?))
+
+  ;; speed up by pre-computing some graph values
+  (define Vs (get-vertices g))
+  (define GRAPH-SIZE (length Vs))
+  (define NEIGHBORS (for/hash ([v Vs]) (values v (get-neighbors g v))))
+  (define (neighbors v) (hash-ref NEIGHBORS v))
   
   ; Used to break ties as mentioned above
   (define (count-colored-neighbors n) 
-    (length (filter colored? (get-neighbors g n))))
+    (length (filter colored? (neighbors n))))
  
   (define (count-uncolored-neighbors n)
-    (length (filter (negate colored?) (get-neighbors g n))))
- 
-  (define graph-size (length (get-vertices g)))
- 
+    (length (filter uncolored? (neighbors n))))
+
+  ;; comparison function to determine which node to color next
+  ;; - Color nodes with the most colored neighbors first
+  ;; - Break ties using the nodes with the most uncolored neighbors
+  (define (more-saturated? n1 n2)
+    (or (> (count-colored-neighbors n1) (count-colored-neighbors n2))
+        (and (= (count-colored-neighbors n1) (count-colored-neighbors n2))
+             (> (count-uncolored-neighbors n1) (count-uncolored-neighbors n2)))))
+
   ; Each time, color the node with the highest current brélaz-number (see above)
-  (for ([i (in-range graph-size)])
-    (define next-node 
+  (for ([i (in-range GRAPH-SIZE)])
+    (define next-node
       (unsafe-car
-       (sort
-        (filter (negate colored?) (get-vertices g))
-        (λ (n1 n2) 
-          (or (> (count-colored-neighbors n1) (count-colored-neighbors n2))
-              (and (= (count-colored-neighbors n1) (count-colored-neighbors n2))
-                   (> (count-uncolored-neighbors n1) (count-uncolored-neighbors n2))))))))
-    
-    (for/first ([i (in-naturals)]
-                #:unless 
-                (member i (map (λ (n) (color n #:default #f)) 
-                               (get-neighbors g next-node))))
+       (sort (filter uncolored? Vs) more-saturated?)))
+    (define next-node-neighbor-colors
+      (for/list ([n (neighbors next-node)])
+       (color n #:default #f)))
+    (for/first ([i (in-naturals)] #:unless (member i next-node-neighbor-colors))
       (color-set! next-node i)))
  
   (color->hash))
