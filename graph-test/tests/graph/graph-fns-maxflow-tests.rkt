@@ -69,8 +69,15 @@
                                                      (11 12))))
 (define L-R (bipartite? gsedge17.5))
 (check-not-false L-R)
-(check-equal? (apply set (first L-R)) (set 0 2 4 6 8 10 12))
-(check-equal? (apply set (second L-R)) (set 1 3 5 7 9 11))
+(let ([computed-L (apply set (first L-R))]
+      [computed-R (apply set (second L-R))]
+      [L (set 0 2 4 6 8 10 12)]
+      [R (set 1 3 5 7 9 11)])
+  (check-true (or (and (equal? computed-L L)
+                       (equal? computed-R R))
+                  (and (equal? computed-L R)
+                       (equal? computed-R L)))
+              "bipartite graph 0,2,3,4,8,10,12 and 1,3,5,7,9,11"))
 
 (define gwiki1 (mk-unweighted-graph/undirected '((0 1) (0 5) (0 6) (0 7)
                                                  (1 2) (1 4)
