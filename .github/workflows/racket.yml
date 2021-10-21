@@ -20,8 +20,10 @@ jobs:
         include:
           - racket-version: '8.0'
             racket-variant: 'CS'
+            experimental: false
           - racket-version: '8.1'
             racket-variant: 'CS'
+            experimental: false
           - racket-version: 'current'
             racket-variant: 'CS'
             experimental: true
