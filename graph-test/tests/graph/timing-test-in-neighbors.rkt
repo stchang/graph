@@ -81,7 +81,7 @@
 (check-equal? (length (get-edges g/scc)) 5105043)
 
 ; just traverse vertices
-(for ([i 10])
+(for ([i (if (getenv "CI") 2 10)])
   (time
    (for* ([v (in-vertices g/scc)]
           [u (in-neighbors g/scc v)]
