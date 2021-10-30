@@ -528,7 +528,7 @@ and a third that maps a vertex to its "finishing time".}
 @defproc[(dfs/generalized 
           [g graph?]
           [#:order order (-> list? list?) (λ (x) x)]
-          [#:break break? (-> graph? [from any/c] [to any/c] boolean?) (λ _ #f)]
+          [#:break break? (-> graph? [from any/c] [to any/c] [acc any/c] boolean?) (λ _ #f)]
           [#:init init (-> graph? void?) void]
           [#:inner-init inner-init (-> any/c any/c) (λ (acc) acc)]
           [#:visit? custom-visit?-fn (-> graph? [from any/c] [to any/c] boolean?) #f]
@@ -552,7 +552,7 @@ implementation:
     (mark-visited! u)
     (define new-acc
       (for/fold ([acc (prologue G parent u acc)])
-                ([v (in-neighbors G u)] #:break (break? G u v))
+                ([v (in-neighbors G u)] #:break (break? G u v acc))
         (cond [(visit? G u v) (do-visit u v acc)]
               [(process-unvisited? G u v) (process-unvisited G u v acc)]
               [else acc])))
@@ -561,7 +561,7 @@ implementation:
   ;; outer loop: picks a new vertex to continue with when search reaches dead end
   (define new-acc 
     (for/fold ([acc (init G)]) 
-              ([u (order (get-vertices G))] #:break (break? G #f u))
+              ([u (order (get-vertices G))] #:break (break? G #f u acc))
       (cond [(visit? G #f u) (combine (do-visit #f u (inner-init acc)) acc)]
             [(process-unvisited? G #f u) (process-unvisited G #f u acc)]
             [else acc])))
