@@ -792,9 +792,9 @@ Note, the running time could be theoretically faster with a version of Dijkstra 
 
 @; graph coloring -------------------------------------------------------------
 
-Graph coloring functions are only valid for undirected graphs.
-
 @section[#:tag "coloring"]{Graph Coloring}
+
+Graph coloring functions are only valid for undirected graphs.
 
 @defproc[(coloring [g graph?] [num-colors natural-number/c] [#:order order (-> list? list?) (λ (x) x)])
          (or/c (hash/c any/c number? #:immutable #f) #f)]{
