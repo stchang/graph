@@ -139,3 +139,56 @@
 (check-true (string-contains? cities-labeled-viz "\\[label=\"1000\"\\]"))
 (check-true (string-contains? cities-labeled-viz "\\[label=\"far\"\\]"))
 (check-true (string-contains? cities-labeled-viz "\\[label=\"near\"\\]"))
+
+; -----------------------------------------------------------------------------
+;; examples from Noah Ma
+
+(require racket/match racket/function racket/pretty)
+
+;; this generates two (undirected and directed subgraph)
+;; what's the proper behavior
+;; (define g (unweighted-graph/directed '((a a) (a b) (a c) (d a))))
+
+;; (define my-colors (make-hash))
+;; (for ([e (in-edges g)])
+;;   (match-define `(,s ,t) e)
+;;   (hash-update! my-colors t add1 (const 0)))
+
+;; (pretty-display (graphviz g #:colors my-colors))
+
+;; https://github.com/stchang/graph/issues/62
+;; digraph G {
+;;     rankdir=LR;
+
+;;     node0 [label="target: c",color="0.5 1.0 1.0"];
+;;     node1 [label="target: a",color="0.5 1.0 1.0"];
+;;     node2 [label="source: d"];
+;;     node3 [label="target: b",color="0.5 1.0 1.0"];
+
+;;     node1 -> node0;
+;;     node1 -> node1;
+;;     node1 -> node3;
+;;     node2 -> node1 [dir=none];
+;; }
+
+(define g (unweighted-graph/directed '((a a) (a b) (a c) (d a))))
+
+(define targets '(a b c))
+(define sources '(d))
+
+(define-vertex-property g HSV-colors #:init (list 0.5 1.0 1.0))
+(HSV-colors-set! 'd #f)
+
+(define (mk-label v)
+  (if (member v targets)
+      (format "target: ~a" v)
+      (format "source: ~a" v)))
+
+(define-edge-property g dirs #:init #f)
+(dirs-set! 'd 'a 'none)
+(pretty-display (graphviz g
+                          #:rankdir "LR"
+                          #:mk-label mk-label
+                          #:hsv-colors (HSV-colors->hash)
+                          #:dirs (dirs->hash)
+                          #:indent "    "))
