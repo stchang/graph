@@ -152,11 +152,13 @@
 
 (define custom-attrs-viz
   (graphviz custom-attrs
+            #:graph-attributes `([rankdir "LR"])
             #:vertex-attributes `([label ,label] [shape ,shape])
             #:edge-attributes `([arrowhead ,arrowhead])))
 
 ;; eg,
 ;; digraph G {
+;; 	rankdir="LR";
 ;; 	node0 [label="THERE",shape="oval"];
 ;; 	node1 [label="HERE",shape="house"];
 ;; 	subgraph U {
@@ -167,6 +169,7 @@
 ;; 	}
 ;; }
 
+(check-true (string-contains? custom-attrs-viz "rankdir=\"LR\""))
 (check-true (string-contains? custom-attrs-viz "\\[label=\"THERE\",shape=\"oval\"]"))
 (check-true (string-contains? custom-attrs-viz "\\[label=\"HERE\",shape=\"house\"]"))
 (check-true (string-contains? custom-attrs-viz "\\[arrowhead=\"obox\"]"))

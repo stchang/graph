@@ -47,19 +47,18 @@
     (define get (cadr attr))
     (list (car attr) (get (first e) (second e)))))
 
-(define (attrs->string attrs)
+(define (attrs->string attrs [sep ","] [after-last ""])
   (define attrs* (remove-duplicates attrs #:key car))
   (define attr-strs
     (for/list ([attr (in-list attrs*)])
       (format "~a=~s" (car attr) (cadr attr))))
-  (if (null? attrs)
-      ""
-      (format "[~a]" (string-join attr-strs ","))))
+  (string-join attr-strs sep #:after-last after-last))
 
 ;; Return a graphviz definition for a graph
 ;; Pass a hash of vertex -> exact-nonnegative-integer? as coloring to color the nodes
 (define (graphviz g
                   #:colors [colors #f]
+                  #:graph-attributes [graph-attrs null]
                   #:edge-attributes [edge-attrs null]
                   #:vertex-attributes [vertex-attrs null]
                   #:output [port #f])
@@ -74,6 +73,8 @@
                      (begin0 (format "node~a" node-count)
                        (set! node-count (add1 node-count))))))
       (printf "digraph G {\n")
+      (when (not (null? graph-attrs))
+        (printf "\t~a" (attrs->string graph-attrs ";\n" ";\n")))
       ; Add vertices, color them using evenly spaced HSV colors if given colors
       (define color-count (and colors (add1 (apply max (hash-values colors)))))
       (for ([v (in-vertices g)])
@@ -81,7 +82,7 @@
           (append (vertex-attrs-get-val vertex-attrs v)
                   `([label ,(sanitize-name v)])
                   (color-attr colors color-count v)))
-        (printf "\t~a ~a;\n"
+        (printf "\t~a [~a];\n"
                 (node-id-table-ref! v)
                 (attrs->string attrs)))
 
@@ -98,7 +99,7 @@
           (define attrs
             (append (edge-attrs-get-val edge-attrs e)
                     (weight-attr weighted? g e)))
-          (printf "\t\t~a -> ~a ~a;\n"
+          (printf "\t\t~a -> ~a [~a];\n"
                   (node-id-table-ref! (first e))
                   (node-id-table-ref! (second e))
                   (attrs->string attrs))
@@ -111,7 +112,7 @@
         (define attrs
           (append (edge-attrs-get-val edge-attrs e)
                   (weight-attr weighted? g e)))
-        (printf "\t\t~a -> ~a ~a;\n"
+        (printf "\t\t~a -> ~a [~a];\n"
                 (node-id-table-ref! (first e))
                 (node-id-table-ref! (second e))
                 (attrs->string attrs)))

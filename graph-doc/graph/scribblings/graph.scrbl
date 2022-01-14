@@ -865,6 +865,7 @@ Note: this is not the Hopcroft-Karp (ie fastest) bipartite matching algorithm.}
           [g graph?]
           [#:output output (or/c output-port? #f) #f]
           [#:colors colors (or/c (hash/c any/c natural-number/c) #f) #f]
+          [#:graph-attributes graph-attrs (listof (list/c symbol? any/c)) null]
           [#:edge-attributes edge-attrs (listof (list/c symbol? procedure?)) null]
           [#:vertex-attributes vertex-attrs (listof (list/c symbol? procedure?)) null])
          string?]{
@@ -883,12 +884,17 @@ The optional output argument redirects the output from a
 string to the given output port. A string is returned when
 the argument is @racket[#f].
 
-The @racket[#:edge-attributes] and @racket[#:vertex-attributes]
-options attach Graphviz attributes to edges and vertices, respectively.
-They take a list containing associations between an attribute name (as a symbol)
-and either an @tech{edge property} or @tech{vertex property}
-that yields the value for that attribute.
-These attributes take precedence over the default attributes.
+The @racket[#:graph-attributes], @racket[#:edge-attributes],
+and @racket[#:vertex-attributes] options attach Graphviz attributes to the
+graph, edges, and vertices, respectively.
+For @racket[#:graph-attributes],
+the argument is a list that associates an attribute name (as a symbol)
+with its value.
+The other two associate an attribute name with
+either an @tech{edge property} or @tech{vertex property}
+that yields the attribute value for that element of the graph.
+These attributes take precedence over any default ones
+(like edge labels derived from the weights).
 }
 
 @; other
