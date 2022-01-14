@@ -893,7 +893,8 @@ with its value.
 The other two associate an attribute name with
 either an @tech{edge property} or @tech{vertex property}
 that yields the attribute value for that element of the graph.
-These attributes take precedence over any default ones
+These attributes take precedence over the attributes
+set by @racket[#:colors] and any default ones
 (like edge labels derived from the weights).
 }
 
