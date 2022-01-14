@@ -864,13 +864,15 @@ Note: this is not the Hopcroft-Karp (ie fastest) bipartite matching algorithm.}
 @defproc[(graphviz
           [g graph?]
           [#:output output (or/c output-port? #f) #f]
-          [#:colors colors (or/c (hash/c any/c natural-number/c) #f) #f])
+          [#:colors colors (or/c (hash/c any/c natural-number/c) #f) #f]
+          [#:edge-attributes edge-attrs (listof (list/c symbol? procedure?)) null]
+          [#:vertex-attributes vertex-attrs (listof (list/c symbol? procedure?)) null])
          string?]{
 Returns the dotfile representation of the given graph (as a string).
 
 The optional color argument maps vertices to colors, where the color
 corresponds to the "H" component of an HSV color representation. The given
-colors are normalized to be between 0 and 1.0 before generating the graphviz
+colors are normalized to be between 0 and 1.0 before generating the Graphviz
 output, with the maximum specified color value corresponding to 1.0 (the S and
 V components are currently unspecifiable and are always 1.0).
 
@@ -879,7 +881,15 @@ Typically, the color argument is the output of a function from
 
 The optional output argument redirects the output from a
 string to the given output port. A string is returned when
-the argument is @racket[#f].}
+the argument is @racket[#f].
+
+The @racket[#:edge-attributes] and @racket[#:vertex-attributes]
+options attach Graphviz attributes to edges and vertices, respectively.
+They take a list containing associations between an attribute name (as a symbol)
+and either an @tech{edge property} or @tech{vertex property}
+that yields the value for that attribute.
+These attributes take precedence over the default attributes.
+}
 
 @; other
 @section{Other}

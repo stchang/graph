@@ -139,3 +139,34 @@
 (check-true (string-contains? cities-labeled-viz "\\[label=\"1000\"\\]"))
 (check-true (string-contains? cities-labeled-viz "\\[label=\"far\"\\]"))
 (check-true (string-contains? cities-labeled-viz "\\[label=\"near\"\\]"))
+
+(define custom-attrs
+  (unweighted-graph/directed '(["here" "there"])))
+
+(define-vertex-property custom-attrs label #:init (string-upcase $v))
+(define-vertex-property custom-attrs shape #:init "oval")
+(shape-set! "here" "house")
+
+(define-edge-property custom-attrs arrowhead)
+(arrowhead-set! "here" "there" "obox")
+
+(define custom-attrs-viz
+  (graphviz custom-attrs
+            #:vertex-attributes `([label ,label] [shape ,shape])
+            #:edge-attributes `([arrowhead ,arrowhead])))
+
+;; eg,
+;; digraph G {
+;; 	node0 [label="THERE",shape="oval"];
+;; 	node1 [label="HERE",shape="house"];
+;; 	subgraph U {
+;; 		edge [dir=none];
+;; 	}
+;; 	subgraph D {
+;; 		node1 -> node0 [arrowhead="obox"];
+;; 	}
+;; }
+
+(check-true (string-contains? custom-attrs-viz "\\[label=\"THERE\",shape=\"oval\"]"))
+(check-true (string-contains? custom-attrs-viz "\\[label=\"HERE\",shape=\"house\"]"))
+(check-true (string-contains? custom-attrs-viz "\\[arrowhead=\"obox\"]"))
