@@ -63,20 +63,20 @@
                   #:edge-attributes [edge-attrs null]
                   #:vertex-attributes [vertex-attrs null]
                   #:output [port #f])
-   (define (generate-graph)
-     (parameterize ([current-output-port (or port (current-output-port))])
-       (define weighted? (weighted-graph? g))
-       (define node-count 0)
-       (define node-id-table (make-hash))
-       (define (node-id-table-ref! node)
-         (hash-ref! node-id-table node
-                    (λ ()
-                      (begin0 (format "node~a" node-count)
-                              (set! node-count (add1 node-count))))))
-       (printf "digraph G {\n")
-       ; Add vertices, color them using evenly spaced HSV colors if given colors
-       (define color-count (and colors (add1 (apply max (hash-values colors)))))
-    (for ([v (in-vertices g)])
+  (define (generate-graph)
+    (parameterize ([current-output-port (or port (current-output-port))])
+      (define weighted? (weighted-graph? g))
+      (define node-count 0)
+      (define node-id-table (make-hash))
+      (define (node-id-table-ref! node)
+        (hash-ref! node-id-table node
+                   (λ ()
+                     (begin0 (format "node~a" node-count)
+                       (set! node-count (add1 node-count))))))
+      (printf "digraph G {\n")
+      ; Add vertices, color them using evenly spaced HSV colors if given colors
+      (define color-count (and colors (add1 (apply max (hash-values colors)))))
+      (for ([v (in-vertices g)])
         (define attrs
           (append (vertex-attrs-get-val vertex-attrs v)
                   `([label ,(sanitize-name v)])
@@ -84,17 +84,17 @@
         (printf "\t~a ~a;\n"
                 (node-id-table-ref! v)
                 (attrs->string attrs)))
-        
-    ; Write undirected edges as one subgraph
-    (printf "\tsubgraph U {\n")
-    (printf "\t\tedge [dir=none];\n")
-    (define undirected-edges
-      (for/fold ([added (set)]) 
-                ([e (in-edges g)]
-                 #:when (and (not (set-member? added e))
-                             (has-edge? g (second e) (first e))
-                             (equal? (edge-weight g (first e) (second e))
-                                     (edge-weight g (second e) (first e)))))
+
+      ; Write undirected edges as one subgraph
+      (printf "\tsubgraph U {\n")
+      (printf "\t\tedge [dir=none];\n")
+      (define undirected-edges
+        (for/fold ([added (set)])
+                  ([e (in-edges g)]
+                   #:when (and (not (set-member? added e))
+                               (has-edge? g (second e) (first e))
+                               (equal? (edge-weight g (first e) (second e))
+                                       (edge-weight g (second e) (first e)))))
           (define attrs
             (append (edge-attrs-get-val edge-attrs e)
                     (weight-attr weighted? g e)))
@@ -102,12 +102,12 @@
                   (node-id-table-ref! (first e))
                   (node-id-table-ref! (second e))
                   (attrs->string attrs))
-        (set-add (set-add added e) (list (second e) (first e)))))
-    (printf "\t}\n")
-        
-    ; Write directed edges as another subgraph
-    (printf "\tsubgraph D {\n")
-    (for ([e (in-edges g)] #:unless (set-member? undirected-edges e))
+          (set-add (set-add added e) (list (second e) (first e)))))
+      (printf "\t}\n")
+
+      ; Write directed edges as another subgraph
+      (printf "\tsubgraph D {\n")
+      (for ([e (in-edges g)] #:unless (set-member? undirected-edges e))
         (define attrs
           (append (edge-attrs-get-val edge-attrs e)
                   (weight-attr weighted? g e)))
@@ -115,8 +115,8 @@
                 (node-id-table-ref! (first e))
                 (node-id-table-ref! (second e))
                 (attrs->string attrs)))
-    (printf "\t}\n")
-    (printf "}\n")))
+      (printf "\t}\n")
+      (printf "}\n")))
   (if port
       (generate-graph)
       (with-output-to-string generate-graph)))
