@@ -112,7 +112,7 @@ which create either a weighted or unweighted graph.
 
 @defproc[(weighted-graph/undirected [edges (listof (list/c any/c any/c any/c))])
          (and/c graph? weighted-graph?)]{
-  Creates a weighted graph that implements @racket[gen:graph] from a list of weighted, undirected edges. Each edge is represented by a list of one weight (label) and two vertices. Vertices can be any Racket values comparable with @racket[equal?]. Weights can be any Racket values comparable with @racket[equal?]. Note that some algorithms will fail on non-numerical egde weights.
+  Creates a weighted graph that implements @racket[gen:graph] from a list of weighted, undirected edges. Each edge is represented by a list of one weight (label) and two vertices. Vertices can be any Racket values comparable with @racket[equal?]. Weights can be any Racket values comparable with @racket[equal?]. Note that some algorithms will fail on non-numerical edge weights.
 @examples[#:eval the-eval
   (define g (weighted-graph/undirected '((10 a b) (20 b c))))
   (graph? g)
